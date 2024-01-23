@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 21:14:29 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/22 21:42:01 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/23 18:53:34 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ class Channel
 private:
 	std::string name;
 	std::vector<Client> clients;
+	std::vector<Client> admins;
 public:
 	Channel();
 	~Channel();
@@ -32,6 +33,9 @@ public:
 	void SetName(std::string name);
 	std::string GetName();
 	void add_client(Client newClient);
+	void add_admin(Client newClient);
+	void remove_client(int fd);
+	void remove_admin(int fd);
 };
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/23 18:43:14 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/23 18:57:04 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,15 +34,15 @@ class Channel;
 class Server
 {
 private:
+	std::vector<Client> clients;
 	std::vector<Channel> channels;
+	std::vector<struct pollfd> fds;
 	int port;
-    std::string password;
-    int server_fdsocket;
-    struct sockaddr_in add;
-    struct sockaddr_in cliadd;
-    struct pollfd new_cli;
-    std::vector<struct pollfd> fds;
-    std::vector<Client> clients;
+	std::string password;
+	int server_fdsocket;
+	struct sockaddr_in add;
+	struct sockaddr_in cliadd;
+	struct pollfd new_cli;
 public:
 	Server();
 	Server(int port, std::string password);
@@ -67,13 +67,13 @@ public:
 	void RemoveFds(int fd);
 	//######################
 	void                        init(int port, std::string pass);
-    void                        set_sever_socket();
-    int                         get_sever_socket();
-    void                        accept_new_client();
-    void                        accept_new_message(int fd, size_t pos);
-    std::vector<std::string>    split_cmd(std::string &str);
-    void                        client_authen(int fd, std::string& pass, std::vector<struct pollfd> &fds);
-    void                        parse_exec_cmd(std::vector<std::string>& cmd, int fd);
+	void                        set_sever_socket();
+	int                         get_sever_socket();
+	void                        accept_new_client();
+	void                        accept_new_message(int fd, size_t pos);
+	std::vector<std::string>    split_cmd(std::string &str);
+	void                        client_authen(int fd, std::string& pass, std::vector<struct pollfd> &fds);
+	void                        parse_exec_cmd(std::vector<std::string>& cmd, int fd);
 };
 
 #endif
