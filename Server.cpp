@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/23 02:48:42 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/23 04:24:57 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 
 Server::Server(){}
-Server::Server(int port, int password){this->port = port; this->password = password;}
+Server::Server(int port, std::string password){this->port = port; this->password = password;}
 Server::~Server(){}
 Server::Server(Server const &src){*this = src;}
 Server &Server::operator=(Server const &src){
@@ -30,10 +30,10 @@ Server &Server::operator=(Server const &src){
 }
 void Server::SetFd(int fd){this->fd = fd;}
 void Server::SetPort(int port){this->port = port;}
-void Server::SetPassword(int password){this->password = password;}
+void Server::SetPassword(std::string password){this->password = password;}
 int Server::GetFd(){return this->fd;}
 int Server::GetPort(){return this->port;}
-int Server::GetPassword(){return this->password;}
+std::string Server::GetPassword(){return this->password;}
 
 void Server::AddClient(Client newClient){this->clients.push_back(newClient);}
 void Server::AddChannel(Channel newChannel){this->channels.push_back(newChannel);}
@@ -58,6 +58,13 @@ void Server::RemoveFds(int fd){
 	}
 }
 //##############################################################################################
+std::string recive(int fd, char *buffer)
+{
+	bzero(buffer, BUFSIZ);
+	recv(fd, buffer, BUFSIZ, 0);
+	return (std::string)buffer;
+}
+
 int create_server_socket(int port)
 {
 	struct sockaddr_in sa;
@@ -79,28 +86,20 @@ int create_server_socket(int port)
 	return socket_fd;
 }
 
-Client NewClient(int fd, int password)
+Client NewClient(int fd, std::string password)
 {
 	std::string nickname, username;
-	int pass;
 	char buffer[BUFSIZ];
 	send(fd, "Enter server password: ", 23, 0);
-	bzero(buffer, BUFSIZ);
-	recv(fd, buffer, BUFSIZ, 0);
-	if (std::atoi(buffer) != password){
+	if (recive(fd, buffer) != (password+"\n")){
 		send(fd, "Wrong password. Closing connection.\n", 36, 0);
 		close(fd);
-		return Client(); // return empty client
+		return Client();
 	}
-	pass = std::atoi(buffer);
 	send(fd, "Enter your nickname: ", 21, 0);
-	bzero(buffer, BUFSIZ);
-	recv(fd, buffer, BUFSIZ, 0);
-	nickname = buffer;
+	nickname = recive(fd, buffer);
 	send(fd, "Enter your username: ", 21, 0);
-	bzero(buffer, BUFSIZ);
-	recv(fd, buffer, BUFSIZ, 0);
-	username = buffer;
+	username = recive(fd, buffer);
 	Client newClient(nickname, username, fd);
 	return newClient;
 }
@@ -109,7 +108,6 @@ void accept_new_connection(Server &ser)
 {
 	int fd;
 	char msg_to_send[BUFSIZ];
-	int status;
 
 	fd = accept(ser.GetFd(), NULL, NULL);
 	if (fd == -1)
@@ -118,21 +116,16 @@ void accept_new_connection(Server &ser)
 	if (newClient.GetFd() == -1)
 		return;
 	ser.AddClient(newClient);
-	
 	pollfd client_fd;
 	client_fd.fd = fd;
 	client_fd.events = POLLIN;
 	ser.AddFds(client_fd);
-
 	std::cout << "[Server] Accepted new connection on client socket " << fd << "." << std::endl;
-
-	std::memset(&msg_to_send, '\0', sizeof msg_to_send);
+	std::memset(&msg_to_send, '\0', sizeof(msg_to_send));
 	std::stringstream ss;
 	ss << "Welcome. You are client fd [" << fd << "]\n";
 	std::strcpy(msg_to_send, ss.str().c_str());
-
-	status = send(fd, msg_to_send, std::strlen(msg_to_send), 0);
-	if (status == -1)
+	if (send(fd, msg_to_send, std::strlen(msg_to_send), 0) == -1)
 		std::cerr << "[Server] Send error to client " << fd << ": " << strerror(errno) << std::endl;
 }
 
@@ -141,7 +134,6 @@ void read_data_from_socket(int i, std::vector<pollfd>& fds, int server_socket)
 	char buffer[BUFSIZ];
 	char msg_to_send[BUFSIZ];
 	int bytes_read;
-	int status;
 	int sender_fd;
 
 	sender_fd = fds[i].fd;
@@ -172,8 +164,7 @@ void read_data_from_socket(int i, std::vector<pollfd>& fds, int server_socket)
 		std::strcpy(msg_to_send, ss.str().c_str());
 		for (size_t j = 0; j < fds.size(); j++){
 			if (fds[j].fd != server_socket && fds[j].fd != sender_fd){
-				status = send(fds[j].fd, msg_to_send, std::strlen(msg_to_send), 0);
-				if (status == -1)
+				if (send(fds[j].fd, msg_to_send, std::strlen(msg_to_send), 0) == -1)
 					std::cerr << "[Server] Send error to client fd " << fds[j].fd << ": " << strerror(errno) << std::endl;
 			}
 		}
@@ -195,10 +186,9 @@ int Server::InitServer()
 	server_fd.fd = this->GetFd();
 	server_fd.events = POLLIN;
 	this->AddFds(server_fd);
-
 	while (true)
 	{
-		status = poll(this->fds.data(), this->fds.size(), 2000);
+		status = poll(this->fds.data(), this->fds.size(), -1);
 		if (status == -1)
 			throw std::runtime_error("[Server] Poll error: " + std::string(strerror(errno)));
 		else if (status == 0)
@@ -211,7 +201,11 @@ int Server::InitServer()
 			else
 				read_data_from_socket(i, this->fds, this->fd);
 		}
+		// if (check_exit_command(this->GetFd()))
+        //     break;
 	}
+	for (size_t i = 0; i < this->fds.size(); i++)
+        close(this->fds[i].fd);
 	close(this->fd);
 	return 0;
 }

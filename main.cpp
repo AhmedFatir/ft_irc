@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 11:29:22 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/22 22:09:16 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/23 03:58:49 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,12 @@
 
 int main(int ac, char **av)
 {
-    if (ac != 2)
-		{std::cout << "Usage: " << av[0] << " port number" << std::endl; return 1;}
+    if (ac != 3)
+		{std::cout << "Usage: " << av[0] << " <port number> <password>" << std::endl; return 1;}
 	std::cout << "---- SERVER ----" << std::endl;
     try
     {
-        Server ser(std::atoi(av[1]), 1234);
+        Server ser(std::atoi(av[1]), av[2]);
         ser.InitServer();    
     }
     catch(const std::exception& e)
