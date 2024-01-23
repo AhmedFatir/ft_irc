@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 21:28:06 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/23 02:47:47 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/23 18:38:13 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,3 +32,4 @@ Client &Client::operator=(Client const &src){
 std::string Client::GetNickName(){return this->nickname;}
 std::string Client::GetUserName(){return this->username;}
 int Client::GetFd(){return this->fd;}
+void Client::SetFd(int fd){this->fd = fd;}

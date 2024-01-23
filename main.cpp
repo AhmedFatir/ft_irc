@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 11:29:22 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/23 03:58:49 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/23 18:40:46 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,8 @@ int main(int ac, char **av)
 	std::cout << "---- SERVER ----" << std::endl;
     try
     {
-        Server ser(std::atoi(av[1]), av[2]);
-        ser.InitServer();    
+        Server ser;
+        ser.init(std::atoi(av[1]), av[2]);
     }
     catch(const std::exception& e)
     {

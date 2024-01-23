@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 21:13:42 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/22 21:35:17 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/23 18:38:04 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ public:
 	std::string GetNickName();
 	std::string GetUserName();
 	int GetFd();
+	void SetFd(int fd);
 };
 
 #endif

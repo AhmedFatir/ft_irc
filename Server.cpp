@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/23 04:24:57 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/23 18:46:22 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,14 +24,14 @@ Server &Server::operator=(Server const &src){
 		this->fds = src.fds;
 		this->password = src.password;
 		this->port = src.port;
-		this->fd = src.fd;
+		this->server_fdsocket = src.server_fdsocket;
 	}
 	return *this;
 }
-void Server::SetFd(int fd){this->fd = fd;}
+void Server::SetFd(int fd){this->server_fdsocket = fd;}
 void Server::SetPort(int port){this->port = port;}
 void Server::SetPassword(std::string password){this->password = password;}
-int Server::GetFd(){return this->fd;}
+int Server::GetFd(){return this->server_fdsocket;}
 int Server::GetPort(){return this->port;}
 std::string Server::GetPassword(){return this->password;}
 
@@ -57,155 +57,131 @@ void Server::RemoveFds(int fd){
 			{this->fds.erase(this->fds.begin() + i); return;}
 	}
 }
-//##############################################################################################
-std::string recive(int fd, char *buffer)
+
+//###################################
+void Server::init(int port, std::string pass)
 {
-	bzero(buffer, BUFSIZ);
-	recv(fd, buffer, BUFSIZ, 0);
-	return (std::string)buffer;
+    this->password = pass;
+    this->port = port;
+    this->set_sever_socket();
+    std::cout << "Waiting to accept a connection...\n";
+    while (true)
+    {
+        if(poll(&fds[0],fds.size(),-1) == -1)
+            throw(std::runtime_error("error in poll"));
+        for (size_t i = 0; i < fds.size(); i++)
+        {
+            if (fds[i].revents == POLLIN) 
+            {
+                if (fds[i].fd == server_fdsocket){
+                    this->accept_new_client();
+                }
+                else {
+                    this->accept_new_message(fds[i].fd, i);
+                }
+            }
+        }
+    }
 }
 
-int create_server_socket(int port)
+void Server::set_sever_socket()
 {
-	struct sockaddr_in sa;
-	int socket_fd;
+    int en = 1;
 
-	bzero(&sa, sizeof(sa));
-	sa.sin_family = AF_INET;
-	sa.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	sa.sin_port = htons(port);
-
-	socket_fd = socket(sa.sin_family, SOCK_STREAM, 0);
-	if (socket_fd == -1)
-		throw std::runtime_error("[Server] Socket error: " + std::string(strerror(errno)));
-	std::cout << "[Server] Created server socket fd: " << socket_fd << std::endl;
-
-	if (bind(socket_fd, reinterpret_cast<struct sockaddr*>(&sa), sizeof(sa)) != 0)
-		throw std::runtime_error("[Server] Bind error: " + std::string(strerror(errno)));
-	std::cout << "[Server] Bound socket to localhost port " << port << std::endl;
-	return socket_fd;
+    add.sin_family = AF_INET;
+    add.sin_addr.s_addr = INADDR_ANY;
+    add.sin_port = htons(port);
+    server_fdsocket = socket(AF_INET, SOCK_STREAM, 0);
+    if(server_fdsocket == -1)
+        throw(std::runtime_error("faild to create socket"));
+    if(setsockopt(server_fdsocket, SOL_SOCKET, SO_REUSEADDR, &en, sizeof(en)) == -1)
+        throw(std::runtime_error("faild to set option (SO_REUSEADDR) on socket"));
+    if (bind(server_fdsocket, (struct sockaddr *)&add, sizeof(add)) == -1)
+        throw(std::runtime_error("faild to bind socket"));
+    if (listen(server_fdsocket, SOMAXCONN) == -1)
+        throw(std::runtime_error("listen() faild"));
+    new_cli.fd = server_fdsocket;
+    new_cli.events = POLLIN;
+    new_cli.revents = 0;
+    fds.push_back(new_cli);
 }
 
-Client NewClient(int fd, std::string password)
+void Server::accept_new_client()
 {
-	std::string nickname, username;
-	char buffer[BUFSIZ];
-	send(fd, "Enter server password: ", 23, 0);
-	if (recive(fd, buffer) != (password+"\n")){
-		send(fd, "Wrong password. Closing connection.\n", 36, 0);
-		close(fd);
-		return Client();
-	}
-	send(fd, "Enter your nickname: ", 21, 0);
-	nickname = recive(fd, buffer);
-	send(fd, "Enter your username: ", 21, 0);
-	username = recive(fd, buffer);
-	Client newClient(nickname, username, fd);
-	return newClient;
+    socklen_t len = sizeof(cliadd);
+
+    int incofd = accept(server_fdsocket, (sockaddr *)&cliadd, &len);
+    if (incofd == -1)
+        throw(std::runtime_error("faccept() failed"));
+    new_cli.fd = incofd;
+    new_cli.events = POLLIN;
+    new_cli.revents = 0;
+    fds.push_back(new_cli);
+    std::string welcome = ":localhost 001 user :Welcome to the IRC server!\r\n";
+    send(incofd, welcome.c_str(), welcome.size(), 0);
 }
 
-void accept_new_connection(Server &ser)
+std::vector<std::string> Server::split_cmd(std::string &str)
 {
-	int fd;
-	char msg_to_send[BUFSIZ];
-
-	fd = accept(ser.GetFd(), NULL, NULL);
-	if (fd == -1)
-		{std::cerr << "[Server] Accept error: " << strerror(errno) << std::endl; return;}
-	Client newClient = NewClient(fd, ser.GetPassword());
-	if (newClient.GetFd() == -1)
-		return;
-	ser.AddClient(newClient);
-	pollfd client_fd;
-	client_fd.fd = fd;
-	client_fd.events = POLLIN;
-	ser.AddFds(client_fd);
-	std::cout << "[Server] Accepted new connection on client socket " << fd << "." << std::endl;
-	std::memset(&msg_to_send, '\0', sizeof(msg_to_send));
-	std::stringstream ss;
-	ss << "Welcome. You are client fd [" << fd << "]\n";
-	std::strcpy(msg_to_send, ss.str().c_str());
-	if (send(fd, msg_to_send, std::strlen(msg_to_send), 0) == -1)
-		std::cerr << "[Server] Send error to client " << fd << ": " << strerror(errno) << std::endl;
+    std::istringstream stm(str);
+    std::string token;
+    std::vector<std::string> vec;
+    while(stm >> token)
+    {
+        vec.push_back(token);
+        token.clear();
+    }
+    return vec;
 }
 
-void read_data_from_socket(int i, std::vector<pollfd>& fds, int server_socket)
+void Server::accept_new_message(int fd, size_t pos)
 {
-	char buffer[BUFSIZ];
-	char msg_to_send[BUFSIZ];
-	int bytes_read;
-	int sender_fd;
-
-	sender_fd = fds[i].fd;
-	bzero(buffer, BUFSIZ);
-	bytes_read = recv(sender_fd, buffer, BUFSIZ, 0);
-	if (!std::strcmp(buffer, "exit\n")){
-		std::cout << "[" << sender_fd << "] Client socket closed connection." << std::endl;
-		close(sender_fd);
-		fds.erase(fds.begin() + i);
-		return;
-	}
-	if (bytes_read <= 0)
-	{
-		if (bytes_read == 0)
-			std::cout << "[" << sender_fd << "] Client socket closed connection." << std::endl;
-		else
-			std::cerr << "[Server] Recv error: " << strerror(errno) << std::endl;
-		close(sender_fd);
-		fds.erase(fds.begin() + i);
-	}
-	else
-	{
-		std::cout << "[" << sender_fd << "] Got message: " << buffer;
-
-		std::memset(&msg_to_send, '\0', sizeof msg_to_send);
-		std::stringstream ss;
-		ss << "[" << sender_fd << "] says: " << buffer;
-		std::strcpy(msg_to_send, ss.str().c_str());
-		for (size_t j = 0; j < fds.size(); j++){
-			if (fds[j].fd != server_socket && fds[j].fd != sender_fd){
-				if (send(fds[j].fd, msg_to_send, std::strlen(msg_to_send), 0) == -1)
-					std::cerr << "[Server] Send error to client fd " << fds[j].fd << ": " << strerror(errno) << std::endl;
-			}
-		}
-	}
+    char buff[1024];
+    ssize_t bytes;
+    std::vector<std::string> cmd;
+    if((bytes = recv(fd, buff, sizeof(buff), 0)) == -1)
+        throw(std::runtime_error("recv() faild"));
+    if(bytes == 0)
+    {
+        std::cout << ": >> " << bytes << std::endl;
+        std::cout << "clinet: " << fd << " disconnected" << std::endl;
+        close(fd);
+        fds.erase(fds.begin() + pos);
+    }
+    else
+    {
+        buff[bytes] = '\0';
+        std::string recived = buff;
+        std::cout << "data recived: " << recived;
+        cmd = split_cmd(recived);
+        // this->parse_exec_cmd(cmd, fd, pos);
+    }
 }
 
-int Server::InitServer()
-{
-	int status;
+// void Server::parse_exec_cmd(std::vector<std::string>& cmd, int fd)
+// {
+//     if(cmd[0] == "PASS")
+//         client_authen(fd, cmd[1]);
+// }
 
-	this->SetFd(create_server_socket(this->GetPort()));
-	if (this->GetFd() == -1)
-		throw std::runtime_error("[Server] Failed to create server socket.");
-	std::cout << "[Server] Listening on port " << this->GetPort() << std::endl;
-	status = listen(this->GetFd(), SOMAXCONN);
-	if (status != 0)
-		throw std::runtime_error("[Server] Listen error: " + std::string(strerror(errno)));
-	pollfd server_fd;
-	server_fd.fd = this->GetFd();
-	server_fd.events = POLLIN;
-	this->AddFds(server_fd);
-	while (true)
-	{
-		status = poll(this->fds.data(), this->fds.size(), -1);
-		if (status == -1)
-			throw std::runtime_error("[Server] Poll error: " + std::string(strerror(errno)));
-		else if (status == 0)
-			continue;
-		for (size_t i = 0; i < this->fds.size(); i++){
-			if ((this->fds[i].revents & POLLIN) != 1)
-				continue;
-			if (this->fds[i].fd == this->fd)
-				accept_new_connection(*this);
-			else
-				read_data_from_socket(i, this->fds, this->fd);
-		}
-		// if (check_exit_command(this->GetFd()))
-        //     break;
-	}
-	for (size_t i = 0; i < this->fds.size(); i++)
-        close(this->fds[i].fd);
-	close(this->fd);
-	return 0;
+
+void Server::client_authen(int fd, std::string& pass, std::vector<struct pollfd> &fds)
+{
+    std::vector<std::string> cmd;
+    Client cli;
+    if(pass == password)
+    {
+        cli.SetFd(fd);
+        clients.push_back(cli);
+    }
+    else
+    {
+        std::string resp = ":localhost 464 user :Password incorrect\r\n";
+        send(fd, resp.c_str(), resp.size(),0);
+        close(fd);
+		RemoveFds(fd);
+		RemoveClient(fd);
+		(void)fds;
+    }
+
 }
