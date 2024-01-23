@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/22 22:14:20 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/23 02:48:42 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,24 +62,47 @@ int create_server_socket(int port)
 {
 	struct sockaddr_in sa;
 	int socket_fd;
-	int status;
 
-	std::memset(&sa, 0, sizeof sa);
+	bzero(&sa, sizeof(sa));
 	sa.sin_family = AF_INET;
 	sa.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	sa.sin_port = htons(port);
 
 	socket_fd = socket(sa.sin_family, SOCK_STREAM, 0);
 	if (socket_fd == -1)
-		{std::cerr << "[Server] Socket error: " << strerror(errno) << std::endl; return -1;}
+		throw std::runtime_error("[Server] Socket error: " + std::string(strerror(errno)));
 	std::cout << "[Server] Created server socket fd: " << socket_fd << std::endl;
 
-	status = bind(socket_fd, reinterpret_cast<struct sockaddr*>(&sa), sizeof(sa));
-	if (status != 0)
+	if (bind(socket_fd, reinterpret_cast<struct sockaddr*>(&sa), sizeof(sa)) != 0)
 		throw std::runtime_error("[Server] Bind error: " + std::string(strerror(errno)));
 	std::cout << "[Server] Bound socket to localhost port " << port << std::endl;
-
 	return socket_fd;
+}
+
+Client NewClient(int fd, int password)
+{
+	std::string nickname, username;
+	int pass;
+	char buffer[BUFSIZ];
+	send(fd, "Enter server password: ", 23, 0);
+	bzero(buffer, BUFSIZ);
+	recv(fd, buffer, BUFSIZ, 0);
+	if (std::atoi(buffer) != password){
+		send(fd, "Wrong password. Closing connection.\n", 36, 0);
+		close(fd);
+		return Client(); // return empty client
+	}
+	pass = std::atoi(buffer);
+	send(fd, "Enter your nickname: ", 21, 0);
+	bzero(buffer, BUFSIZ);
+	recv(fd, buffer, BUFSIZ, 0);
+	nickname = buffer;
+	send(fd, "Enter your username: ", 21, 0);
+	bzero(buffer, BUFSIZ);
+	recv(fd, buffer, BUFSIZ, 0);
+	username = buffer;
+	Client newClient(nickname, username, fd);
+	return newClient;
 }
 
 void accept_new_connection(Server &ser)
@@ -91,9 +114,11 @@ void accept_new_connection(Server &ser)
 	fd = accept(ser.GetFd(), NULL, NULL);
 	if (fd == -1)
 		{std::cerr << "[Server] Accept error: " << strerror(errno) << std::endl; return;}
-	Client newClient("nick", "user", fd);
+	Client newClient = NewClient(fd, ser.GetPassword());
+	if (newClient.GetFd() == -1)
+		return;
 	ser.AddClient(newClient);
-
+	
 	pollfd client_fd;
 	client_fd.fd = fd;
 	client_fd.events = POLLIN;
@@ -105,8 +130,7 @@ void accept_new_connection(Server &ser)
 	std::stringstream ss;
 	ss << "Welcome. You are client fd [" << fd << "]\n";
 	std::strcpy(msg_to_send, ss.str().c_str());
-	
-	
+
 	status = send(fd, msg_to_send, std::strlen(msg_to_send), 0);
 	if (status == -1)
 		std::cerr << "[Server] Send error to client " << fd << ": " << strerror(errno) << std::endl;
@@ -121,10 +145,9 @@ void read_data_from_socket(int i, std::vector<pollfd>& fds, int server_socket)
 	int sender_fd;
 
 	sender_fd = fds[i].fd;
-	std::memset(&buffer, '\0', sizeof buffer);
+	bzero(buffer, BUFSIZ);
 	bytes_read = recv(sender_fd, buffer, BUFSIZ, 0);
-	if (!std::strcmp(buffer, "exit\n"))
-	{
+	if (!std::strcmp(buffer, "exit\n")){
 		std::cout << "[" << sender_fd << "] Client socket closed connection." << std::endl;
 		close(sender_fd);
 		fds.erase(fds.begin() + i);
@@ -147,8 +170,7 @@ void read_data_from_socket(int i, std::vector<pollfd>& fds, int server_socket)
 		std::stringstream ss;
 		ss << "[" << sender_fd << "] says: " << buffer;
 		std::strcpy(msg_to_send, ss.str().c_str());
-		for (size_t j = 0; j < fds.size(); j++)
-		{ // Loop on fds
+		for (size_t j = 0; j < fds.size(); j++){
 			if (fds[j].fd != server_socket && fds[j].fd != sender_fd){
 				status = send(fds[j].fd, msg_to_send, std::strlen(msg_to_send), 0);
 				if (status == -1)
