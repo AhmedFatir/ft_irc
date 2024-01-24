@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/24 16:26:52 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/24 17:46:20 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -208,6 +208,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
         client_authen(fd, splited_cmd[1]);
 	else if (splited_cmd[0] == "NICK")
 		set_nickname(splited_cmd[1],fd);
+	else if (splited_cmd[0] == "JOIN")
+		JOIN(cmd, fd);
 	// else if (splited_cmd[0] == "USER")
 	// 	set_username(splited_cmd, fd);
 
@@ -361,26 +363,43 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, in
 
 void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd)
 {
-	if (token[i].first[0] != '#' && token[i].first[0] != '&')
-		{senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n"); return;}
+	// if (token[i].first[0] != '#' && token[i].first[0] != '&')
+	// 	{senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n"); return;}
 	Channel newChannel;
 	newChannel.SetName(token[i].first);
 	if (!token[i].second.empty())
 		newChannel.SetPassword(token[i].second);
 	newChannel.add_admin(*GetClient(fd));
 	this->channels.push_back(newChannel);
+	//notifiy thet the client joined the channel
+	//RPL_JOIN(nick, username, channelname, ipaddress) ":" + nick + "!~" + username + "@" + ipaddress + " JOIN " + channelname + "\r\n"
+	std::stringstream ss;
+	ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " JOIN " << token[i].first << "\r\n";
+	std::string resp = ss.str();
+	std::cout << "		" << resp;
+	for (size_t i = 0; i < this->clients.size(); i++)
+	{
+		if (this->clients[i].GetFd() != fd)
+			send(this->clients[i].GetFd(), resp.c_str(), resp.size(),0);
+	}
+
 }
 
 void Server::JOIN(std::string cmd, int fd)
 {
 	std::vector<std::pair<std::string, std::string> > token;
 	SplitJoin(token, cmd);
+	for (size_t i = 0; i < token.size(); i++)
+		token[i].first.erase(token[i].first.begin());
 	for (size_t i = 0; i < token.size(); i++){
+		bool flag = false;
 		for (size_t j = 0; j < this->channels.size(); j++){
-			if (this->channels[j].GetName() == token[i].first)
+			if (this->channels[j].GetName() == token[i].first){
 				ExistCh(token, i, j, fd);
-			else
-				NotExistCh(token, i, fd);
+				flag = true; break;
+			}
 		}
+		if (!flag)
+			NotExistCh(token, i, fd);
 	}
 }
