@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/23 18:57:04 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/24 16:10:14 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ public:
 	int GetFd();
 	int GetPort();
 	std::string GetPassword();
+	Client *GetClient(int fd);
 	
 	void SetFd(int server_fdsocket);
 	void SetPort(int port);
@@ -74,6 +75,10 @@ public:
 	std::vector<std::string>    split_cmd(std::string &str);
 	void                        client_authen(int fd, std::string& pass, std::vector<struct pollfd> &fds);
 	void                        parse_exec_cmd(std::vector<std::string>& cmd, int fd);
+	//##########JOIN############
+	void	JOIN(std::string cmd, int fd);
+	void	ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd);
+	void	NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd);
 };
 
 #endif

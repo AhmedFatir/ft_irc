@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/23 18:57:30 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/24 16:10:32 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,13 @@ void Server::RemoveFds(int fd){
 		if (this->fds[i].fd == fd)
 			{this->fds.erase(this->fds.begin() + i); return;}
 	}
+}
+Client *Server::GetClient(int fd){
+	for (size_t i = 0; i < this->clients.size(); i++){
+		if (this->clients[i].GetFd() == fd)
+			return &this->clients[i];
+	}
+	return NULL;
 }
 
 //###################################
@@ -162,6 +169,7 @@ void Server::accept_new_message(int fd, size_t pos)
 // {
 //     if(cmd[0] == "PASS")
 //         client_authen(fd, cmd[1]);
+
 // }
 
 
@@ -183,5 +191,103 @@ void Server::client_authen(int fd, std::string& pass, std::vector<struct pollfd>
 		RemoveClient(fd);
 		(void)fds;
 	}
+}
+//######################################################################################
+// functions to join a channel
+void printVector(std::vector<std::string> token)
+{
+	for (size_t i = 0; i < token.size(); i++)
+		std::cout << "|" << token[i] << "|";
+	std::cout << std::endl;	
+}
+void SplitCmdJoin(std::string cmd, std::vector<std::string> &tmp)
+{
+	std::string str;
+	for (size_t i = 0; i < cmd.size(); i++){
+		if (cmd[i] == ' ' || cmd[i] == ',')
+			{tmp.push_back(str); str.clear();}
+		else str += cmd[i];
+	}
+	tmp.push_back(str);
+	tmp.erase(tmp.begin());
+}
 
+void SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::string cmd)
+{
+	std::vector<std::string> tmp;
+	SplitCmdJoin(cmd, tmp);
+	for (size_t i = 0; i < tmp.size(); i++)
+	{
+		std::string str, pass;
+		if (tmp[i][0] == '#'){
+			str = tmp[i];
+			for (size_t j = i + 1; j < tmp.size(); j++){
+				if (tmp[j][0] != '#' && tmp[j][0] != '&')
+					{pass = tmp[j];tmp.erase(tmp.begin() + j);break;}
+			}
+			token.push_back(std::make_pair(str, pass));
+		}
+		else if (tmp[i][0] == '&'){
+			str = tmp[i];
+			for (size_t j = i + 1; j < tmp.size(); j++){
+				if (tmp[j][0] != '#' && tmp[j][0] != '&')
+					{pass = tmp[j]; tmp.erase(tmp.begin() + j); break;}
+			}
+			token.push_back(std::make_pair(str, pass));
+		}
+		else token.push_back(std::make_pair(tmp[i], ""));
+	}
+}
+
+void senderror(int code,std::string clientname, int fd, std::string msg)
+{
+	std::stringstream ss;
+	ss << ":localhost " << code << " " << clientname << msg;
+	std::string resp = ss.str();
+	send(fd, resp.c_str(), resp.size(),0);
+}
+
+void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd)
+{
+	if (this->channels[j].GetInvitOnly())
+		{senderror(473, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :Cannot join channel (+i)\r\n"); return;}
+	else if (this->channels[j].GetLimit() && this->channels[j].GetClientsNumber() >= this->channels[j].GetLimit())
+		{senderror(471, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :Cannot join channel (+l)\r\n"); return;}
+	else if (token[i].second.empty() && this->channels[j].GetPassword().empty()){
+		if (this->channels[j].get_admin(fd) || this->channels[j].get_client(fd))
+			{senderror(477, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :You are already in this channel\r\n"); return;}
+	}
+	else if (token[i].second == this->channels[j].GetPassword()){
+		if (this->channels[j].get_admin(fd) || this->channels[j].get_client(fd))
+			{senderror(477, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :You are already in this channel\r\n"); return;}
+	}
+	else if (token[i].second != this->channels[j].GetPassword())
+		{senderror(475, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :Wrong password\r\n"); return;}
+	this->channels[j].add_client(*GetClient(fd));
+}
+
+void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd)
+{
+	if (token[i].first[0] != '#' && token[i].first[0] != '&')
+		{senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n"); return;}
+	Channel newChannel;
+	newChannel.SetName(token[i].first);
+	if (!token[i].second.empty())
+		newChannel.SetPassword(token[i].second);
+	newChannel.add_admin(*GetClient(fd));
+	this->channels.push_back(newChannel);
+}
+
+void Server::JOIN(std::string cmd, int fd)
+{
+	std::vector<std::pair<std::string, std::string> > token;
+	SplitJoin(token, cmd);
+	for (size_t i = 0; i < token.size(); i++){
+		for (size_t j = 0; j < this->channels.size(); j++){
+			if (this->channels[j].GetName() == token[i].first)
+				ExistCh(token, i, j, fd);
+			else
+				NotExistCh(token, i, fd);
+		}
+	}
 }
