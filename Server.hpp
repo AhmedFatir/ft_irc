@@ -68,12 +68,18 @@ public:
 	//######################
 	void                        init(int port, std::string pass);
 	void                        set_sever_socket();
-	int                         get_sever_socket();
 	void                        accept_new_client();
-	void                        accept_new_message(int fd, size_t pos);
+	void                        accept_new_message(int fd);
 	std::vector<std::string>    split_cmd(std::string &str);
-	void                        client_authen(int fd, std::string& pass, std::vector<struct pollfd> &fds);
-	void                        parse_exec_cmd(std::vector<std::string>& cmd, int fd);
+	std::vector<std::string>    split_recivedBuffer(std::string &str);
+	void                        client_authen(int fd, std::string& pass);
+	void                        parse_exec_cmd(std::string &cmd, int fd);
+	// void						join_channel(std::vector<std::string>& cmd, int fd);
+	// bool						is_channlExist(std::string& channel_name);
+	void						set_nickname(std::string& nickname, int fd);
+	// void                        set_username(std::vector<std::string>& cmd, int fd);
+	// Client*					isCliExist(int fd);
+	// ###########################
 };
 
 #endif

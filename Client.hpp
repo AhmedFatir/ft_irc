@@ -22,6 +22,7 @@ class Client
 private:
 	std::string nickname;
 	std::string username;
+	bool isOperator;
 	int fd;
 public:
 	Client();
@@ -34,6 +35,9 @@ public:
 	std::string GetUserName();
 	void SetFd(int fd);
 	int GetFd();
+
+	//###############
+	void SetNickname(std::string& nickName);
 };
 
 #endif

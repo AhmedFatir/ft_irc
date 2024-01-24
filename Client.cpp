@@ -16,6 +16,7 @@ Client::Client(){
 	this->nickname = "";
 	this->username = "";
 	this->fd = -1;
+	this->isOperator= false;
 }
 Client::Client(std::string nickname, std::string username, int fd) : nickname(nickname), username(username), fd(fd){}
 Client::~Client(){}
@@ -33,3 +34,4 @@ std::string Client::GetNickName(){return this->nickname;}
 std::string Client::GetUserName(){return this->username;}
 int Client::GetFd(){return this->fd;}
 void Client::SetFd(int fd){this->fd = fd;}
+void Client::SetNickname(std::string& nickName){this->nickname = nickName;}

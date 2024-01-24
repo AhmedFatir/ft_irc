@@ -77,7 +77,7 @@ void Server::init(int port, std::string pass)
 					this->accept_new_client();
 				}
 				else {
-					this->accept_new_message(fds[i].fd, i);
+					this->accept_new_message(fds[i].fd);
 				}
 			}
 		}
@@ -117,24 +117,20 @@ void Server::accept_new_client()
 	new_cli.events = POLLIN;
 	new_cli.revents = 0;
 	fds.push_back(new_cli);
-	std::string welcome = ":localhost 001 user :Welcome to the IRC server!\r\n";
-	send(incofd, welcome.c_str(), welcome.size(), 0);
 }
 
-std::vector<std::string> Server::split_cmd(std::string &str)
+std::vector<std::string> Server::split_recivedBuffer(std::string &str)
 {
-	std::istringstream stm(str);
-	std::string token;
+
 	std::vector<std::string> vec;
-	while(stm >> token)
-	{
-		vec.push_back(token);
-		token.clear();
-	}
+	std::istringstream stm(str);
+	std::string line;
+	while(std::getline(stm, line))
+		vec.push_back(line);
 	return vec;
 }
 
-void Server::accept_new_message(int fd, size_t pos)
+void Server::accept_new_message(int fd)
 {
 	char buff[1024];
 	ssize_t bytes;
@@ -143,29 +139,124 @@ void Server::accept_new_message(int fd, size_t pos)
 		throw(std::runtime_error("recv() faild"));
 	if(bytes == 0)
 	{
-		std::cout << ": >> " << bytes << std::endl;
 		std::cout << "clinet: " << fd << " disconnected" << std::endl;
+		RemoveClient(fd);
+		RemoveFds(fd);
 		close(fd);
-		fds.erase(fds.begin() + pos);
 	}
 	else
 	{
 		buff[bytes] = '\0';
 		std::string recived = buff;
-		std::cout << "data recived: " << recived;
-		cmd = split_cmd(recived);
-		// this->parse_exec_cmd(cmd, fd, pos);
+		std::cout << "recived: " << recived;
+		cmd = split_recivedBuffer(recived);
+		for(size_t i = 0; i < cmd.size(); i++)
+			this->parse_exec_cmd(cmd[i], fd);
 	}
 }
 
-// void Server::parse_exec_cmd(std::vector<std::string>& cmd, int fd)
+
+// bool Server::is_channlExist(std::string& channel_name)
 // {
-//     if(cmd[0] == "PASS")
-//         client_authen(fd, cmd[1]);
+// 	for (size_t i = 0; i < this->channels.size(); i++){
+// 		if (this->channels[i].GetName() == channel_name)
+// 			return true;
+// 	}
+// 	return false;
+// }
+// void Server::join_channel(std::vector<std::string>& cmd, int fd)
+// {
+// 	(void)fd;
+// 	if(this->is_channlExist(cmd[1]))
+// 		std::cout << "exist" << std::endl;
+// 	else
+// 	{
+// 		Channel ch;
+// 		ch.SetName = cmd[1];
+// 		this->AddChannel()
+// 		std::cout << "does not exist" << std::endl;
+// 	}
+
+// }
+
+std::vector<std::string> Server::split_cmd(std::string& cmd)
+{
+	std::vector<std::string> vec;
+	std::istringstream stm(cmd);
+	std::string token;
+	while(stm >> token)
+	{
+		vec.push_back(token);
+		token.clear();
+	}
+	return vec;
+}
+
+void Server::parse_exec_cmd(std::string &cmd, int fd)
+{
+	std::vector<std::string> splited_cmd = split_cmd(cmd);
+    if(splited_cmd[0] == "PASS")
+        client_authen(fd, splited_cmd[1]);
+	else if (splited_cmd[0] == "NICK")
+		set_nickname(splited_cmd[1],fd);
+	// else if (splited_cmd[0] == "USER")
+	// 	set_username(splited_cmd, fd);
+
+}
+
+// Client*	Server::isCliExist(int fd)
+// {
+// 	for (size_t i = 0; i < this->clients.size(); i++)
+// 	{
+// 		if (this->clients[i].GetFd() == fd)
+// 			return &(this->clients[i]);	
+// 	}
+// 	return NULL;
 // }
 
 
-void Server::client_authen(int fd, std::string& pass, std::vector<struct pollfd> &fds)
+// void	Server::set_username(std::vector<std::string>& cmd, int fd)
+// {
+
+// }
+
+
+//    Numeric Replies:
+
+//    ERR_NONICKNAMEGIVEN             ERR_ERRONEUSNICKNAME
+//    ERR_NICKNAMEINUSE               ERR_NICKCOLLISION
+//    ERR_UNAVAILRESOURCE             ERR_RESTRICTED
+void Server::set_nickname(std::string& nickname, int fd)
+{
+	std::cout << "		nick name to set: |" << nickname << "|\n"; 
+	if(nickname == ":" || nickname.empty())
+	{
+		std::string resp = ":localhost 431 user :No nickname given\r\n";
+		if(send(fd,resp.c_str(), resp.size(), 0) == -1)
+			throw(std::runtime_error("send() faild"));
+	}
+	// else if (is_nicknameInUSe(nickname))
+	// {
+		
+	// }
+	else
+	{
+		this->clients[fd].SetNickname(nickname);
+		// nickname
+	}
+	// this->clients[fd].SetNickname(nickname);
+	// for (size_t i = 0; i < this->clients.size(); i++)
+	// {
+	// 	if (this->clients[i].GetFd() == fd)
+	// 	{
+	// 		this->clients[i].SetNickname(nickname);
+	// 		break;
+	// 	}
+	// }
+	std::cout << "		clinet nickname: |x" << this->clients[fd].GetNickName() << "x|" << std::endl;
+}
+
+void Server::client_authen(int fd, std::string& pass)
 {
 	std::vector<std::string> cmd;
 	Client cli;
@@ -173,6 +264,8 @@ void Server::client_authen(int fd, std::string& pass, std::vector<struct pollfd>
 	{
 		cli.SetFd(fd);
 		clients.push_back(cli);
+		std::string welcome = ":localhost 001 user :Welcome to the IRC server!\r\n";
+		send(fd, welcome.c_str(), welcome.size(), 0);
 	}
 	else
 	{
@@ -181,7 +274,6 @@ void Server::client_authen(int fd, std::string& pass, std::vector<struct pollfd>
 		close(fd);
 		RemoveFds(fd);
 		RemoveClient(fd);
-		(void)fds;
 	}
 
 }
