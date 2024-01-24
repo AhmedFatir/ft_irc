@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/24 16:10:14 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/24 16:26:44 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,9 +69,8 @@ public:
 	//######################
 	void                        init(int port, std::string pass);
 	void                        set_sever_socket();
-	int                         get_sever_socket();
 	void                        accept_new_client();
-	void                        accept_new_message(int fd, size_t pos);
+	void                        accept_new_message(int fd);
 	std::vector<std::string>    split_cmd(std::string &str);
 	void                        client_authen(int fd, std::string& pass, std::vector<struct pollfd> &fds);
 	void                        parse_exec_cmd(std::vector<std::string>& cmd, int fd);
@@ -79,6 +78,15 @@ public:
 	void	JOIN(std::string cmd, int fd);
 	void	ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd);
 	void	NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd);
+	std::vector<std::string>    split_recivedBuffer(std::string &str);
+	void                        client_authen(int fd, std::string& pass);
+	void                        parse_exec_cmd(std::string &cmd, int fd);
+	// void						join_channel(std::vector<std::string>& cmd, int fd);
+	// bool						is_channlExist(std::string& channel_name);
+	void						set_nickname(std::string& nickname, int fd);
+	// void                        set_username(std::vector<std::string>& cmd, int fd);
+	// Client*					isCliExist(int fd);
+	// ###########################
 };
 
 #endif
