@@ -155,38 +155,15 @@ void Server::accept_new_message(int fd)
 	{
 		buff[bytes] = '\0';
 		std::string recived = buff;
-		std::cout << "recived: " << recived;
-		cmd = split_recivedBuffer(recived);
-		for(size_t i = 0; i < cmd.size(); i++)
-			this->parse_exec_cmd(cmd[i], fd);
+		if(recived != "PONG localhost")
+		{
+			std::cout << "recived: " << recived;
+			cmd = split_recivedBuffer(recived);
+			for(size_t i = 0; i < cmd.size(); i++)
+				this->parse_exec_cmd(cmd[i], fd);
+		}
 	}
 }
-
-
-// bool Server::is_channlExist(std::string& channel_name)
-// {
-//     if(cmd[0] == "PASS")
-//         client_authen(fd, cmd[1]);
-// 	for (size_t i = 0; i < this->channels.size(); i++){
-// 		if (this->channels[i].GetName() == channel_name)
-// 			return true;
-// 	}
-// 	return false;
-// }
-// void Server::join_channel(std::vector<std::string>& cmd, int fd)
-// {
-// 	(void)fd;
-// 	if(this->is_channlExist(cmd[1]))
-// 		std::cout << "exist" << std::endl;
-// 	else
-// 	{
-// 		Channel ch;
-// 		ch.SetName = cmd[1];
-// 		this->AddChannel()
-// 		std::cout << "does not exist" << std::endl;
-// 	}
-
-// }
 
 std::vector<std::string> Server::split_cmd(std::string& cmd)
 {
@@ -201,6 +178,22 @@ std::vector<std::string> Server::split_cmd(std::string& cmd)
 	return vec;
 }
 
+void	Server::set_username(std::string& username, int fd)
+{
+	Client *cli = GetClient(fd);
+	if(cli)
+		cli->SetUsername(username);
+	else
+	{
+		std::string resp = ":localhost 541 user :You have not registered\r\n";
+		send(fd,resp.c_str(), resp.size(), 0);
+		close(fd);
+		RemoveFds(fd);
+		RemoveClient(fd);
+	}
+}
+
+
 void Server::parse_exec_cmd(std::string &cmd, int fd)
 {
 	std::vector<std::string> splited_cmd = split_cmd(cmd);
@@ -208,83 +201,134 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
         client_authen(fd, splited_cmd[1]);
 	else if (splited_cmd[0] == "NICK")
 		set_nickname(splited_cmd[1],fd);
+	else if(splited_cmd[0] == "USER")
+		set_username(splited_cmd[1], fd);
 	else if (splited_cmd[0] == "JOIN")
 		JOIN(cmd, fd);
-	// else if (splited_cmd[0] == "USER")
-	// 	set_username(splited_cmd, fd);
+	// else if (split_cmd[0] == "TOPIC")
+	// 	TOPIC(cmd, fd);
 
 }
 
-// Client*	Server::isCliExist(int fd)
-// {
-// 	for (size_t i = 0; i < this->clients.size(); i++)
-// 	{
-// 		if (this->clients[i].GetFd() == fd)
-// 			return &(this->clients[i]);	
-// 	}
-// 	return NULL;
-// }
 
+bool Server::is_validNickname(std::string& nickname)
+{
+	if(!nickname.empty() && (nickname[0] == '&' || nickname[0] == '#' || nickname[0] == ':' || std::isdigit(nickname[0])))
+		return false;
+	for(size_t i = 1; i < nickname.size(); i++)
+	{
+		//square and curly brackets ([]{}), backslashes (\), and pipe (|)
+		if(!std::isalnum(nickname[i]) && nickname[i] != '{' && nickname[i] != '}' && \
+			nickname[i] != '[' && nickname[i] != ']' && nickname[i] != '|' && nickname[i] != '\\')
+			return false;
+	}
+	return true;
+}
+//dan-!d@localhost JOIN #test
 
-// void	Server::set_username(std::vector<std::string>& cmd, int fd)
-// {
-
-// }
-
-
-//    Numeric Replies:
-
-//    ERR_NONICKNAMEGIVEN             ERR_ERRONEUSNICKNAME
-//    ERR_NICKNAMEINUSE               ERR_NICKCOLLISION
-//    ERR_UNAVAILRESOURCE             ERR_RESTRICTED
 void Server::set_nickname(std::string& nickname, int fd)
 {
-	std::cout << "		nick name to set: |" << nickname << "|\n"; 
 	if(nickname == ":" || nickname.empty())
 	{
-		std::string resp = ":localhost 431 user :No nickname given\r\n";
+		// ERR_NONICKNAMEGIVEN (431)
+		std::string resp = ": 431 user :No nickname given\r\n";
 		if(send(fd,resp.c_str(), resp.size(), 0) == -1)
 			throw(std::runtime_error("send() faild"));
 	}
-	// else if (is_nicknameInUSe(nickname))
-	// {
-		
-	// }
+	else if (nickNameInUse(nickname))
+	{
+		//ERR_NICKNAMEINUSE (433)
+		std::string resp = ":localhost 433 user :Nickname is already in use\r\n";
+		if(send(fd,resp.c_str(), resp.size(), 0) == -1)
+			throw(std::runtime_error("send() faild"));
+	}
+	else if(!is_validNickname(nickname))
+	{
+		//ERR_ERRONEUSNICKNAME (432)
+		std::string resp = ": 432 user :Erroneus nickname\r\n";
+		send(fd,resp.c_str(), resp.size(), 0);
+	}
 	else
 	{
-		this->clients[fd].SetNickname(nickname);
-		// nickname
+		Client *cli = GetClient(fd);
+		if(cli)
+		{
+			// ":" + oldNick + " NICK " + nick + "\r\n"
+			std::string oldNick = cli->GetNickName();
+			if(!oldNick.empty())
+			{
+				std::string resp = ": " + oldNick + " NICK " + nickname + "\r\n"; 
+				send(fd, resp.c_str(), resp.size(), 0);
+			}
+			cli->SetNickname(nickname);
+
+		}
+		else	
+		{
+
+			std::string resp = ": 541 " + nickname + " :You have not registered\r\n";
+			send(fd,resp.c_str(), resp.size(), 0);
+			close(fd);
+			RemoveFds(fd);
+			RemoveClient(fd);
+		}
 	}
-	// this->clients[fd].SetNickname(nickname);
-	// for (size_t i = 0; i < this->clients.size(); i++)
-	// {
-	// 	if (this->clients[i].GetFd() == fd)
-	// 	{
-	// 		this->clients[i].SetNickname(nickname);
-	// 		break;
-	// 	}
-	// }
-	std::cout << "		clinet nickname: |x" << this->clients[fd].GetNickName() << "x|" << std::endl;
+}
+
+bool Server::is_clientExist(int fd)
+{
+	for (size_t i = 0; i < this->clients.size(); i++)
+	{
+		if (this->clients[i].GetFd() == fd)
+			return true;
+	}
+	return false;
+}
+bool Server::nickNameInUse(std::string& nickname)
+{
+	for (size_t i = 0; i < this->clients.size(); i++)
+	{
+		if (this->clients[i].GetNickName() == nickname)
+			return true;
+	}
+	return false;
 }
 
 void Server::client_authen(int fd, std::string& pass)
 {
 	std::vector<std::string> cmd;
 	Client cli;
-	if(pass == password)
+	if(!is_clientExist(fd))
 	{
-		cli.SetFd(fd);
-		clients.push_back(cli);
-		std::string welcome = ":localhost 001 user :Welcome to the IRC server!\r\n";
-		send(fd, welcome.c_str(), welcome.size(), 0);
+		if(pass == password)
+		{
+			cli.SetFd(fd);
+			clients.push_back(cli);
+			std::string welcome = ":localhost 001 user :Welcome to the IRC server!\r\n";
+			send(fd, welcome.c_str(), welcome.size(), 0);
+		}
+		else
+		{
+			if(pass.empty())
+			{
+				std::string resp = ":localhost 461 user :Not enough parameters\r\n";
+				send(fd, resp.c_str(), resp.size(), 0);
+			}
+			else
+			{
+				std::string resp = ":localhost 464 user :Password incorrect\r\n";
+				send(fd, resp.c_str(), resp.size(),0);
+				close(fd);
+				RemoveFds(fd);
+				RemoveClient(fd);
+			}
+		}
 	}
 	else
 	{
-		std::string resp = ":localhost 464 user :Password incorrect\r\n";
+		std::string resp = ":localhost 642 user :You may not reregister\r\n";
 		send(fd, resp.c_str(), resp.size(),0);
-		close(fd);
-		RemoveFds(fd);
-		RemoveClient(fd);
+
 	}
 }
 //######################################################################################
@@ -372,16 +416,24 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 	newChannel.add_admin(*GetClient(fd));
 	this->channels.push_back(newChannel);
 	//notifiy thet the client joined the channel
-	//RPL_JOIN(nick, username, channelname, ipaddress) ":" + nick + "!~" + username + "@" + ipaddress + " JOIN " + channelname + "\r\n"
 	std::stringstream ss;
-	ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " JOIN " << token[i].first << "\r\n";
+	//
+	ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " JOIN #" << token[i].first << "\r\n";
 	std::string resp = ss.str();
+	ss.clear();
+	//":" + hostname + " 332 " + nick + " " + channel + " :" + topic + "\r\n"
+	ss << ":localhost 332 " + GetClient(fd)->GetNickName() + " #" + token[i].first + " :\r\n"; 
+	std::string resp1 = ss.str(); 
+	ss.clear();
+	//
+	// ss << ":localhost 332 " + GetClient(fd)->GetNickName() + " #" + token[i].first + " :\r\n"; 
+
 	std::cout << "		" << resp;
-	for (size_t i = 0; i < this->clients.size(); i++)
-	{
-		if (this->clients[i].GetFd() != fd)
-			send(this->clients[i].GetFd(), resp.c_str(), resp.size(),0);
-	}
+	// for (size_t i = 0; i < this->clients.size(); i++)
+	// {
+	// 	if (this->clients[i].GetFd() != fd)
+	// 		send(this->clients[i].GetFd(), resp.c_str(), resp.size(),0);
+	// }
 
 }
 

@@ -12,14 +12,14 @@
 
 NAME = ircserv
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -std=c++98
-SRCS = Server.cpp Client.cpp Channel.cpp main.cpp
+CFLAGS = -Wall -Wextra -Werror -std=c++98 #-fsanitize=address
+SRCS = Server.cpp Client.cpp Channel.cpp main.cpp 
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	@$(CC) $(CFLAGS) -o $(NAME) $(OBJS)
+	@$(CC) $(CFLAGS) -g -o $(NAME) $(OBJS)
 
 %.o: %.cpp Server.hpp Client.hpp Channel.hpp
 	$(CC) $(CFLAGS) -c $< -o $@

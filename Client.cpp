@@ -12,11 +12,13 @@
 
 #include "Client.hpp"
 
-Client::Client(){
+Client::Client()
+{
 	this->nickname = "";
 	this->username = "";
 	this->fd = -1;
 	this->isOperator= false;
+	this->registered = false;
 }
 Client::Client(std::string nickname, std::string username, int fd) : nickname(nickname), username(username), fd(fd){}
 Client::~Client(){}

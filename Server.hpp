@@ -78,15 +78,21 @@ public:
 	void	JOIN(std::string cmd, int fd);
 	void	ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd);
 	void	NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd);
+	// ########### CMDS RECIVED
 	std::vector<std::string>    split_recivedBuffer(std::string &str);
 	void                        client_authen(int fd, std::string& pass);
 	void                        parse_exec_cmd(std::string &cmd, int fd);
 	// void						join_channel(std::vector<std::string>& cmd, int fd);
 	// bool						is_channlExist(std::string& channel_name);
-	void						set_nickname(std::string& nickname, int fd);
 	// void                        set_username(std::vector<std::string>& cmd, int fd);
 	// Client*					isCliExist(int fd);
-	// ###########################
+	// ########################### BOOL METHODS 
+	bool	is_clientExist(int fd);
+	bool	nickNameInUse(std::string& nickname);
+	bool	is_validNickname(std::string& nickname);
+	// ########################### GETTERS & SETTERS 
+	void						set_username(std::string& username, int fd);
+	void						set_nickname(std::string& nickname, int fd);
 };
 
 #endif

@@ -24,6 +24,7 @@ private:
 	std::string username;
 	bool isOperator;
 	int fd;
+	bool registered;
 public:
 	Client();
 	Client(std::string nickname, std::string username, int fd);
@@ -38,6 +39,10 @@ public:
 
 	//###############
 	void SetNickname(std::string& nickName);
+	void SetUsername(std::string& username)
+	{
+		this->username = username;
+	}
 };
 
 #endif
