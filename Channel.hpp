@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 21:14:29 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/24 15:44:19 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/26 00:27:23 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,7 @@ public:
 	void remove_client(int fd);
 	void remove_admin(int fd);
 	int GetClientsNumber();
+	Client* GetClientInChannel(std::string name);
 };
 
 #endif
