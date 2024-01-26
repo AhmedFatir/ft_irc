@@ -11,7 +11,13 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
+int g_run;
 
+void signal_handler(int signal)
+{
+    (void)signal;
+    g_run = 0;
+}
 
 Server::Server(){}
 Server::Server(int port, std::string password){this->port = port; this->password = password;}
@@ -71,8 +77,11 @@ void Server::init(int port, std::string pass)
 	this->password = pass;
 	this->port = port;
 	this->set_sever_socket();
+
+	g_run = 1;
+	std::signal(SIGINT, signal_handler);
 	std::cout << "Waiting to accept a connection...\n";
-	while (true)
+	while (g_run)
 	{
 		if(poll(&fds[0],fds.size(),-1) == -1)
 			throw(std::runtime_error("error in poll"));
@@ -155,7 +164,7 @@ void Server::accept_new_message(int fd)
 	{
 		buff[bytes] = '\0';
 		std::string recived = buff;
-		if(recived != "PONG localhost")
+		if(recived != "PONG localhost\r\n")
 		{
 			std::cout << "recived: " << recived;
 			cmd = split_recivedBuffer(recived);
@@ -197,6 +206,8 @@ void	Server::set_username(std::string& username, int fd)
 void Server::parse_exec_cmd(std::string &cmd, int fd)
 {
 	std::vector<std::string> splited_cmd = split_cmd(cmd);
+	if(cmd.empty())
+		return ;
     if(splited_cmd[0] == "PASS")
         client_authen(fd, splited_cmd[1]);
 	else if (splited_cmd[0] == "NICK")
@@ -257,7 +268,8 @@ void Server::set_nickname(std::string& nickname, int fd)
 			std::string oldNick = cli->GetNickName();
 			if(!oldNick.empty())
 			{
-				std::string resp = ": " + oldNick + " NICK " + nickname + "\r\n"; 
+				std::string resp = ":" + oldNick + " NICK " + nickname + "\r\n";
+				std::cout << resp; 
 				send(fd, resp.c_str(), resp.size(), 0);
 			}
 			cli->SetNickname(nickname);
@@ -454,4 +466,14 @@ void Server::JOIN(std::string cmd, int fd)
 		if (!flag)
 			NotExistCh(token, i, fd);
 	}
+}
+///
+void	Server::close_fds()
+{
+		for(size_t i = 0; i < clients.size(); i++)
+		{
+			std::cout << "close: " << i << std::endl;
+			close(clients[i].GetFd());
+		}
+		close(server_fdsocket);
 }
