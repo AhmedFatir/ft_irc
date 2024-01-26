@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/24 17:46:20 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/26 01:27:21 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -205,6 +205,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 		set_username(splited_cmd[1], fd);
 	else if (splited_cmd[0] == "JOIN")
 		JOIN(cmd, fd);
+	else if (splited_cmd[0] == "KICK")
+		KICK(cmd, fd);
 	// else if (split_cmd[0] == "TOPIC")
 	// 	TOPIC(cmd, fd);
 
@@ -378,7 +380,7 @@ void SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::st
 	}
 }
 
-void senderror(int code,std::string clientname, int fd, std::string msg)
+void senderror(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
 	ss << ":localhost " << code << " " << clientname << msg;
@@ -454,4 +456,64 @@ void Server::JOIN(std::string cmd, int fd)
 		if (!flag)
 			NotExistCh(token, i, fd);
 	}
+}
+//######################################################################################
+//functions to kick a client
+void SplitCmdKick(std::string cmd, std::vector<std::string> &tmp)
+{
+	std::string str;
+	for (size_t i = 0; i < cmd.size(); i++){
+		if (cmd[i] == ':')
+			{tmp.push_back(cmd.substr(i));tmp.erase(tmp.begin());return;};
+		if (cmd[i] == ' ')
+			{tmp.push_back(str); str.clear();}
+		else
+			str += cmd[i];
+	}
+	tmp.push_back(str);
+	tmp.erase(tmp.begin());
+}
+
+void	Server::KICK(std::string cmd, int fd)
+{
+	std::vector<std::string> tmp;
+	SplitCmdKick(cmd, tmp);
+	std::cout << tmp[0] << std::endl;
+	exit(0);
+	tmp[0].erase(tmp[0].begin());
+	int flag = 0;
+	if (tmp.size() < 2)
+		{senderror(461, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
+	for (size_t i = 0; i < this->channels.size(); i++){
+		if (this->channels[i].GetName() == tmp[0]){
+			flag = 1;
+			if (!channels[i].get_client(fd) && !channels[i].get_admin(fd))
+				{senderror(442, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :You're not on that channel\r\n"); return;}
+			//check if the client is admin
+			if(this->channels[i].get_admin(fd)){
+				//check if the client name is in the channel
+				if (channels[i].GetClientInChannel(tmp[1])){
+					//check if the client is admin
+					if (channels[i].get_admin(channels[i].GetClientInChannel(tmp[1])->GetFd()))
+						channels[i].remove_admin(channels[i].GetClientInChannel(tmp[1])->GetFd());
+					else
+						channels[i].remove_client(channels[i].GetClientInChannel(tmp[1])->GetFd());
+					//send the msg to the channel
+					std::stringstream ss;
+					ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " KICK #" << tmp[0] << " " << tmp[1];
+					if (tmp.size() == 3)
+						ss << tmp[2] << "\r\n";
+					else ss << "\r\n";
+					std::string resp = ss.str();
+					std::cout << "		" << resp;
+				}
+				else
+					{senderror(441, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :They aren't on that channel\r\n"); return;}
+			}
+			else
+				{senderror(482, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :You're not channel operator\r\n"); return;}
+		}
+	}
+	if (flag == 0)
+		senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n");
 }

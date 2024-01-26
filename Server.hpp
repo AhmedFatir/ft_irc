@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/24 16:26:44 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/26 00:26:56 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,9 @@ public:
 	// ########################### GETTERS & SETTERS 
 	void						set_username(std::string& username, int fd);
 	void						set_nickname(std::string& nickname, int fd);
+	// ########################### CKIK CMD
+	void   KICK(std::string cmd, int fd);
+	// Channel* GetClientInChannel(Channel chnnel, std::string name);
 };
 
 #endif

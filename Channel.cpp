@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 21:19:08 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/24 16:09:17 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/26 00:29:07 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,3 +82,14 @@ void Channel::remove_admin(int fd){
 	}
 }
 int Channel::GetClientsNumber(){return this->clients.size() + this->admins.size();}
+Client* Channel::GetClientInChannel(std::string name){
+	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it){
+		if (it->GetNickName() == name)
+			return &(*it);
+	}
+	for (std::vector<Client>::iterator it = admins.begin(); it != admins.end(); ++it){
+		if (it->GetNickName() == name)
+			return &(*it);
+	}
+	return NULL;
+}
