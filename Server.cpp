@@ -6,12 +6,21 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/26 18:53:22 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/26 19:44:23 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
+#define RPL_NAMREPLY(hostname, clients, channelname, nick) ":" + hostname + " 353 " + nick + " = " + channelname + " :" + clients + "\r\n"
+
+int g_run;
+
+void signal_handler(int signal)
+{
+    (void)signal;
+    g_run = 0;
+}
 
 Server::Server(){}
 Server::Server(int port, std::string password){this->port = port; this->password = password;}
@@ -71,8 +80,11 @@ void Server::init(int port, std::string pass)
 	this->password = pass;
 	this->port = port;
 	this->set_sever_socket();
+
+	g_run = 1;
+	std::signal(SIGINT, signal_handler);
 	std::cout << "Waiting to accept a connection...\n";
-	while (true)
+	while (g_run)
 	{
 		if(poll(&fds[0],fds.size(),-1) == -1)
 			throw(std::runtime_error("error in poll"));
@@ -155,7 +167,7 @@ void Server::accept_new_message(int fd)
 	{
 		buff[bytes] = '\0';
 		std::string recived = buff;
-		if(recived != "PONG localhost")
+		if(recived != "PONG localhost\r\n")
 		{
 			std::cout << "recived: " << recived;
 			cmd = split_recivedBuffer(recived);
@@ -196,6 +208,8 @@ void	Server::set_username(std::string& username, int fd)
 
 void Server::parse_exec_cmd(std::string &cmd, int fd)
 {
+	if(cmd.empty() || cmd == "\r")
+		return ;
 	std::vector<std::string> splited_cmd = split_cmd(cmd);
     if(splited_cmd[0] == "PASS")
         client_authen(fd, splited_cmd[1]);
@@ -203,10 +217,10 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 		set_nickname(splited_cmd[1],fd);
 	else if(splited_cmd[0] == "USER")
 		set_username(splited_cmd[1], fd);
-	else if (splited_cmd[0] == "JOIN")
-		JOIN(cmd, fd);
 	else if (splited_cmd[0] == "KICK")
 		KICK(cmd, fd);
+	else if (splited_cmd[0] == "JOIN")
+		JOIN(cmd, fd);
 	// else if (split_cmd[0] == "TOPIC")
 	// 	TOPIC(cmd, fd);
 
@@ -259,7 +273,8 @@ void Server::set_nickname(std::string& nickname, int fd)
 			std::string oldNick = cli->GetNickName();
 			if(!oldNick.empty())
 			{
-				std::string resp = ": " + oldNick + " NICK " + nickname + "\r\n"; 
+				std::string resp = ":" + oldNick + " NICK " + nickname + "\r\n";
+				std::cout << resp; 
 				send(fd, resp.c_str(), resp.size(), 0);
 			}
 			cli->SetNickname(nickname);
@@ -443,6 +458,7 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 	// 		send(this->clients[i].GetFd(), resp.c_str(), resp.size(),0);
 	// }
 
+	
 }
 
 void Server::JOIN(std::string cmd, int fd)
@@ -451,9 +467,11 @@ void Server::JOIN(std::string cmd, int fd)
 	SplitJoin(token, cmd);
 	for (size_t i = 0; i < token.size(); i++)
 		token[i].first.erase(token[i].first.begin());
-	for (size_t i = 0; i < token.size(); i++){
+	for (size_t i = 0; i < token.size(); i++)
+	{
 		bool flag = false;
-		for (size_t j = 0; j < this->channels.size(); j++){
+		for (size_t j = 0; j < this->channels.size(); j++)
+		{
 			if (this->channels[j].GetName() == token[i].first){
 				ExistCh(token, i, j, fd);
 				flag = true; break;
@@ -462,6 +480,16 @@ void Server::JOIN(std::string cmd, int fd)
 		if (!flag)
 			NotExistCh(token, i, fd);
 	}
+}
+///
+void	Server::close_fds()
+{
+		for(size_t i = 0; i < clients.size(); i++)
+		{
+			std::cout << "close: " << i << std::endl;
+			close(clients[i].GetFd());
+		}
+		close(server_fdsocket);
 }
 //######################################################################################
 //functions to kick a client
@@ -523,3 +551,33 @@ void	Server::KICK(std::string cmd, int fd)
 	if (flag == 0)
 		senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n");
 }
+
+
+//############# PLEASE DON'T REMOVE THIS COMMENT
+
+// (void)cmd;
+// std::string host = "localhost";
+// std::string chnam = "#cc";
+// std::string nickname = GetClient(fd)->GetNickName();
+// std::string username = GetClient(fd)->GetUserName();
+
+// // :aa!~oo@localhost JOIN #cc
+// std::string resp = ":localhost JOIN " + nickname + " " + chnam + "\r\n";
+
+// // RPL_TOPIC (332) Message (Channel with No Topic): // :irc.server.com 332 dan- #new_channel :
+// std::string resp1 = ":localhost 332 " + nickname + " " + chnam + " :Welcome to the channel!" + "\r\n";
+
+// // :localhost 353  aa = #cc : aa // :irc.server.com 353 dan- = #test :@dan- john
+// std::string resp2 = ":localhost 353 " + nickname + " = " + chnam + " :@" + nickname + "\r\n";
+
+// // ":" + hostname + " 366 " + nick + " " + channelname + " :END of /NAMES list\r\n"
+// std::string resp3 = ":localhost 366 " + nickname + " " + chnam + " :END of NAMES list" + "\r\n";
+
+// send(fd, resp.c_str(), resp.size(),0);
+// send(fd, resp1.c_str(), resp1.size(),0);
+// send(fd, resp2.c_str(), resp2.size(),0);
+// send(fd, resp3.c_str(), resp3.size(),0);
+// std::cout << resp; // join message 
+// std::cout << resp1; // RPL_TOPIC (332) Message:
+// std::cout << resp2; // RPL_NAMREPLY (353) Messages:
+// std::cout << resp3; // RPL_ENDOFNAMES (366) Message:
