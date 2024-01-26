@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/26 01:27:21 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/26 18:53:22 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -418,6 +418,12 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 	newChannel.add_admin(*GetClient(fd));
 	this->channels.push_back(newChannel);
 	//notifiy thet the client joined the channel
+	#define RPL_JOIN(nick, username, channelname, ipaddress) ":" + nick + "!~" + username + "@" + ipaddress + " JOIN " + channelname + "\r\n"
+	
+	// RPL_JOIN(GetClient(fd)->GetNickName(), GetClient(fd)->GetUserName(), token[i].first, "localhost");
+	
+	std::cout << "		" << RPL_JOIN(GetClient(fd)->GetNickName(), GetClient(fd)->GetUserName(), token[i].first, "localhost");
+
 	std::stringstream ss;
 	//
 	ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " JOIN #" << token[i].first << "\r\n";
@@ -425,7 +431,7 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 	ss.clear();
 	//":" + hostname + " 332 " + nick + " " + channel + " :" + topic + "\r\n"
 	ss << ":localhost 332 " + GetClient(fd)->GetNickName() + " #" + token[i].first + " :\r\n"; 
-	std::string resp1 = ss.str(); 
+	std::string resp1 = ss.str();
 	ss.clear();
 	//
 	// ss << ":localhost 332 " + GetClient(fd)->GetNickName() + " #" + token[i].first + " :\r\n"; 
