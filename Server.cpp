@@ -375,6 +375,7 @@ void printVector(std::vector<std::string> token)
 }
 void SplitCmdJoin(std::string cmd, std::vector<std::string> &tmp)
 {
+	cmd = cmd.substr(0, cmd.size() - 1);
 	std::string str;
 	for (size_t i = 0; i < cmd.size(); i++){
 		if (cmd[i] == ' ' || cmd[i] == ',')
@@ -431,13 +432,13 @@ void senderror(int code, std::string clientname, int fd, std::string msg)
 
 void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd)
 {
-	// if the channel is invit only
+	// if the channel is invit only: ERR_INVITEONLYCHAN (473)
 	// if (this->channels[j].GetInvitOnly())
 	// {
 	// 	std::cout <<" 1 \n";
 	// 	senderror(473, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :Cannot join channel (+i)\r\n"); return;
 	// } 
-	// // channel reached the limit of number of clients
+	// // channel reached the limit of number of clients: ERR_CHANNELISFULL (471)
 	// else if (this->channels[j].GetLimit() && this->channels[j].GetClientsNumber() >= this->channels[j].GetLimit())
 	// {
 	// 	std::cout <<" 2 \n";
@@ -460,28 +461,16 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, in
 	// 	senderror(475, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :Wrong password\r\n"); return;
 	// }
 	// else
-	// {
+	{
 			Client *cli = GetClient(fd);
 			this->channels[j].add_client(*cli);
-			std::ofstream outputFile("out");
-			// std::cout << channels[j].clientChannel_list() << "|"<< std::endl;
 
 			std::string respo = ":" + cli->GetNickName() + "!" + cli->GetUserName() + "@localhost JOIN #" + token[i].first + "\r\n";
 			std::string resp2 = ": 353 " + cli->GetNickName() + " @ #" + token[i].first + " :" + channels[j].clientChannel_list() + "\r\n";
 			std::string resp3 = ": 366 " + cli->GetNickName() + " #" + token[i].first + " :END of /NAMES list.\r\n";
 			channels[i].sendTo_all(respo, resp2, resp3);
-
-			// std::string cli_list = channels[j].clientChannel_list();
-
-			outputFile << respo;
-			outputFile << resp2;
-			outputFile << resp3;
-			// std::cout << respo << resp2 << resp3 << std::endl;
-			// send(fd, respo.c_str(), respo.size(),0);
-			// send(fd, resp2.c_str(), resp2.size(),0);
-			// send(fd, resp3.c_str(), resp3.size(),0);
-		
-	// }
+	}
+	
 }
 
 
@@ -496,6 +485,7 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 	newChannel.add_admin(*GetClient(fd));
 	this->channels.push_back(newChannel);
 	// notifiy thet the client joined the channel
+
 	///////////////////////////////////////////////////
 	// ABDO >> this will be recoded to more clean code
 	//////////////////////////////////////////////////
@@ -516,39 +506,7 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 
 void Server::JOIN(std::string cmd, int fd)
 {
-	// (void)cmd;
 	
-	// std::string host = "localhost";
-	// std::string chnam = "#cc";
-	// std::string nickname = GetClient(fd)->GetNickName();
-	// std::string username = GetClient(fd)->GetUserName();
-	// std::string clis = "@" + nickname;
-
-	// std::cout << std::endl;
-	// std::cout << "host " << host << std::endl;
-	// std::cout << "chnam " << chnam << std::endl;
-	// std::cout << "nickname " << nickname << std::endl;
-	// std::cout << "username " << username << std::endl;
-	// std::cout << "clis " << clis << std::endl;
-	// // ":" + nick + "!~" + username + "@" + ipaddress + " JOIN " + channelname + "\r\n"
-	// std::cout << std::endl;
-
-	// std::string respo = ":" + nickname + "!" + username + "@localhost JOIN " + chnam + "\r\n";
-
-
-	// std::string resp2 = ": 353 " + nickname + " @ " + chnam + " :@" + nickname + "\r\n";
-
-	// // // ":" + hostname + " 366 " + nick + " " + channelname + " :END of /NAMES list\r\n"
-	// std::string resp3 = ": 366 " + nickname + " " + chnam + " :END of /NAMES list.\r\n";
-
-	// std::cout << respo; // join message 
-	// std::cout << resp2; // RPL_NAMREPLY (353) Messages:
-	// std::cout << resp3; // RPL_ENDOFNAMES (366) Message:
-
-	// send(fd, respo.c_str(), respo.size(),0);
-	// send(fd, resp2.c_str(), resp2.size(),0);
-	// send(fd, resp3.c_str(), resp3.size(),0);
-
 	std::vector<std::pair<std::string, std::string> > token;
 	SplitJoin(token, cmd);
 	for (size_t i = 0; i < token.size(); i++)
@@ -600,15 +558,18 @@ void	Server::KICK(std::string cmd, int fd)
 	std::vector<std::string> tmp;
 	SplitCmdKick(cmd, tmp);
 	// for(int i = 0; i < )
-	std::cout << tmp[0] << std::endl;
-	exit(0);
+	// std::cout << tmp[0] << std::endl;
+	// exit(0);
 	tmp[0].erase(tmp[0].begin());
 	int flag = 0;
 	if (tmp.size() < 2)
 		{senderror(461, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	for (size_t i = 0; i < this->channels.size(); i++){
+			std::cout << "channel name |" <<this->channels[i].GetName() << "|" << std::endl;
+			std::cout << "sended |" <<tmp[0] << "|" <<  std::endl;
 		if (this->channels[i].GetName() == tmp[0]){
 			flag = 1;
+			puts("ana hena");
 			if (!channels[i].get_client(fd) && !channels[i].get_admin(fd))
 				{senderror(442, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :You're not on that channel\r\n"); return;}
 			//check if the client is admin
@@ -616,18 +577,22 @@ void	Server::KICK(std::string cmd, int fd)
 				//check if the client name is in the channel
 				if (channels[i].GetClientInChannel(tmp[1])){
 					//check if the client is admin
-					if (channels[i].get_admin(channels[i].GetClientInChannel(tmp[1])->GetFd()))
-						channels[i].remove_admin(channels[i].GetClientInChannel(tmp[1])->GetFd());
-					else
-						channels[i].remove_client(channels[i].GetClientInChannel(tmp[1])->GetFd());
-					//send the msg to the channel
 					std::stringstream ss;
 					ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " KICK #" << tmp[0] << " " << tmp[1];
 					if (tmp.size() == 3)
-						ss << tmp[2] << "\r\n";
+						ss << " :" <<tmp[2] << "\r\n";
 					else ss << "\r\n";
 					std::string resp = ss.str();
+					this->channels[i].sendTo_all(resp);
+					// send(fd, resp.c_str(), resp.size(), 0);
 					std::cout << "		" << resp;
+					if (channels[i].get_admin(channels[i].GetClientInChannel(tmp[1])->GetFd()))
+						channels[i].remove_admin(channels[i].GetClientInChannel(tmp[1])->GetFd());
+					else
+					{
+						channels[i].remove_client(channels[i].GetClientInChannel(tmp[1])->GetFd());
+					}
+					//send the msg to the channel
 				}
 				else
 					{senderror(441, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :They aren't on that channel\r\n"); return;}

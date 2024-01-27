@@ -130,3 +130,15 @@ void Channel::sendTo_all(std::string &rpl1, std::string &rpl2 , std::string &rpl
 			send(clients[i].GetFd(), rpl3.c_str(), rpl3.size(),0);
 	}
 }
+void Channel::sendTo_all(std::string &rpl1)
+{
+	// std::string cli_list = this->clientChannel_list();
+	for(size_t i = 0; i < admins.size(); i++)
+	{
+			send(admins[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
+	}
+	for(size_t i = 0; i < clients.size(); i++)
+	{
+			send(clients[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
+	}
+}
