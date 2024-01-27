@@ -52,6 +52,25 @@ int Channel::GetLimit(){return this->limit;}
 std::string Channel::GetTopicName(){return this->topic_name;}
 std::string Channel::GetPassword(){return this->password;}
 std::string Channel::GetName(){return this->name;}
+std::string Channel::clientChannel_list()
+{
+	std::string list;
+	for(size_t i = 0; i < admins.size(); i++)
+	{
+		list += "@" + admins[i].GetNickName();
+		if((i + 1) < admins.size())
+			list += " ";
+	}
+	if(clients.size())
+		list += " ";
+	for(size_t i = 0; i < clients.size(); i++)
+	{
+		list += clients[i].GetNickName();
+		if((i + 1) < clients.size())
+			list += " ";
+	}
+	return list;
+}
 //###########################################################
 void Channel::add_client(Client newClient){clients.push_back(newClient);}
 void Channel::add_admin(Client newClient){admins.push_back(newClient);}
@@ -92,4 +111,22 @@ Client* Channel::GetClientInChannel(std::string name){
 			return &(*it);
 	}
 	return NULL;
+}
+
+// abdellah
+void Channel::sendTo_all(std::string &rpl1, std::string &rpl2 , std::string &rpl3)
+{
+	std::string cli_list = this->clientChannel_list();
+	for(size_t i = 0; i < admins.size(); i++)
+	{
+			send(admins[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
+			send(admins[i].GetFd(), rpl2.c_str(), rpl2.size(),0);
+			send(admins[i].GetFd(), rpl3.c_str(), rpl3.size(),0);
+	}
+	for(size_t i = 0; i < clients.size(); i++)
+	{
+			send(clients[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
+			send(clients[i].GetFd(), rpl2.c_str(), rpl2.size(),0);
+			send(clients[i].GetFd(), rpl3.c_str(), rpl3.size(),0);
+	}
 }
