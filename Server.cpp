@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/26 19:44:23 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/26 23:24:59 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -433,36 +433,59 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 	newChannel.add_admin(*GetClient(fd));
 	this->channels.push_back(newChannel);
 	//notifiy thet the client joined the channel
-	#define RPL_JOIN(nick, username, channelname, ipaddress) ":" + nick + "!~" + username + "@" + ipaddress + " JOIN " + channelname + "\r\n"
 	
-	// RPL_JOIN(GetClient(fd)->GetNickName(), GetClient(fd)->GetUserName(), token[i].first, "localhost");
-	
-	std::cout << "		" << RPL_JOIN(GetClient(fd)->GetNickName(), GetClient(fd)->GetUserName(), token[i].first, "localhost");
+	std::string respo = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost JOIN #" + token[i].first + "\r\n";
 
-	std::stringstream ss;
-	//
-	ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " JOIN #" << token[i].first << "\r\n";
-	std::string resp = ss.str();
-	ss.clear();
-	//":" + hostname + " 332 " + nick + " " + channel + " :" + topic + "\r\n"
-	ss << ":localhost 332 " + GetClient(fd)->GetNickName() + " #" + token[i].first + " :\r\n"; 
-	std::string resp1 = ss.str();
-	ss.clear();
-	//
-	// ss << ":localhost 332 " + GetClient(fd)->GetNickName() + " #" + token[i].first + " :\r\n"; 
 
-	std::cout << "		" << resp;
-	// for (size_t i = 0; i < this->clients.size(); i++)
-	// {
-	// 	if (this->clients[i].GetFd() != fd)
-	// 		send(this->clients[i].GetFd(), resp.c_str(), resp.size(),0);
-	// }
+    std::string resp2 = ":irc_servername 353 " + GetClient(fd)->GetNickName() + " @ " + GetClient(fd)->GetUserName() + " :@" + GetClient(fd)->GetNickName() + "\r\n";
 
+    // // ":" + hostname + " 366 " + nick + " " + channelname + " :END of /NAMES list\r\n"
+    std::string resp3 = ":irc_servername 366 " + GetClient(fd)->GetNickName() + " #" + token[i].first + " :End of /NAMES list.\n";
+
+    std::cout << respo; // join message
+    std::cout << resp2; // RPL_NAMREPLY (353) Messages:
+    std::cout << resp3; // RPL_ENDOFNAMES (366) Message:
+
+    send(fd, respo.c_str(), respo.size(),0);
+    send(fd, resp2.c_str(), resp2.size(),0);
+    send(fd, resp3.c_str(), resp3.size(),0);
 	
 }
 
 void Server::JOIN(std::string cmd, int fd)
 {
+	(void)cmd;
+	std::string host = "localhost";
+    std::string chnam = "#cc";
+    std::string nickname = GetClient(fd)->GetNickName();
+    std::string username = GetClient(fd)->GetUserName();
+    std::string clis = "@" + nickname;
+
+    std::cout << std::endl;
+    std::cout << "host " << host << std::endl;
+    std::cout << "chnam " << chnam << std::endl;
+    std::cout << "nickname " << nickname << std::endl;
+    std::cout << "username " << username << std::endl;
+    std::cout << "clis " << clis << std::endl;
+    // ":" + nick + "!~" + username + "@" + ipaddress + " JOIN " + channelname + "\r\n"
+    std::cout << std::endl;
+
+    std::string respo = ":" + nickname + "!~" + username + "@localhost JOIN " + chnam + "\n";
+
+
+    std::string resp2 = ":irc_servername 353 " + nickname + " @ " + chnam + " :@" + nickname + "\n";
+
+    // // ":" + hostname + " 366 " + nick + " " + channelname + " :END of /NAMES list\r\n"
+    std::string resp3 = ":irc_servername 366 " + nickname + " " + chnam + " :End of /NAMES list.\n";
+
+    std::cout << respo; // join message 
+    std::cout << resp2; // RPL_NAMREPLY (353) Messages:
+    std::cout << resp3; // RPL_ENDOFNAMES (366) Message:
+
+    send(fd, respo.c_str(), respo.size(),0);
+    send(fd, resp2.c_str(), resp2.size(),0);
+    send(fd, resp3.c_str(), resp3.size(),0);
+	//################################################################################
 	std::vector<std::pair<std::string, std::string> > token;
 	SplitJoin(token, cmd);
 	for (size_t i = 0; i < token.size(); i++)
