@@ -26,6 +26,7 @@
 #include <netdb.h>
 #include <poll.h>
 #include <csignal>
+#include <fstream>
 #include "Client.hpp"
 #include "Channel.hpp"
 
@@ -84,6 +85,7 @@ public:
 	void                        client_authen(int fd, std::string& pass);
 	void                        parse_exec_cmd(std::string &cmd, int fd);
 	void						close_fds();
+	std::string 		get_clientList(Channel &channel);
 	// void						join_channel(std::vector<std::string>& cmd, int fd);
 	// bool						is_channlExist(std::string& channel_name);
 	// void                        set_username(std::vector<std::string>& cmd, int fd);
