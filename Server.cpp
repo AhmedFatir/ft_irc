@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/27 21:57:03 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/28 02:33:02 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -365,21 +365,14 @@ void Server::client_authen(int fd, std::string& cmd)
 
 	}
 }
-//######################################################################################
-// functions to join a channel
-void printVector(std::vector<std::string> token)
-{
-	for (size_t i = 0; i < token.size(); i++)
-		std::cout << "|" << token[i] << "|";
-	std::cout << std::endl;	
-}
+//####################################JOIN##################################################
 void SplitCmdJoin(std::string cmd, std::vector<std::string> &tmp)
 {
 	cmd = cmd.substr(0, cmd.size() - 1);
 	std::string str;
 	for (size_t i = 0; i < cmd.size(); i++){
 		if (cmd[i] == ' ' || cmd[i] == ',')
-			{tmp.push_back(str); str.clear();}
+			{tmp.push_back(str); str.clear(); while(cmd[i] == ' ') i++; i--;}
 		else str += cmd[i];
 	}
 	tmp.push_back(str);
@@ -421,6 +414,15 @@ void senderror(int code, std::string clientname, int fd, std::string msg)
 	send(fd, resp.c_str(), resp.size(),0);
 }
 
+void senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg)
+{
+	std::stringstream ss;
+	ss << ":localhost " << code << " " << clientname << " " << channelname << msg;
+	std::string resp = ss.str();
+	send(fd, resp.c_str(), resp.size(),0);
+}
+
+
 // std::string Server::get_clientList(Channel &channel)
 // {
 // 	std::string clinets;
@@ -430,54 +432,45 @@ void senderror(int code, std::string clientname, int fd, std::string msg)
 // 	}
 // }
 
+int Server::SearchForClients(std::string nickname)
+{
+	int count = 0;
+	for (size_t i = 0; i < this->channels.size(); i++){
+		if (this->channels[i].GetClientInChannel(nickname))
+			count++;
+	}
+	return count;
+}
+
 void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd)
 {
-	// if the channel is invit only: ERR_INVITEONLYCHAN (473)
-	// if (this->channels[j].GetInvitOnly())
-	// {
-	// 	std::cout <<" 1 \n";
-	// 	senderror(473, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :Cannot join channel (+i)\r\n"); return;
-	// } 
-	// // channel reached the limit of number of clients: ERR_CHANNELISFULL (471)
-	// else if (this->channels[j].GetLimit() && this->channels[j].GetClientsNumber() >= this->channels[j].GetLimit())
-	// {
-	// 	std::cout <<" 2 \n";
-	// 	senderror(471, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :Cannot join channel (+l)\r\n"); return;
-	// }
-	// //
-	// else if (token[i].second.empty() && this->channels[j].GetPassword().empty()){
-	// 	std::cout <<" 3 \n";
-	// 	if (this->channels[j].get_admin(fd) || this->channels[j].get_client(fd))
-	// 		{senderror(477, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :You are already in this channel\r\n"); return;}
-	// }
-	// else if (token[i].second == this->channels[j].GetPassword()){
-	// 	std::cout <<" 4 \n";
-	// 	if (this->channels[j].get_admin(fd) || this->channels[j].get_client(fd))
-	// 		{senderror(477, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :You are already in this channel\r\n"); return;}
-	// }
-	// else if (token[i].second != this->channels[j].GetPassword())
-	// {
-	// 	std::cout << " i was here uuuuuuuuuu\n";
-	// 	senderror(475, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :Wrong password\r\n"); return;
-	// }
-	// else
-	{
-			Client *cli = GetClient(fd);
-			this->channels[j].add_client(*cli);
-
-			std::string respo = ":" + cli->GetNickName() + "!" + cli->GetUserName() + "@localhost JOIN #" + token[i].first + "\r\n";
-			std::string resp2 = ": 353 " + cli->GetNickName() + " @ #" + token[i].first + " :" + channels[j].clientChannel_list() + "\r\n";
-			std::string resp3 = ": 366 " + cli->GetNickName() + " #" + token[i].first + " :END of /NAMES list.\r\n";
-			channels[i].sendTo_all(respo, resp2, resp3);
-	}
+	/*
+	ERR_BANNEDFROMCHAN (474) // if the client is banned from the channel
+	ERR_BADCHANMASK (476) // if the channel mask is invalid
+	*/
 	
+	if (SearchForClients(GetClient(fd)->GetNickName()) >= 10)//ERR_TOOMANYCHANNELS (405) // if the client is already in 10 channels
+		{senderror(405, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :You have joined too many channels\r\n"); return;}
+	if (this->channels[j].GetInvitOnly())// ERR_INVITEONLYCHAN (473) // if the channel is invit only
+		{senderror(473, GetClient(fd)->GetNickName(), token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+i)\r\n"); return;}
+	if (this->channels[j].GetLimit() && this->channels[j].GetClientsNumber() >= this->channels[j].GetLimit())// ERR_CHANNELISFULL (471) // if the channel reached the limit of number of clients
+		{senderror(471, GetClient(fd)->GetNickName(), token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+l)\r\n"); return;}
+	if (!this->channels[j].GetPassword().empty() && this->channels[j].GetPassword() != token[i].second)// ERR_BADCHANNELKEY (475) // if the password is incorrect
+		{senderror(475, GetClient(fd)->GetNickName(), token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+k) - bad key\r\n"); return;}
+	if (this->channels[j].GetClientInChannel(GetClient(fd)->GetNickName()))// ERR_ALREADYREGISTRED (462) // if the client is already registered
+		{senderror(462, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :You may not reregister\r\n"); return;}
+	// add the client to the channel
+	Client *cli = GetClient(fd);
+	this->channels[j].add_client(*cli);
+	std::string respo = ":" + cli->GetNickName() + "!" + cli->GetUserName() + "@localhost JOIN #" + token[i].first + "\r\n";
+	std::string resp2 = ": 353 " + cli->GetNickName() + " @ #" + token[i].first + " :" + channels[j].clientChannel_list() + "\r\n";
+	std::string resp3 = ": 366 " + cli->GetNickName() + " #" + token[i].first + " :END of /NAMES list.\r\n";
+	channels[i].sendTo_all(respo, resp2, resp3);
 }
 
 
 void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd)
 {
-	// if (token[i].first[0] != '#' && token[i].first[0] != '&')
-	// 	{senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n"); return;}
 	Channel newChannel;
 	newChannel.SetName(token[i].first);
 	if (!token[i].second.empty())
@@ -485,39 +478,31 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 	newChannel.add_admin(*GetClient(fd));
 	this->channels.push_back(newChannel);
 	// notifiy thet the client joined the channel
-
-	///////////////////////////////////////////////////
-	// ABDO >> this will be recoded to more clean code
-	//////////////////////////////////////////////////
-	Client *cli = GetClient(fd);
-	std::string respo = ":" + cli->GetNickName() + "!" + cli->GetUserName() + "@localhost JOIN #" + token[i].first + "\r\n";
-	std::string resp2 = ": 353 " + cli->GetNickName() + " @ #" + token[i].first + " :@" + cli->GetNickName() + "\r\n";
-	std::string resp3 = ": 366 " + cli->GetNickName() + " #" + token[i].first + " :END of /NAMES list.\r\n";
-
-	std::cout << respo; // join message 
-	std::cout << resp2; // RPL_NAMREPLY (353) Messages:
-	std::cout << resp3; // RPL_ENDOFNAMES (366) Message:
-
+	std::string respo = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost JOIN #" + token[i].first + "\r\n"; // join message
+	std::string resp2 = ": 353 " + GetClient(fd)->GetNickName() + " @ #" + token[i].first + " :@" + GetClient(fd)->GetNickName() + "\r\n"; // RPL_NAMREPLY (353) Messages:
+	std::string resp3 = ": 366 " + GetClient(fd)->GetNickName() + " #" + token[i].first + " :END of /NAMES list.\r\n"; // RPL_ENDOFNAMES (366) Message:
+	std::cout << respo << resp2 << resp3; 
 	send(fd, respo.c_str(), respo.size(),0);
 	send(fd, resp2.c_str(), resp2.size(),0);
 	send(fd, resp3.c_str(), resp3.size(),0);
-	std::cout << std::endl;
 }
 
 void Server::JOIN(std::string cmd, int fd)
 {
-	
+	if (cmd.size() < 6)// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
+		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	std::vector<std::pair<std::string, std::string> > token;
 	SplitJoin(token, cmd);
-	for (size_t i = 0; i < token.size(); i++)
-		token[i].first.erase(token[i].first.begin());
-	for (size_t i = 0; i < token.size(); i++)
-	{
+	for (size_t i = 0; i < token.size(); i++){//ERR_NOSUCHCHANNEL (403) // if the channel doesn't exist
+		if (*(token[i].first.begin()) != '#' && *(token[i].first.begin()) != '&')
+			{senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n"); return;}
+		else
+			token[i].first.erase(token[i].first.begin());
+	}
+	for (size_t i = 0; i < token.size(); i++){
 		bool flag = false;
-		for (size_t j = 0; j < this->channels.size(); j++)
-		{
+		for (size_t j = 0; j < this->channels.size(); j++){
 			if (this->channels[j].GetName() == token[i].first){
-				std::cout << "i was here kakaka \n";
 				ExistCh(token, i, j, fd);
 				flag = true; break;
 			}
@@ -526,7 +511,7 @@ void Server::JOIN(std::string cmd, int fd)
 			NotExistCh(token, i, fd);
 	}
 }
-///
+
 void	Server::close_fds()
 {
 		for(size_t i = 0; i < clients.size(); i++)
@@ -536,8 +521,7 @@ void	Server::close_fds()
 		}
 		close(server_fdsocket);
 }
-//######################################################################################
-//functions to kick a client
+//####################################KICK##################################################
 void SplitCmdKick(std::string cmd, std::vector<std::string> &tmp)
 {
 	std::string str;
@@ -545,7 +529,7 @@ void SplitCmdKick(std::string cmd, std::vector<std::string> &tmp)
 		if (cmd[i] == ':')
 			{tmp.push_back(cmd.substr(i));tmp.erase(tmp.begin());return;};
 		if (cmd[i] == ' ')
-			{tmp.push_back(str); str.clear();}
+			{tmp.push_back(str); str.clear(); while(cmd[i] == ' ') i++; i--;}
 		else
 			str += cmd[i];
 	}
@@ -555,28 +539,20 @@ void SplitCmdKick(std::string cmd, std::vector<std::string> &tmp)
 
 void	Server::KICK(std::string cmd, int fd)
 {
+	//ERR_BADCHANMASK (476) // if the channel mask is invalid
 	std::vector<std::string> tmp;
 	SplitCmdKick(cmd, tmp);
-	// for(int i = 0; i < )
-	// std::cout << tmp[0] << std::endl;
-	// exit(0);
 	tmp[0].erase(tmp[0].begin());
 	int flag = 0;
-	if (tmp.size() < 2)
-		{senderror(461, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
-	for (size_t i = 0; i < this->channels.size(); i++){
-			std::cout << "channel name |" <<this->channels[i].GetName() << "|" << std::endl;
-			std::cout << "sended |" <<tmp[0] << "|" <<  std::endl;
-		if (this->channels[i].GetName() == tmp[0]){
+	if (tmp.size() < 2) // check if the client send the channel name and the client to kick
+		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
+	for (size_t i = 0; i < this->channels.size(); i++){ // search for the channel
+		if (this->channels[i].GetName() == tmp[0]){ // check if the channel exist
 			flag = 1;
-			puts("ana hena");
-			if (!channels[i].get_client(fd) && !channels[i].get_admin(fd))
-				{senderror(442, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :You're not on that channel\r\n"); return;}
-			//check if the client is admin
-			if(this->channels[i].get_admin(fd)){
-				//check if the client name is in the channel
-				if (channels[i].GetClientInChannel(tmp[1])){
-					//check if the client is admin
+			if (!channels[i].get_client(fd) && !channels[i].get_admin(fd)) // check if the client is in the channel
+				{senderror(442, GetClient(fd)->GetNickName(), tmp[0], GetClient(fd)->GetFd(), " :You're not on that channel\r\n"); return;}
+			if(this->channels[i].get_admin(fd)){ // check if the client is admin
+				if (channels[i].GetClientInChannel(tmp[1])){ // check if the client to kick is in the channel
 					std::stringstream ss;
 					ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " KICK #" << tmp[0] << " " << tmp[1];
 					if (tmp.size() == 3)
@@ -584,25 +560,21 @@ void	Server::KICK(std::string cmd, int fd)
 					else ss << "\r\n";
 					std::string resp = ss.str();
 					this->channels[i].sendTo_all(resp);
-					// send(fd, resp.c_str(), resp.size(), 0);
 					std::cout << "		" << resp;
 					if (channels[i].get_admin(channels[i].GetClientInChannel(tmp[1])->GetFd()))
 						channels[i].remove_admin(channels[i].GetClientInChannel(tmp[1])->GetFd());
 					else
-					{
 						channels[i].remove_client(channels[i].GetClientInChannel(tmp[1])->GetFd());
-					}
-					//send the msg to the channel
 				}
-				else
-					{senderror(441, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :They aren't on that channel\r\n"); return;}
+				else // if the client to kick is not in the channel
+					{senderror(441, GetClient(fd)->GetNickName(), tmp[0], GetClient(fd)->GetFd(), " :They aren't on that channel\r\n"); return;}
 			}
-			else
-				{senderror(482, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :You're not channel operator\r\n"); return;}
+			else // if the client is not admin
+				{senderror(482, GetClient(fd)->GetNickName(), tmp[0], GetClient(fd)->GetFd(), " :You're not channel operator\r\n"); return;}
 		}
 	}
-	if (flag == 0)
-		senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n");
+	if (flag == 0) // if the channel doesn't exist
+		senderror(403, GetClient(fd)->GetNickName(), tmp[0], GetClient(fd)->GetFd(), " :No such channel\r\n");
 }
 
 
@@ -634,3 +606,62 @@ void	Server::KICK(std::string cmd, int fd)
 // std::cout << resp1; // RPL_TOPIC (332) Message:
 // std::cout << resp2; // RPL_NAMREPLY (353) Messages:
 // std::cout << resp3; // RPL_ENDOFNAMES (366) Message:
+//################################PART#####################################################
+std::string SplitCmdPart(std::string cmd, std::vector<std::string> &tmp)
+{
+	std::istringstream stm(cmd);
+	std::string reason;
+	while(stm >> cmd)
+		tmp.push_back(cmd);
+	
+	for (size_t i = 0; i < tmp.size(); i++){//search for ',' and split the cmd
+		for(size_t j = 0; j < tmp[i].size(); j++){
+			if (tmp[i][j] == ',')
+			{tmp.insert(tmp.begin() + i + 1, tmp[i].substr(j + 1));
+			tmp[i].erase(tmp[i].begin() + j, tmp[i].end());}
+		}
+	}
+	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
+		{if (tmp[i].empty()) tmp.erase(tmp.begin() + i);}
+	tmp.erase(tmp.begin());
+	for (size_t i = 0; i < tmp.size(); i++){//combine the strings that has no '#' or '&' at the begining 
+		if (tmp[i][0] != '#' && tmp[i][0] != '&'){
+			for (size_t j = i; j < tmp.size(); j++)
+				{reason += " " + tmp[j];tmp.erase(tmp.begin() + j);j--;}
+		}
+	}
+	for (size_t i = 0; i < tmp.size(); i++)//remove '#' and '&' from the begining of the strings
+		{if (tmp[i][0] == '#' || tmp[i][0] == '&') tmp[i].erase(tmp[i].begin());}
+	return reason;
+}
+void Server::PART(std::string cmd, int fd)
+{
+	if (cmd.size() < 6)// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
+		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
+	std::vector<std::string> tmp;
+	std::string reason = SplitCmdPart(cmd, tmp);
+	for (size_t i = 0; i < tmp.size(); i++){
+		bool flag = false;
+		for (size_t j = 0; j < this->channels.size(); j++){ // search for the channel
+			if (this->channels[j].GetName() == tmp[i]){ // check if the channel exist
+				flag = true;
+				if (!channels[j].get_client(fd) && !channels[j].get_admin(fd)) // ERR_NOTONCHANNEL (442) // if the client is not in the channel
+					{senderror(442, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :You're not on that channel\r\n"); return;}
+					std::stringstream ss;
+					ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " PART #" << tmp[i];
+					if (!reason.empty())
+						ss << " :" << reason << "\r\n";
+					else ss << "\r\n";
+					std::string resp = ss.str();
+					send(fd, resp.c_str(), resp.size(),0);
+					std::cout << "		" << resp;
+					if (channels[j].get_admin(channels[j].GetClientInChannel(GetClient(fd)->GetNickName())->GetFd()))
+						channels[j].remove_admin(channels[j].GetClientInChannel(GetClient(fd)->GetNickName())->GetFd());
+					else
+						channels[j].remove_client(channels[j].GetClientInChannel(GetClient(fd)->GetNickName())->GetFd());
+			}
+		}
+		if (!flag) // ERR_NOSUCHCHANNEL (403) // if the channel doesn't exist
+			senderror(403, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :No such channel\r\n");
+	}
+}
