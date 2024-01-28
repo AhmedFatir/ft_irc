@@ -6,7 +6,7 @@
 /*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/28 21:41:13 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/01/28 23:48:48 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,7 +152,12 @@ std::vector<std::string> Server::split_recivedBuffer(std::string &str)
 	std::istringstream stm(str);
 	std::string line;
 	while(std::getline(stm, line))
+	{
+		size_t pos = line.find_first_of("\r\n");
+		if(pos != std::string::npos)
+			line = line.substr(0, pos);
 		vec.push_back(line);
+	}
 	return vec;
 }
 
@@ -370,7 +375,7 @@ void Server::client_authen(int fd, std::string& cmd)
 //####################################JOIN##################################################
 void SplitCmdJoin(std::string cmd, std::vector<std::string> &tmp)
 {
-	cmd = cmd.substr(0, cmd.size() - 1);
+	// cmd = cmd.substr(0, cmd.size() - 1);
 	std::string str;
 	for (size_t i = 0; i < cmd.size(); i++){
 		if (cmd[i] == ' ' || cmd[i] == ',')
@@ -708,19 +713,17 @@ void Server::Topic(std::string &cmd, int &fd)
 		Client *admin = ch.get_admin(fd);
 		if (admin)
 		{
-			std::string topic = scmd[2];
-			ch.SetTopicName(topic);
-			std::string respons;
-			// std::string hostname = "localhost";
-			// std::string res = ":localhost TOPIC " + scmd[1] + " :" + topic + "\r\n";
-			// ch.sendTo_all(res);
-			// send(fd, res.c_str(), res.size(),0);
+			ch.SetTopicName(scmd[2]);
+			std::string respons= ":" + admin->GetNickName() + "!" + admin->GetUserName() + "@localhost TOPIC #" + nmch + " :" + ch.GetTopicName() + "\r\n";
+			send(fd, respons.c_str(), respons.size(),0);
 
-			std::string res = ":localhost 332 " + admin->GetNickName() + " " + scmd[1] + " :" + topic + "\r\n";
-			send(fd, res.c_str(), res.size(),0);
-			
-			std::string rees = ":localhost 333 " + admin->GetNickName() + " " + scmd[1] + " " + admin->GetNickName() + " " + tTopic() + "\r\n";
-			send(fd, rees.c_str(), rees.size(),0);
+			if 
+			// std::string rep = ":localhost 332 " + admin->GetNickName() + " " + scmd[1] + " :" + ch.GetTopicName() + "\r\n";
+			// send(fd, rep.c_str(), rep.length(), 0);
+
+			// std::string rep1 = ":localhost 333 " + admin->GetNickName() + " " + scmd[1] + " " + admin->GetNickName() + " " + tTopic() + "\r\n";
+			// send(fd, rep1.c_str(), rep1.length(), 0);
+			// std::cout << rep << rep1;
 		}
 		else
 		{
