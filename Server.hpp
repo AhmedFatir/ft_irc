@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
+/*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/26 00:26:56 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/28 16:49:08 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,7 @@ public:
 	int GetPort();
 	std::string GetPassword();
 	Client *GetClient(int fd);
+	Channel *GetChannel(std::string name);
 	
 	void SetFd(int server_fdsocket);
 	void SetPort(int port);
@@ -100,7 +101,13 @@ public:
 	// ########################### CKIK CMD
 	void   KICK(std::string cmd, int fd);
 	// Channel* GetClientInChannel(Channel chnnel, std::string name);
-};
 
+	//--------TOPIC----
+	void Topic(std::string &cmd, int &fd);
+	bool checkifchannelexist(std::string &namechannel);
+	bool checkifadmin(int &fd);
+	std::string getnamechannel(std::string &cmd);
+	Channel *GetChannelByName(const std::string &name);
+};
 
 #endif

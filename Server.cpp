@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
+/*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/26 01:27:21 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/28 17:07:31 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,6 +79,7 @@ Client *Server::GetClient(int fd){
 	return NULL;
 }
 
+
 //###################################
 void Server::init(int port, std::string pass)
 {
@@ -95,7 +96,7 @@ void Server::init(int port, std::string pass)
 			throw(std::runtime_error("error in poll"));
 		for (size_t i = 0; i < fds.size(); i++)
 		{
-			if (fds[i].revents == POLLIN) 
+			if (fds[i].revents == POLLIN)
 			{
 				if (fds[i].fd == server_fdsocket){
 					this->accept_new_client();
@@ -244,8 +245,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 		KICK(cmd, fd);
 	else if (splited_cmd[0] == "JOIN")
 		JOIN(cmd, fd);
-	// else if (split_cmd[0] == "TOPIC")
-	// 	TOPIC(cmd, fd);
+	else if (splited_cmd[0] == "TOPIC")
+		Topic(cmd, fd);
 
 }
 
@@ -504,7 +505,7 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 	std::string resp2 = ": 353 " + cli->GetNickName() + " @ #" + token[i].first + " :@" + cli->GetNickName() + "\r\n";
 	std::string resp3 = ": 366 " + cli->GetNickName() + " #" + token[i].first + " :END of /NAMES list.\r\n";
 
-	std::cout << respo; // join message 
+	std::cout << respo; // join message
 	std::cout << resp2; // RPL_NAMREPLY (353) Messages:
 	std::cout << resp3; // RPL_ENDOFNAMES (366) Message:
 
@@ -669,3 +670,76 @@ void	Server::KICK(std::string cmd, int fd)
 // std::cout << resp1; // RPL_TOPIC (332) Message:
 // std::cout << resp2; // RPL_NAMREPLY (353) Messages:
 // std::cout << resp3; // RPL_ENDOFNAMES (366) Message:
+
+
+//------------------------TOPIC--------------------------------------------------------------
+
+
+bool Server::checkifadmin(int &fd)
+{
+	for(size_t i=0; i < channels.size(); i++)
+		if (channels[i].get_admin(fd))
+			return true;
+	return false;
+}
+
+Channel *Server::GetChannel(std::string name)
+{
+	for (size_t i = 0; i < this->channels.size(); i++){
+		if (this->channels[i].GetName() == name)
+			return &channels[i];
+	}
+	return NULL;
+}
+
+std::string Server::getnamechannel(std::string &name)
+{
+	if (!name.empty() && name[0] == '#')
+		return (name.substr(1));
+	return name;
+}
+
+bool Server::checkifchannelexist(std::string &namechannel)
+{
+	for (size_t i = 0; i < channels.size(); i++)
+	{
+		if (namechannel == (channels[i].GetName()))
+			return true;
+	}
+		return false;
+}
+
+// Channel *Server::getchannel(std::string name , std::vector<Channel> lstchannel)
+// {
+// 	for (int i = 0; i < (int)lstchannel.size(); i++)
+// 	{
+// 		if (lstchannel[i].GetName() == name)
+// 			return lstchannel[i];
+// 	}
+// 	return NULL;
+// }
+
+Channel* Server::GetChannelByName(const std::string& name)
+{
+    for (size_t i = 0; i < this->channels.size(); i++) {
+		std::cout << "name " << channels[i].GetName()  <<"|"<< std::endl;
+        if (this->channels[i].GetName() == name)
+		{
+			std::cout << "ana hena " << channels[i].GetName() << std::endl;
+            return &this->channels[i];
+		}
+    }
+    return NULL;
+}
+
+void Server::Topic(std::string &cmd, int &fd)
+{
+	(void)fd;
+	std::vector<std::string> scmd = split_cmd(cmd);
+	std::string nmch = getnamechannel(scmd[1]);
+	Channel *ch = GetChannelByName(nmch);
+	if(ch)
+		std::cout << "nmch " << ch->GetName() << std::endl;
+	else 
+		std::cout << "nmch |" << nmch  << "|"<< std::endl;
+}

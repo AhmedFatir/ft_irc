@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
+/*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 21:19:08 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/26 00:29:07 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/28 14:34:59 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@ Channel::Channel(){
 	this->topic = 0;
 	this->key = 0;
 	this->limit = 0;
+	this->topic_name = "sss";
+	this->name = "";
 }
 Channel::~Channel(){}
 Channel::Channel(Channel const &src){
