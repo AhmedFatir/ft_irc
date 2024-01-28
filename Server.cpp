@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/28 02:33:02 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/28 04:14:48 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -524,17 +524,19 @@ void	Server::close_fds()
 //####################################KICK##################################################
 void SplitCmdKick(std::string cmd, std::vector<std::string> &tmp)
 {
+	std::istringstream stm(cmd);
 	std::string str;
-	for (size_t i = 0; i < cmd.size(); i++){
-		if (cmd[i] == ':')
-			{tmp.push_back(cmd.substr(i));tmp.erase(tmp.begin());return;};
-		if (cmd[i] == ' ')
-			{tmp.push_back(str); str.clear(); while(cmd[i] == ' ') i++; i--;}
-		else
-			str += cmd[i];
-	}
-	tmp.push_back(str);
+	while(stm >> cmd)
+		tmp.push_back(cmd);
 	tmp.erase(tmp.begin());
+	for (size_t i = 2; i < tmp.size(); i++){//take just the first 2 strings and rest of the string is the reason
+			for (size_t j = i; j < tmp.size(); j++)
+				{str += " " + tmp[j];tmp.erase(tmp.begin() + j);j--;}
+	}
+	if (!str.empty()) // if the reason is not empty add it
+		tmp.push_back(str);
+	//erase the '#' from the channel name
+	tmp[0].erase(tmp[0].begin());
 }
 
 void	Server::KICK(std::string cmd, int fd)
@@ -542,7 +544,6 @@ void	Server::KICK(std::string cmd, int fd)
 	//ERR_BADCHANMASK (476) // if the channel mask is invalid
 	std::vector<std::string> tmp;
 	SplitCmdKick(cmd, tmp);
-	tmp[0].erase(tmp[0].begin());
 	int flag = 0;
 	if (tmp.size() < 2) // check if the client send the channel name and the client to kick
 		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
@@ -613,27 +614,25 @@ std::string SplitCmdPart(std::string cmd, std::vector<std::string> &tmp)
 	std::string reason;
 	while(stm >> cmd)
 		tmp.push_back(cmd);
-	
-	for (size_t i = 0; i < tmp.size(); i++){//search for ',' and split the cmd
-		for(size_t j = 0; j < tmp[i].size(); j++){
-			if (tmp[i][j] == ',')
-			{tmp.insert(tmp.begin() + i + 1, tmp[i].substr(j + 1));
-			tmp[i].erase(tmp[i].begin() + j, tmp[i].end());}
-		}
-	}
-	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
-		{if (tmp[i].empty()) tmp.erase(tmp.begin() + i);}
 	tmp.erase(tmp.begin());
-	for (size_t i = 0; i < tmp.size(); i++){//combine the strings that has no '#' or '&' at the begining 
-		if (tmp[i][0] != '#' && tmp[i][0] != '&'){
+	for (size_t i = 1; i < tmp.size(); i++){//start from the second string and take the rest of the strings as the reason
 			for (size_t j = i; j < tmp.size(); j++)
 				{reason += " " + tmp[j];tmp.erase(tmp.begin() + j);j--;}
-		}
 	}
-	for (size_t i = 0; i < tmp.size(); i++)//remove '#' and '&' from the begining of the strings
-		{if (tmp[i][0] == '#' || tmp[i][0] == '&') tmp[i].erase(tmp[i].begin());}
+	std::string str = tmp[0]; std::string str1; tmp.clear();
+	for (size_t i = 0; i < str.size(); i++){//split the first string by ',' to get the channels names
+		if (str[i] == ',')
+			{tmp.push_back(str1); str1.clear();}
+		else str1 += str[i];
+	}
+	tmp.push_back(str1);
+	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
+		{if (tmp[i].empty())tmp.erase(tmp.begin() + i);}
+	for (size_t i = 0; i < tmp.size(); i++)// erase the '#' from the channel name
+		{if (*(tmp[i].begin()) == '#' || *(tmp[i].begin()) == '&') tmp[i].erase(tmp[i].begin());}
 	return reason;
 }
+
 void Server::PART(std::string cmd, int fd)
 {
 	if (cmd.size() < 6)// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
