@@ -6,12 +6,13 @@
 /*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/28 16:49:08 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/01/28 18:33:03 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 #define SERVER_HPP
+
 
 #include <iostream>
 #include <vector>
@@ -77,10 +78,11 @@ public:
 	std::vector<std::string>    split_cmd(std::string &str);
 	void                        client_authen(int fd, std::string& pass, std::vector<struct pollfd> &fds);
 	void                        parse_exec_cmd(std::vector<std::string>& cmd, int fd);
-	//##########JOIN############
+	// ########################### JOIN CMD
 	void	JOIN(std::string cmd, int fd);
 	void	ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd);
 	void	NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd);
+	int		SearchForClients(std::string nickname);
 	// ########### CMDS RECIVED
 	std::vector<std::string>    split_recivedBuffer(std::string &str);
 	void                        client_authen(int fd, std::string& pass);
@@ -101,13 +103,16 @@ public:
 	// ########################### CKIK CMD
 	void   KICK(std::string cmd, int fd);
 	// Channel* GetClientInChannel(Channel chnnel, std::string name);
+	// ########################### PART CMD
+	void   PART(std::string cmd, int fd);
 
 	//--------TOPIC----
 	void Topic(std::string &cmd, int &fd);
 	bool checkifchannelexist(std::string &namechannel);
 	bool checkifadmin(int &fd);
 	std::string getnamechannel(std::string &cmd);
-	Channel *GetChannelByName(const std::string &name);
+	std::string tTopic();
+	// Channel *GetChannelByName(const std::string &name);
 };
 
 #endif
