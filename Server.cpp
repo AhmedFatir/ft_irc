@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/28 04:14:48 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/28 05:13:34 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -377,12 +377,17 @@ void SplitCmdJoin(std::string cmd, std::vector<std::string> &tmp)
 	}
 	tmp.push_back(str);
 	tmp.erase(tmp.begin());
+	//print the vector
+	// for (size_t i = 0; i < tmp.size(); i++)
+	// 	std::cout << tmp[i] << std::endl;
+	// exit(0);
 }
 
 void SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::string cmd)
 {
 	std::vector<std::string> tmp;
 	SplitCmdJoin(cmd, tmp);
+	//print the vector
 	for (size_t i = 0; i < tmp.size(); i++)
 	{
 		std::string str, pass;
@@ -404,6 +409,10 @@ void SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::st
 		}
 		else token.push_back(std::make_pair(tmp[i], ""));
 	}
+	//print the vector
+	// for (size_t i = 0; i < token.size(); i++)
+	// 	std::cout << token[i].first << " " << token[i].second << std::endl;
+	// exit(0);
 }
 
 void senderror(int code, std::string clientname, int fd, std::string msg)
@@ -493,6 +502,7 @@ void Server::JOIN(std::string cmd, int fd)
 		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	std::vector<std::pair<std::string, std::string> > token;
 	SplitJoin(token, cmd);
+	std::cout <<"-------------------------"<< token[0].first << std::endl;
 	for (size_t i = 0; i < token.size(); i++){//ERR_NOSUCHCHANNEL (403) // if the channel doesn't exist
 		if (*(token[i].first.begin()) != '#' && *(token[i].first.begin()) != '&')
 			{senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n"); return;}
