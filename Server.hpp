@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
+/*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/28 01:33:26 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/28 18:33:03 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,7 @@ public:
 	int GetPort();
 	std::string GetPassword();
 	Client *GetClient(int fd);
+	Channel *GetChannel(std::string name);
 	
 	void SetFd(int server_fdsocket);
 	void SetPort(int port);
@@ -101,9 +102,17 @@ public:
 	void						set_nickname(std::string& nickname, int fd);
 	// ########################### CKIK CMD
 	void   KICK(std::string cmd, int fd);
+	// Channel* GetClientInChannel(Channel chnnel, std::string name);
 	// ########################### PART CMD
 	void   PART(std::string cmd, int fd);
-};
 
+	//--------TOPIC----
+	void Topic(std::string &cmd, int &fd);
+	bool checkifchannelexist(std::string &namechannel);
+	bool checkifadmin(int &fd);
+	std::string getnamechannel(std::string &cmd);
+	std::string tTopic();
+	// Channel *GetChannelByName(const std::string &name);
+};
 
 #endif

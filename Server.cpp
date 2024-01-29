@@ -6,9 +6,10 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/28 05:13:34 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/29 08:03:12 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "Server.hpp"
 
@@ -79,6 +80,7 @@ Client *Server::GetClient(int fd){
 	return NULL;
 }
 
+
 //###################################
 void Server::init(int port, std::string pass)
 {
@@ -95,7 +97,7 @@ void Server::init(int port, std::string pass)
 			throw(std::runtime_error("error in poll"));
 		for (size_t i = 0; i < fds.size(); i++)
 		{
-			if (fds[i].revents == POLLIN) 
+			if (fds[i].revents == POLLIN)
 			{
 				if (fds[i].fd == server_fdsocket){
 					this->accept_new_client();
@@ -150,7 +152,12 @@ std::vector<std::string> Server::split_recivedBuffer(std::string &str)
 	std::istringstream stm(str);
 	std::string line;
 	while(std::getline(stm, line))
+	{
+		size_t pos = line.find_first_of("\r\n");
+		if(pos != std::string::npos)
+			line = line.substr(0, pos);
 		vec.push_back(line);
+	}
 	return vec;
 }
 
@@ -244,8 +251,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 		KICK(cmd, fd);
 	else if (splited_cmd[0] == "JOIN")
 		JOIN(cmd, fd);
-	// else if (split_cmd[0] == "TOPIC")
-	// 	TOPIC(cmd, fd);
+	else if (splited_cmd[0] == "TOPIC")
+		Topic(cmd, fd);
 
 }
 
@@ -368,7 +375,7 @@ void Server::client_authen(int fd, std::string& cmd)
 //####################################JOIN##################################################
 void SplitCmdJoin(std::string cmd, std::vector<std::string> &tmp)
 {
-	cmd = cmd.substr(0, cmd.size() - 1);
+	// cmd = cmd.substr(0, cmd.size() - 1);
 	std::string str;
 	for (size_t i = 0; i < cmd.size(); i++){
 		if (cmd[i] == ' ' || cmd[i] == ',')
@@ -617,6 +624,129 @@ void	Server::KICK(std::string cmd, int fd)
 // std::cout << resp1; // RPL_TOPIC (332) Message:
 // std::cout << resp2; // RPL_NAMREPLY (353) Messages:
 // std::cout << resp3; // RPL_ENDOFNAMES (366) Message:
+
+
+//------------------------TOPIC--------------------------------------------------------------
+
+
+bool Server::checkifadmin(int &fd)
+{
+	for(size_t i=0; i < channels.size(); i++)
+		if (channels[i].get_admin(fd))
+			return true;
+	return false;
+}
+
+Channel *Server::GetChannel(std::string name)
+{
+	for (size_t i = 0; i < this->channels.size(); i++){
+		if (this->channels[i].GetName() == name)
+			return &channels[i];
+	}
+	return NULL;
+}
+
+std::string Server::getnamechannel(std::string &name)
+{
+	if (!name.empty() && name[0] == '#')
+		return (name.substr(1));
+	return name;
+}
+
+bool Server::checkifchannelexist(std::string &namechannel)
+{
+	for (size_t i = 0; i < channels.size(); i++)
+	{
+		if (namechannel == (channels[i].GetName()))
+			return true;
+	}
+		return false;
+}
+
+// Channel *Server::getchannel(std::string name , std::vector<Channel> lstchannel)
+// {
+// 	for (int i = 0; i < (int)lstchannel.size(); i++)
+// 	{
+// 		if (lstchannel[i].GetName() == name)
+// 			return lstchannel[i];
+// 	}
+// 	return NULL;
+// }
+
+// Channel* Server::GetChannelByName(const std::string& name)
+// {
+//     for (size_t i = 0; i < this->channels.size(); i++) {
+//         if ( == name)
+// 		{
+// 			std::cout << "ana hena " << channels[i].GetName() << std::endl;
+//             return &this->channels[i];
+// 		}
+//     }
+//     return NULL;
+// }
+
+std::string Server::tTopic()
+{
+	std::time_t current = std::time(NULL);
+	std::stringstream res;
+
+	res << current;
+	return res.str();
+}
+
+// std::string	Server::_printMessage(std::string num, std::string nickname, std::string message)
+// {
+// 	if (nickname.empty())
+// 		nickname = "*";
+// 	return (":" + this->_name + " " + num + " " + nickname + " " + message + "\n");
+// }
+
+void Server::Topic(std::string &cmd, int &fd)
+{
+	(void)fd;
+	std::vector<std::string> scmd = split_cmd(cmd);
+	std::string nmch = getnamechannel(scmd[1]);
+	Channel ch;
+	int chexist = 0;
+	for (size_t i = 0; i < channels.size(); i++)
+	{
+		if (nmch == channels[i].GetName())
+		{
+			ch = channels[i];
+			chexist = 1;
+			break;
+		}
+		chexist = 0;
+	}
+	if (chexist)
+	{
+		Client *admin = ch.get_admin(fd);
+		if (admin)
+		{
+			ch.SetTopicName(scmd[2]);
+			std::string respons= ":" + admin->GetNickName() + "!" + admin->GetUserName() + "@localhost TOPIC #" + nmch + " :" + ch.GetTopicName() + "\r\n";
+			send(fd, respons.c_str(), respons.size(),0);
+
+			if 
+			// std::string rep = ":localhost 332 " + admin->GetNickName() + " " + scmd[1] + " :" + ch.GetTopicName() + "\r\n";
+			// send(fd, rep.c_str(), rep.length(), 0);
+
+			// std::string rep1 = ":localhost 333 " + admin->GetNickName() + " " + scmd[1] + " " + admin->GetNickName() + " " + tTopic() + "\r\n";
+			// send(fd, rep1.c_str(), rep1.length(), 0);
+			// std::cout << rep << rep1;
+		}
+		else
+		{
+			std::string respons = ":localhost 482 " + GetClient(fd)->GetNickName() + " " + nmch + " :You're not channel operator\r\n";
+			send(fd, respons.c_str(), respons.size(),0);
+		}
+	}
+	else
+	{
+		std::string respons = ":localhost 403 " + GetClient(fd)->GetNickName() + " " + nmch + " :No such channel\r\n";
+		send(fd, respons.c_str(), respons.size(),0);
+	}
+}
 //################################PART#####################################################
 std::string SplitCmdPart(std::string cmd, std::vector<std::string> &tmp)
 {
