@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/30 08:10:50 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/30 09:32:24 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,6 +115,9 @@ public:
 	// Channel *GetChannelByName(const std::string &name);
 	// ########################### PRIVMSG CMD
 	void   PRIVMSG(std::string cmd, int fd);
+	// ########################### MODE CMD
+
+	void mode_command(std::string& cmd, int fd);
 };
 
 #endif
