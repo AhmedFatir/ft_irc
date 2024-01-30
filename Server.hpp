@@ -113,6 +113,9 @@ public:
 	std::string getnamechannel(std::string &cmd);
 	std::string tTopic();
 	// Channel *GetChannelByName(const std::string &name);
+	// ########################### MODE CMD
+
+	void mode_command(std::string& cmd, int fd);
 };
 
 #endif
