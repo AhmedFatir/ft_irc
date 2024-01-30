@@ -1058,8 +1058,8 @@ void	Server::CheckForChannels_Clients(std::vector<std::string> &tmp, int fd)
 	for(size_t i = 0; i < tmp.size(); i++){
 		if (tmp[i][0] == '#'){
 			tmp[i].erase(tmp[i].begin());
-			if(!GetChannel(tmp[i]))//ERR_NOSUCHCHANNEL (403) // if the channel doesn't exist
-				{senderror(403, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :No such channel\r\n"); tmp.erase(tmp.begin() + i); i--;}
+			if(!GetChannel(tmp[i]))//ERR_NOSUCHNICK (401) // if the channel doesn't exist
+				{senderror(401, tmp[i], GetClient(fd)->GetFd(), " :No such nick/channel\r\n"); tmp.erase(tmp.begin() + i); i--;}
 			else if (!GetChannel(tmp[i])->GetClientInChannel(GetClient(fd)->GetNickName())) //ERR_CANNOTSENDTOCHAN (404) // if the client is not in the channel
 				{senderror(404, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :Cannot send to channel\r\n"); tmp.erase(tmp.begin() + i); i--;}
 			else tmp[i] = "#" + tmp[i];
@@ -1091,13 +1091,17 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 		{senderror(411, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No recipient given (PRIVMSG)\r\n"); return;}
 	CheckForChannels_Clients(tmp, fd); // check if the channels and clients exist
 	for (size_t i = 0; i < tmp.size(); i++){// send the message to the clients and channels
+		std::cout << "channel name: " << tmp[i] << std::endl;
 		if (tmp[i][0] == '#'){
+			std::cout << "ana hena\n"; 
 			tmp[i].erase(tmp[i].begin());
 			std::string resp = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG #" + tmp[i] + " :" + message + "\r\n";
-			GetChannel(tmp[i])->sendTo_all(resp);
-			std::cout << "		" << resp;
+			Channel *ch  = GetChannel(tmp[i]);
+			ch->sendTo_all(resp, fd);
+			std::cout << "		|" << resp << "|\n" ;
 		}
 		else{
+			std::cout <<  "2\n";
 			std::string resp = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + tmp[i] + " :" + message + "\r\n";
 			send(GetClientNick(tmp[i])->GetFd(), resp.c_str(), resp.size(),0);
 			std::cout << "		" << resp;

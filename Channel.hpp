@@ -52,6 +52,7 @@ public:
 	std::string clientChannel_list();
 	void sendTo_all(std::string &rpl1, std::string &rpl2 , std::string &rpl3);
 	void sendTo_all(std::string &rpl1);
+	void sendTo_all(std::string &rpl1, int fd);
 	//
 	std::string GetTopicName();
 	std::string GetPassword();
