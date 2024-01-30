@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/29 08:03:12 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/30 08:10:29 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -487,6 +487,8 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, in
 
 void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd)
 {
+	if (SearchForClients(GetClient(fd)->GetNickName()) >= 10)//ERR_TOOMANYCHANNELS (405) // if the client is already in 10 channels
+		{senderror(405, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :You have joined too many channels\r\n"); return;}
 	Channel newChannel;
 	newChannel.SetName(token[i].first);
 	if (!token[i].second.empty())
@@ -727,7 +729,7 @@ void Server::Topic(std::string &cmd, int &fd)
 			std::string respons= ":" + admin->GetNickName() + "!" + admin->GetUserName() + "@localhost TOPIC #" + nmch + " :" + ch.GetTopicName() + "\r\n";
 			send(fd, respons.c_str(), respons.size(),0);
 
-			if 
+			// if 
 			// std::string rep = ":localhost 332 " + admin->GetNickName() + " " + scmd[1] + " :" + ch.GetTopicName() + "\r\n";
 			// send(fd, rep.c_str(), rep.length(), 0);
 
@@ -803,4 +805,10 @@ void Server::PART(std::string cmd, int fd)
 		if (!flag) // ERR_NOSUCHCHANNEL (403) // if the channel doesn't exist
 			senderror(403, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :No such channel\r\n");
 	}
+}
+//########################################################PRIVMSG
+void	PRIVMSG(std::string cmd, int fd)
+{
+	(void)cmd;
+	(void)fd;
 }

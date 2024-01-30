@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/28 18:33:03 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/01/30 08:10:50 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,6 +113,8 @@ public:
 	std::string getnamechannel(std::string &cmd);
 	std::string tTopic();
 	// Channel *GetChannelByName(const std::string &name);
+	// ########################### PRIVMSG CMD
+	void   PRIVMSG(std::string cmd, int fd);
 };
 
 #endif
