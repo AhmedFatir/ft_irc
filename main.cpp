@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 11:29:22 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/30 10:53:14 by afatir           ###   ########.fr       */
+/*   Updated: 2024/01/30 11:12:48 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,6 @@ int main(int ac, char **av)
 	std::cout << "---- SERVER ----" << std::endl;
     try
     {
-        // ser.PRIVMSG("PRIVMSG #hello,world,#channel hello from the main function", 2);
         ser.init(std::atoi(av[1]), av[2]);
     }
     catch(const std::exception& e)
