@@ -6,8 +6,8 @@
       "type": "lldb",
       "request": "launch",
       "args": [],
-      "cwd": "/Users/khbouych/Desktop/ircc",
-      "program": "/Users/khbouych/Desktop/ircc/build/Debug/outDebug"
+      "cwd": "/Users/khbouych/Desktop/ft_irc",
+      "program": "/Users/khbouych/Desktop/ft_irc/build/Debug/outDebug"
     }
   ]
 }
