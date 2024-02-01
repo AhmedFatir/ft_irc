@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 21:19:08 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/28 14:34:59 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/01/30 11:52:03 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,14 +137,12 @@ void Channel::sendTo_all(std::string &rpl1)
 	// std::string cli_list = this->clientChannel_list();
 	for(size_t i = 0; i < admins.size(); i++)
 	{
-			std::cout << "     admins i: " << clients.size() << std::endl; 
-			send(admins[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
+		send(admins[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
 	}
 	
 	for(size_t i = 0; i < clients.size(); i++)
 	{
-			std::cout << "     cli i: " << clients.size() << std::endl; 
-			send(clients[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
+		send(clients[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
 	}
 }
 void Channel::sendTo_all(std::string &rpl1, int fd)
@@ -154,12 +152,10 @@ void Channel::sendTo_all(std::string &rpl1, int fd)
 	{
 		if(admins[i].GetFd() != fd)
 			send(admins[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
-		std::cout << "     admins i: " << clients.size() << std::endl; 
 	}
 	
 	for(size_t i = 0; i < clients.size(); i++)
 	{
-		std::cout << "     cli i: " << clients.size() << std::endl; 
 		if(clients[i].GetFd() != fd)
 			send(clients[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
 	}

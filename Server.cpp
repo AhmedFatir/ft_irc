@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/30 10:59:22 by afatir           ###   ########.fr       */
+/*   Updated: 2024/02/01 04:21:12 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,15 +18,6 @@
 #define RPL_NAMREPLY(hostname, clients, channelname, nick) ":" + hostname + " 353 " + nick + " = " + channelname + " :" + clients + "\r\n"
 
 #define RPL_ENDOFNAMES(hostname, nick, channelname) ":" + hostname + " 366 " + nick + " " + channelname + " :END of /NAMES list\r\n"
-
-
-// int g_run;
-
-// void signal_handler(int signal)
-// {
-//     (void)signal;
-//     g_run = 0;
-// }
 
 Server::Server(){}
 Server::Server(int port, std::string password){this->port = port; this->password = password;}
@@ -86,22 +77,38 @@ Client *Server::GetClientNick(std::string nickname){
 	}
 	return NULL;
 }
+//######################################CLOSE
+void	Server::close_fds()
+{
+		for(size_t i = 0; i < clients.size(); i++)
+		{
+			std::cout << "close index: " << i << " /NumFd: "<< clients[i].GetFd() << std::endl;
+			close(clients[i].GetFd());
+		}
+		std::cout << "close the server's Fd: " << server_fdsocket << std::endl;
+		close(server_fdsocket);
+}
 
+bool Server::Signal = false;
 
-//###################################
+void Server::SignalHandler(int signum)
+{
+	(void)signum;
+	std::cout << std::endl << "SignalHandler" << std::endl;
+	Server::Signal = true;
+}
+
 void Server::init(int port, std::string pass)
 {
 	this->password = pass;
 	this->port = port;
 	this->set_sever_socket();
 
-	// g_run = 1;
-	// std::signal(SIGINT, signal_handler);
 	std::cout << "Waiting to accept a connection...\n";
 	while (true)
 	{
-		if(poll(&fds[0],fds.size(),-1) == -1)
-			throw(std::runtime_error("error in poll"));
+		if(poll(&fds[0],fds.size(),-1) == -1 || Server::Signal == true)
+			throw(std::runtime_error("poll() faild or signal recived"));
 		for (size_t i = 0; i < fds.size(); i++)
 		{
 			if (fds[i].revents == POLLIN)
@@ -544,15 +551,6 @@ void Server::JOIN(std::string cmd, int fd)
 	}
 }
 
-void	Server::close_fds()
-{
-		for(size_t i = 0; i < clients.size(); i++)
-		{
-			std::cout << "close: " << i << std::endl;
-			close(clients[i].GetFd());
-		}
-		close(server_fdsocket);
-}
 //####################################KICK##################################################
 void SplitCmdKick(std::string cmd, std::vector<std::string> &tmp)
 {
@@ -1084,24 +1082,17 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 		{senderror(407, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Too many recipients\r\n"); return;}
 	if (message.empty())//ERR_NOTEXTTOSEND (412) // if the client doesn't specify the message
 		{senderror(412, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No text to send\r\n"); return;}
-	//print the vector
-	for (size_t i = 0; i < tmp.size(); i++)
-		std::cout << tmp[i] << std::endl;
 	if (tmp.size() < 1)//ERR_NORECIPIENT (411) // if the client doesn't specify the recipient
 		{senderror(411, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No recipient given (PRIVMSG)\r\n"); return;}
 	CheckForChannels_Clients(tmp, fd); // check if the channels and clients exist
 	for (size_t i = 0; i < tmp.size(); i++){// send the message to the clients and channels
-		std::cout << "channel name: " << tmp[i] << std::endl;
 		if (tmp[i][0] == '#'){
-			std::cout << "ana hena\n"; 
 			tmp[i].erase(tmp[i].begin());
 			std::string resp = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG #" + tmp[i] + " :" + message + "\r\n";
-			Channel *ch  = GetChannel(tmp[i]);
-			ch->sendTo_all(resp, fd);
-			std::cout << "		|" << resp << "|\n" ;
+			GetChannel(tmp[i])->sendTo_all(resp, fd);
+			std::cout << "		" << resp;
 		}
 		else{
-			std::cout <<  "2\n";
 			std::string resp = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + tmp[i] + " :" + message + "\r\n";
 			send(GetClientNick(tmp[i])->GetFd(), resp.c_str(), resp.size(),0);
 			std::cout << "		" << resp;

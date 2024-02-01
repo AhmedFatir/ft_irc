@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/30 10:27:48 by afatir           ###   ########.fr       */
+/*   Updated: 2024/02/01 04:10:22 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ class Channel;
 class Server
 {
 private:
+	static bool Signal;
 	std::vector<Client> clients;
 	std::vector<Channel> channels;
 	std::vector<struct pollfd> fds;
@@ -72,6 +73,8 @@ public:
 	void RemoveChannel(std::string name);
 	void RemoveFds(int fd);
 	//######################
+	static void					SignalHandler(int signum);
+	void						close_fds();
 	void                        init(int port, std::string pass);
 	void                        set_sever_socket();
 	void                        accept_new_client();
@@ -88,7 +91,6 @@ public:
 	std::vector<std::string>    split_recivedBuffer(std::string &str);
 	void                        client_authen(int fd, std::string& pass);
 	void                        parse_exec_cmd(std::string &cmd, int fd);
-	void						close_fds();
 	std::string 		get_clientList(Channel &channel);
 	// void						join_channel(std::vector<std::string>& cmd, int fd);
 	// bool						is_channlExist(std::string& channel_name);
