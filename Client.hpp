@@ -36,7 +36,7 @@ public:
 	std::string GetUserName();
 	void SetFd(int fd);
 	int GetFd();
-
+	std::string getHostname();
 	//###############
 	void SetNickname(std::string& nickName);
 	void SetUsername(std::string& username)
