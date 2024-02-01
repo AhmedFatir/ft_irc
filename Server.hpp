@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/28 18:33:03 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/01/30 10:27:48 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,7 @@ public:
 	int GetPort();
 	std::string GetPassword();
 	Client *GetClient(int fd);
+	Client *GetClientNick(std::string nickname);
 	Channel *GetChannel(std::string name);
 	
 	void SetFd(int server_fdsocket);
@@ -113,6 +114,13 @@ public:
 	std::string getnamechannel(std::string &cmd);
 	std::string tTopic();
 	// Channel *GetChannelByName(const std::string &name);
+
+	// ########################### MODE CMD
+
+	void mode_command(std::string& cmd, int fd);
+	// ########################### PRIVMSG CMD
+	void   PRIVMSG(std::string cmd, int fd);
+	void CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
 };
 
 #endif

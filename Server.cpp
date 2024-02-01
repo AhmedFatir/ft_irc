@@ -6,7 +6,7 @@
 /*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/02/01 16:44:57 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/02/01 16:55:38 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,13 @@ void Server::RemoveFds(int fd){
 Client *Server::GetClient(int fd){
 	for (size_t i = 0; i < this->clients.size(); i++){
 		if (this->clients[i].GetFd() == fd)
+			return &this->clients[i];
+	}
+	return NULL;
+}
+Client *Server::GetClientNick(std::string nickname){
+	for (size_t i = 0; i < this->clients.size(); i++){
+		if (this->clients[i].GetNickName() == nickname)
 			return &this->clients[i];
 	}
 	return NULL;
@@ -253,6 +260,12 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 		JOIN(cmd, fd);
 	else if (splited_cmd[0] == "TOPIC")
 		Topic(cmd, fd);
+	else if (splited_cmd[0] == "MODE")
+		mode_command(cmd, fd);
+	else if (splited_cmd[0] == "PART")
+		PART(cmd, fd);
+	else if (splited_cmd[0] == "PRIVMSG")
+		PRIVMSG(cmd, fd);
 
 }
 
@@ -384,12 +397,17 @@ void SplitCmdJoin(std::string cmd, std::vector<std::string> &tmp)
 	}
 	tmp.push_back(str);
 	tmp.erase(tmp.begin());
+	//print the vector
+	// for (size_t i = 0; i < tmp.size(); i++)
+	// 	std::cout << tmp[i] << std::endl;
+	// exit(0);
 }
 
 void SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::string cmd)
 {
 	std::vector<std::string> tmp;
 	SplitCmdJoin(cmd, tmp);
+	//print the vector
 	for (size_t i = 0; i < tmp.size(); i++)
 	{
 		std::string str, pass;
@@ -411,6 +429,10 @@ void SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::st
 		}
 		else token.push_back(std::make_pair(tmp[i], ""));
 	}
+	//print the vector
+	// for (size_t i = 0; i < token.size(); i++)
+	// 	std::cout << token[i].first << " " << token[i].second << std::endl;
+	// exit(0);
 }
 
 void senderror(int code, std::string clientname, int fd, std::string msg)
@@ -478,6 +500,8 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, in
 
 void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd)
 {
+	if (SearchForClients(GetClient(fd)->GetNickName()) >= 10)//ERR_TOOMANYCHANNELS (405) // if the client is already in 10 channels
+		{senderror(405, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :You have joined too many channels\r\n"); return;}
 	Channel newChannel;
 	newChannel.SetName(token[i].first);
 	if (!token[i].second.empty())
@@ -500,6 +524,7 @@ void Server::JOIN(std::string cmd, int fd)
 		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	std::vector<std::pair<std::string, std::string> > token;
 	SplitJoin(token, cmd);
+	std::cout <<"-------------------------"<< token[0].first << std::endl;
 	for (size_t i = 0; i < token.size(); i++){//ERR_NOSUCHCHANNEL (403) // if the channel doesn't exist
 		if (*(token[i].first.begin()) != '#' && *(token[i].first.begin()) != '&')
 			{senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n"); return;}
@@ -810,5 +835,294 @@ void Server::PART(std::string cmd, int fd)
 		}
 		if (!flag) // ERR_NOSUCHCHANNEL (403) // if the channel doesn't exist
 			senderror(403, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :No such channel\r\n");
+	}
+}
+
+//################################ MODE #####################################################
+
+
+std::string mode_toAppend(std::string chain, char opera, char mode)
+{
+	std::stringstream ss;
+
+	ss.clear();
+	char last = '\0';
+	for(size_t i = 0; i < chain.size(); i++)
+	{
+		if(chain[i] == '+' || chain[i] == '-')
+			last = chain[i];
+	}
+	if(last != opera)
+		ss << opera << mode;
+	else
+		ss << mode;
+	return ss.str();
+}
+
+void Server::mode_command(std::string& cmd, int fd)
+{
+
+	//if channel is not exsit ERR_NOSUCHCHANNEL (403) is returned
+	//if <options> is not given, the RPL_CHANNELMODEIS (324) numeric is returned. (MODE #example)
+	// If a user does not have appropriate privileges to change modes on the target channel, \
+	// the server MUST NOT process the message, and ERR_CHANOPRIVSNEEDED (482) numeric is returned
+
+	std::vector<std::pair<char, bool> > modes;
+	char charaters[5] = {'i', 't', 'k', 'o', 'l'};
+	for(int i = 0; i < 5; i++)
+		modes.push_back(std::make_pair(charaters[i],false));
+	std::string pass;
+	std::string _pass;
+	std::string user;
+	std::string limit;
+
+	std::vector<std::string> splited = split_cmd(cmd);
+	char opera = '\0';
+	std::stringstream mode_chain;
+	Client *cli = GetClient(fd);
+	if(!cli)
+	{
+		std::string resp = ": 451 nickname :You have not registered\r\n";
+		send(fd,resp.c_str(), resp.size(), 0);
+		close(fd);
+		RemoveFds(fd);
+		RemoveClient(fd);
+		return ;
+	}
+	else if(splited.size() < 2)
+	{
+		std::string resp = ": 461 " + cli->GetNickName() + " USER :Not enough parameters\r\n";
+		send(fd, resp.c_str(), resp.size(), 0);
+		return ;
+	}
+	std::string channelName = splited[1].substr(1);
+	Channel *channel = GetChannel(channelName);
+
+	if(!channel)
+	{
+		// "<client> <channel> :No such channel"
+		std::string resp = ": 403 " + cli->GetNickName()+  " " + channelName + " No such channel\r\n";
+		send(fd, resp.c_str(), resp.size(), 0);
+		return ;
+	}
+	else if(channel)
+	{
+		size_t pos = 3;
+		if (splited.size() == 2)
+			std::cout << "reply with modes of channel" << std::endl;
+		else
+		{
+			for(size_t i = 0; i < splited[2].size(); i++)
+			{
+				std::cout << "cmd: " << splited[2][i] << std::endl;
+				if(splited[2][i] == '+' || splited[2][i] == '-')
+					opera = splited[2][i];
+				else
+				{
+					if(splited[2][i] == 'i')
+					{
+						if(opera == '+')
+						{
+							mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
+							modes[0].second = true;
+						}
+						else if (opera == '-')
+						{
+							mode_chain << mode_toAppend(mode_chain.str(), opera, splited[2][i]);
+							modes[0].second = false;
+						}
+					}
+				
+					else if (splited[2][i] == 't')
+					{
+						if(opera == '+')
+						{
+							mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
+							modes[1].second = true;
+						}
+						else if (opera == '-')
+						{
+							mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
+							modes[1].second = false;
+						}
+					}
+					else if (splited[2][i] == 'k')
+					{	
+						if(opera == '+')
+						{
+							if(splited.size() > pos)
+							{
+								modes[2].second = true;
+								pass = splited[pos++];
+								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
+							}
+							else
+							{
+								// ":" + hostname + " 324 " + nick + " " + channelName + " " + channelmode + "\r\n"
+								std::string resp = ": 324 " + GetClient(fd)->GetNickName() + " " + channel->GetName() + " +k\r\n"; 
+								std::cout << "You must specify a parameter for the key mode (+k)\n";
+								send(fd, resp.c_str(), resp.size(), 0);
+							}
+						}
+						else if (opera == '-')
+						{
+							if(splited.size() > pos)
+							{
+								modes[2].second = false;
+								pass = splited[pos++];
+								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
+							}
+							else
+								std::cout << "You must specify a parameter for the key mode(-k)";
+						}
+					}
+					else if (splited[2][i] == 'o')
+					{	
+						if(opera == '+')
+						{
+							if(splited.size() > pos)
+							{
+								modes[3].second = true;
+								pass = splited[pos++];
+								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
+							}
+							else
+								std::cout << "You must specify a parameter for the key mode (+o)";
+						}
+						else if (opera == '-')
+						{
+							if(splited.size() > pos)
+							{
+								modes[3].second = false;
+								_pass = splited[pos++];
+								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
+							}
+							else
+								std::cout << "You must specify a parameter for the key mode (-o)";
+						}
+					}
+					else if (splited[2][i] == 'l')
+					{	
+						if(opera == '+')
+						{
+							if(splited.size() > pos)
+							{
+								modes[4].second = true;
+								limit = splited[pos++];
+								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
+							}
+							else
+								std::cout << "You must specify a parameter for the key mode (+l)";
+						}
+						else if (opera == '-')
+						{
+							if(splited.size() > pos)
+							{
+								modes[4].second = false;
+								limit = splited[pos++];
+								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
+							}
+							else
+								std::cout << "You must specify a parameter for the key mode (-l)";
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for(size_t i = 0; i < modes.size(); i++)
+	{
+		if(modes[i].first == 'k')
+			std::cout << ":" << '\'' << modes[i].first << '\'' << modes[i].second << " PASS: " << pass <<  "| " <<  _pass << std::endl;
+		else if (modes[i].first == 'o') 
+			std::cout << ":" << '\'' << modes[i].first << '\'' << modes[i].second << " USER: " << user << std::endl;
+		else if (modes[i].first == 'l') 
+			std::cout << ":" << '\'' << modes[i].first << '\'' << modes[i].second << " LIMIT: " << limit << std::endl;
+		else
+			std::cout << ":" << '\'' << modes[i].first << '\'' << modes[i].second << std::endl;
+	}
+	// std::cout << "mode chain: " << mode_chain.str() << std::endl;
+	// std::string resp = ":" + cli->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost MODE " + channel->GetName() +" " + mode_chain.str() + "\r\n";
+	// send(fd, resp.c_str(), resp.size(),0);
+	// std::cout << resp;
+
+}
+//########################################################PRIVMSG
+std::string SplitCmdPrivmsg(std::string cmd, std::vector<std::string> &tmp)
+{
+	std::istringstream stm(cmd);
+	std::string str;
+	while(stm >> cmd)
+		tmp.push_back(cmd);
+	tmp.erase(tmp.begin());
+	for (size_t i = 1; i < tmp.size(); i++){//start from the second string and take the rest of the strings as the message
+			for (size_t j = i; j < tmp.size(); j++)
+				{str += " " + tmp[j];tmp.erase(tmp.begin() + j);j--;}
+	}
+	std::string str1 = tmp[0]; std::string str2; tmp.clear();
+	for (size_t i = 0; i < str1.size(); i++){//split the first string by ',' to get the channels names
+		if (str1[i] == ',')
+			{tmp.push_back(str2); str2.clear();}
+		else str2 += str1[i];
+	}
+	tmp.push_back(str2);
+	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
+		{if (tmp[i].empty())tmp.erase(tmp.begin() + i);}
+	return str;
+}
+void	Server::CheckForChannels_Clients(std::vector<std::string> &tmp, int fd)
+{
+	for(size_t i = 0; i < tmp.size(); i++){
+		if (tmp[i][0] == '#'){
+			tmp[i].erase(tmp[i].begin());
+			if(!GetChannel(tmp[i]))//ERR_NOSUCHNICK (401) // if the channel doesn't exist
+				{senderror(401, tmp[i], GetClient(fd)->GetFd(), " :No such nick/channel\r\n"); tmp.erase(tmp.begin() + i); i--;}
+			else if (!GetChannel(tmp[i])->GetClientInChannel(GetClient(fd)->GetNickName())) //ERR_CANNOTSENDTOCHAN (404) // if the client is not in the channel
+				{senderror(404, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :Cannot send to channel\r\n"); tmp.erase(tmp.begin() + i); i--;}
+			else tmp[i] = "#" + tmp[i];
+		}
+		else{
+			if (!GetClientNick(tmp[i]))//ERR_NOSUCHNICK (401) // if the client doesn't exist
+				{senderror(401, tmp[i], GetClient(fd)->GetFd(), " :No such nick/channel\r\n"); tmp.erase(tmp.begin() + i); i--;}
+		}
+	}
+}
+
+void	Server::PRIVMSG(std::string cmd, int fd)
+{
+/*
+	ERR_NOSUCHSERVER (402) // if the server doesn't exist
+	ERR_NOTOPLEVEL (413) // if the client send the message to a server
+	ERR_WILDTOPLEVEL (414) // if the client send the message to a server
+*/
+	std::vector<std::string> tmp;
+	std::string message = SplitCmdPrivmsg(cmd, tmp);
+	if (tmp.size() > 10) //ERR_TOOMANYTARGETS (407) // if the client send the message to more than 10 clients
+		{senderror(407, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Too many recipients\r\n"); return;}
+	if (message.empty())//ERR_NOTEXTTOSEND (412) // if the client doesn't specify the message
+		{senderror(412, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No text to send\r\n"); return;}
+	//print the vector
+	for (size_t i = 0; i < tmp.size(); i++)
+		std::cout << tmp[i] << std::endl;
+	if (tmp.size() < 1)//ERR_NORECIPIENT (411) // if the client doesn't specify the recipient
+		{senderror(411, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No recipient given (PRIVMSG)\r\n"); return;}
+	CheckForChannels_Clients(tmp, fd); // check if the channels and clients exist
+	for (size_t i = 0; i < tmp.size(); i++){// send the message to the clients and channels
+		std::cout << "channel name: " << tmp[i] << std::endl;
+		if (tmp[i][0] == '#'){
+			std::cout << "ana hena\n"; 
+			tmp[i].erase(tmp[i].begin());
+			std::string resp = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG #" + tmp[i] + " :" + message + "\r\n";
+			Channel *ch  = GetChannel(tmp[i]);
+			ch->sendTo_all(resp, fd);
+			std::cout << "		|" << resp << "|\n" ;
+		}
+		else{
+			std::cout <<  "2\n";
+			std::string resp = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + tmp[i] + " :" + message + "\r\n";
+			send(GetClientNick(tmp[i])->GetFd(), resp.c_str(), resp.size(),0);
+			std::cout << "		" << resp;
+		}
 	}
 }
