@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
+/*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/30 10:59:22 by afatir           ###   ########.fr       */
+/*   Updated: 2024/02/01 16:55:38 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -315,12 +315,12 @@ void Server::set_nickname(std::string& nickname, int fd)
 			if(!oldNick.empty())
 			{
 				std::string resp = ":" + oldNick + " NICK " + nickname + "\r\n";
-				std::cout << resp; 
+				std::cout << resp;
 				send(fd, resp.c_str(), resp.size(), 0);
 			}
 			cli->SetNickname(nickname);
 		}
-		else	
+		else
 		{
 			std::string resp = ": 541 " + nickname + " :You have not registered\r\n";
 			send(fd,resp.c_str(), resp.size(), 0);
@@ -504,7 +504,7 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 	std::string respo = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost JOIN #" + token[i].first + "\r\n"; // join message
 	std::string resp2 = ": 353 " + GetClient(fd)->GetNickName() + " @ #" + token[i].first + " :@" + GetClient(fd)->GetNickName() + "\r\n"; // RPL_NAMREPLY (353) Messages:
 	std::string resp3 = ": 366 " + GetClient(fd)->GetNickName() + " #" + token[i].first + " :END of /NAMES list.\r\n"; // RPL_ENDOFNAMES (366) Message:
-	std::cout << respo << resp2 << resp3; 
+	std::cout << respo << resp2 << resp3;
 	send(fd, respo.c_str(), respo.size(),0);
 	send(fd, resp2.c_str(), resp2.size(),0);
 	send(fd, resp3.c_str(), resp3.size(),0);
@@ -692,14 +692,6 @@ bool Server::checkifchannelexist(std::string &namechannel)
 //     return NULL;
 // }
 
-std::string Server::tTopic()
-{
-	std::time_t current = std::time(NULL);
-	std::stringstream res;
-
-	res << current;
-	return res.str();
-}
 
 // std::string	Server::_printMessage(std::string num, std::string nickname, std::string message)
 // {
@@ -708,18 +700,27 @@ std::string Server::tTopic()
 // 	return (":" + this->_name + " " + num + " " + nickname + " " + message + "\n");
 // }
 
+//---------------------------KHBOUYCH-------------------------------------
+std::string Server::tTopic()
+{
+	std::time_t current = std::time(NULL);
+	std::stringstream res;
+
+	res << current;
+	return res.str();
+}
 void Server::Topic(std::string &cmd, int &fd)
 {
 	(void)fd;
 	std::vector<std::string> scmd = split_cmd(cmd);
 	std::string nmch = getnamechannel(scmd[1]);
-	Channel ch;
+	Channel *ch = NULL;
 	int chexist = 0;
 	for (size_t i = 0; i < channels.size(); i++)
 	{
 		if (nmch == channels[i].GetName())
 		{
-			ch = channels[i];
+			ch = &channels[i];
 			chexist = 1;
 			break;
 		}
@@ -727,20 +728,36 @@ void Server::Topic(std::string &cmd, int &fd)
 	}
 	if (chexist)
 	{
-		Client *admin = ch.get_admin(fd);
+		Client *admin = ch->get_admin(fd);
+		Client *client = ch->get_client(fd);
+		if (scmd.size() == 2)
+		{
+			if (admin)
+			{
+				std::string respons = ":localhost 332 " + admin->GetUserName() + " " + scmd[1] + " :" + ch->GetTopicName() + "\r\n";
+				send(fd, respons.c_str(), respons.size(),0);
+				std::string rep1 = ":localhost 333 " + admin->GetNickName() + " " + scmd[1] + " " + admin->GetNickName() + " " + tTopic() + "\r\n";
+				send(fd, rep1.c_str(), rep1.size(),0);
+			}
+			else if (client)
+			{
+				std::string respons = ":localhost 332 " + client->GetUserName() + " " + scmd[1] + " :" + ch->GetTopicName() + "\r\n";
+				send(fd, respons.c_str(), respons.size(),0);
+				std::string rep1 = ":localhost 333 " + client->GetNickName() + " " + scmd[1] + " " + client->GetNickName() + " " + tTopic() + "\r\n";
+				send(fd, rep1.c_str(), rep1.size(),0);
+			}
+		}
 		if (admin)
 		{
-			ch.SetTopicName(scmd[2]);
-			std::string respons= ":" + admin->GetNickName() + "!" + admin->GetUserName() + "@localhost TOPIC #" + nmch + " :" + ch.GetTopicName() + "\r\n";
-			send(fd, respons.c_str(), respons.size(),0);
-
-			// if 
-			// std::string rep = ":localhost 332 " + admin->GetNickName() + " " + scmd[1] + " :" + ch.GetTopicName() + "\r\n";
-			// send(fd, rep.c_str(), rep.length(), 0);
-
-			// std::string rep1 = ":localhost 333 " + admin->GetNickName() + " " + scmd[1] + " " + admin->GetNickName() + " " + tTopic() + "\r\n";
-			// send(fd, rep1.c_str(), rep1.length(), 0);
-			// std::cout << rep << rep1;
+			if (scmd.size() >= 3)
+			{
+				std::string restopic ;
+				for (size_t i = 2; i < scmd.size(); i++)
+					restopic += scmd[i] + " ";
+				ch->SetTopicName(restopic);
+				std::string respons= ":" + admin->GetNickName() + "!" + admin->GetUserName() + "@localhost TOPIC #" + nmch + " :" + ch->GetTopicName() + "\r\n";
+				send(fd, respons.c_str(), respons.size(),0);
+			}
 		}
 		else
 		{
@@ -754,6 +771,7 @@ void Server::Topic(std::string &cmd, int &fd)
 		send(fd, respons.c_str(), respons.size(),0);
 	}
 }
+//---------------------------KHBOUYCH----------------------------------------------------------------
 //################################PART#####################################################
 std::string SplitCmdPart(std::string cmd, std::vector<std::string> &tmp)
 {
