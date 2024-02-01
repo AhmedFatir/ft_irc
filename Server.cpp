@@ -711,7 +711,6 @@ std::string Server::tTopic()
 }
 void Server::Topic(std::string &cmd, int &fd)
 {
-	(void)fd;
 	std::vector<std::string> scmd = split_cmd(cmd);
 	std::string nmch = getnamechannel(scmd[1]);
 	Channel *ch = NULL;
