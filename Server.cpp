@@ -452,15 +452,6 @@ void senderror(int code, std::string clientname, std::string channelname, int fd
 }
 
 
-// std::string Server::get_clientList(Channel &channel)
-// {
-// 	std::string clinets;
-// 	for(size_t i = 0; i < channel.clientChannel_size(); i++)
-// 	{
-// 		clinets += cha
-// 	}
-// }
-
 int Server::SearchForClients(std::string nickname)
 {
 	int count = 0;
@@ -507,6 +498,7 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 	if (!token[i].second.empty())
 		newChannel.SetPassword(token[i].second);
 	newChannel.add_admin(*GetClient(fd));
+	newChannel.set_createiontime();
 	this->channels.push_back(newChannel);
 	// notifiy thet the client joined the channel
 	std::string respo = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost JOIN #" + token[i].first + "\r\n"; // join message
@@ -820,216 +812,6 @@ void Server::PART(std::string cmd, int fd)
 	}
 }
 
-//################################ MODE #####################################################
-
-
-std::string mode_toAppend(std::string chain, char opera, char mode)
-{
-	std::stringstream ss;
-
-	ss.clear();
-	char last = '\0';
-	for(size_t i = 0; i < chain.size(); i++)
-	{
-		if(chain[i] == '+' || chain[i] == '-')
-			last = chain[i];
-	}
-	if(last != opera)
-		ss << opera << mode;
-	else
-		ss << mode;
-	return ss.str();
-}
-
-void Server::mode_command(std::string& cmd, int fd)
-{
-
-	//if channel is not exsit ERR_NOSUCHCHANNEL (403) is returned
-	//if <options> is not given, the RPL_CHANNELMODEIS (324) numeric is returned. (MODE #example)
-	// If a user does not have appropriate privileges to change modes on the target channel, \
-	// the server MUST NOT process the message, and ERR_CHANOPRIVSNEEDED (482) numeric is returned
-
-	std::vector<std::pair<char, bool> > modes;
-	char charaters[5] = {'i', 't', 'k', 'o', 'l'};
-	for(int i = 0; i < 5; i++)
-		modes.push_back(std::make_pair(charaters[i],false));
-	std::string pass;
-	std::string _pass;
-	std::string user;
-	std::string limit;
-
-	std::vector<std::string> splited = split_cmd(cmd);
-	char opera = '\0';
-	std::stringstream mode_chain;
-	Client *cli = GetClient(fd);
-	if(!cli)
-	{
-		std::string resp = ": 451 nickname :You have not registered\r\n";
-		send(fd,resp.c_str(), resp.size(), 0);
-		close(fd);
-		RemoveFds(fd);
-		RemoveClient(fd);
-		return ;
-	}
-	else if(splited.size() < 2)
-	{
-		std::string resp = ": 461 " + cli->GetNickName() + " USER :Not enough parameters\r\n";
-		send(fd, resp.c_str(), resp.size(), 0);
-		return ;
-	}
-	std::string channelName = splited[1].substr(1);
-	Channel *channel = GetChannel(channelName);
-
-	if(!channel)
-	{
-		// "<client> <channel> :No such channel"
-		std::string resp = ": 403 " + cli->GetNickName()+  " " + channelName + " No such channel\r\n";
-		send(fd, resp.c_str(), resp.size(), 0);
-		return ;
-	}
-	else if(channel)
-	{
-		size_t pos = 3;
-		if (splited.size() == 2)
-			std::cout << "reply with modes of channel" << std::endl;
-		else
-		{
-			for(size_t i = 0; i < splited[2].size(); i++)
-			{
-				std::cout << "cmd: " << splited[2][i] << std::endl;
-				if(splited[2][i] == '+' || splited[2][i] == '-')
-					opera = splited[2][i];
-				else
-				{
-					if(splited[2][i] == 'i')
-					{
-						if(opera == '+')
-						{
-							mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
-							modes[0].second = true;
-						}
-						else if (opera == '-')
-						{
-							mode_chain << mode_toAppend(mode_chain.str(), opera, splited[2][i]);
-							modes[0].second = false;
-						}
-					}
-				
-					else if (splited[2][i] == 't')
-					{
-						if(opera == '+')
-						{
-							mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
-							modes[1].second = true;
-						}
-						else if (opera == '-')
-						{
-							mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
-							modes[1].second = false;
-						}
-					}
-					else if (splited[2][i] == 'k')
-					{	
-						if(opera == '+')
-						{
-							if(splited.size() > pos)
-							{
-								modes[2].second = true;
-								pass = splited[pos++];
-								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
-							}
-							else
-							{
-								// ":" + hostname + " 324 " + nick + " " + channelName + " " + channelmode + "\r\n"
-								std::string resp = ": 324 " + GetClient(fd)->GetNickName() + " " + channel->GetName() + " +k\r\n"; 
-								std::cout << "You must specify a parameter for the key mode (+k)\n";
-								send(fd, resp.c_str(), resp.size(), 0);
-							}
-						}
-						else if (opera == '-')
-						{
-							if(splited.size() > pos)
-							{
-								modes[2].second = false;
-								pass = splited[pos++];
-								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
-							}
-							else
-								std::cout << "You must specify a parameter for the key mode(-k)";
-						}
-					}
-					else if (splited[2][i] == 'o')
-					{	
-						if(opera == '+')
-						{
-							if(splited.size() > pos)
-							{
-								modes[3].second = true;
-								pass = splited[pos++];
-								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
-							}
-							else
-								std::cout << "You must specify a parameter for the key mode (+o)";
-						}
-						else if (opera == '-')
-						{
-							if(splited.size() > pos)
-							{
-								modes[3].second = false;
-								_pass = splited[pos++];
-								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
-							}
-							else
-								std::cout << "You must specify a parameter for the key mode (-o)";
-						}
-					}
-					else if (splited[2][i] == 'l')
-					{	
-						if(opera == '+')
-						{
-							if(splited.size() > pos)
-							{
-								modes[4].second = true;
-								limit = splited[pos++];
-								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
-							}
-							else
-								std::cout << "You must specify a parameter for the key mode (+l)";
-						}
-						else if (opera == '-')
-						{
-							if(splited.size() > pos)
-							{
-								modes[4].second = false;
-								limit = splited[pos++];
-								mode_chain <<  mode_toAppend(mode_chain.str(), opera, splited[2][i]);
-							}
-							else
-								std::cout << "You must specify a parameter for the key mode (-l)";
-						}
-					}
-				}
-			}
-		}
-	}
-
-	for(size_t i = 0; i < modes.size(); i++)
-	{
-		if(modes[i].first == 'k')
-			std::cout << ":" << '\'' << modes[i].first << '\'' << modes[i].second << " PASS: " << pass <<  "| " <<  _pass << std::endl;
-		else if (modes[i].first == 'o') 
-			std::cout << ":" << '\'' << modes[i].first << '\'' << modes[i].second << " USER: " << user << std::endl;
-		else if (modes[i].first == 'l') 
-			std::cout << ":" << '\'' << modes[i].first << '\'' << modes[i].second << " LIMIT: " << limit << std::endl;
-		else
-			std::cout << ":" << '\'' << modes[i].first << '\'' << modes[i].second << std::endl;
-	}
-	// std::cout << "mode chain: " << mode_chain.str() << std::endl;
-	// std::string resp = ":" + cli->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost MODE " + channel->GetName() +" " + mode_chain.str() + "\r\n";
-	// send(fd, resp.c_str(), resp.size(),0);
-	// std::cout << resp;
-
-}
 //########################################################PRIVMSG
 std::string SplitCmdPrivmsg(std::string cmd, std::vector<std::string> &tmp)
 {
@@ -1107,4 +889,14 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 			std::cout << "		" << resp;
 		}
 	}
+}
+
+
+////////////// send
+
+void Server::_sendResponse(std::string response, int fd)
+{
+	std::cout << "Response: " << response;
+	if(send(fd, response.c_str(), response.size(), 0) == -1)
+		std::cerr << "send() faild" << std::endl;
 }

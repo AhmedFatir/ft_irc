@@ -28,8 +28,10 @@
 #include <poll.h>
 #include <csignal>
 #include <fstream>
+#include <ctime>
 #include "Client.hpp"
 #include "Channel.hpp"
+#include "replies.hpp"
 
 class Client;
 class Channel;
@@ -116,8 +118,15 @@ public:
 	// Channel *GetChannelByName(const std::string &name);
 
 	// ########################### MODE CMD
-
-	void mode_command(std::string& cmd, int fd);
+	void 		mode_command(std::string& cmd, int fd);
+	std::string invite_only(Channel *channel, char opera, std::string chain);
+	std::string topic_restriction(Channel *channel ,char opera, std::string chain);
+	std::string password_mode(std::vector<std::string> splited, Channel *channel, size_t &pos, char opera, int fd, std::string chain, std::string& arguments);
+	std::string operator_privilege(std::vector<std::string> splited, Channel *channel, size_t& pos, int fd, char opera, std::string chain, std::string& arguments);
+	std::string channel_limit(std::vector<std::string> splited, Channel *channel, size_t &pos, char opera, int fd, std::string chain, std::string& arguments);
+	bool		isvalid_limit(std::string& limit);
+	std::string mode_toAppend(std::string chain, char opera, char mode);
+	void 		_sendResponse(std::string response, int fd);
 	// ########################### PRIVMSG CMD
 	void   PRIVMSG(std::string cmd, int fd);
 	void CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
