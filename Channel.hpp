@@ -6,7 +6,7 @@
 /*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 21:14:29 by afatir            #+#    #+#             */
-/*   Updated: 2024/02/02 11:50:26 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/02/02 12:56:14 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,12 +25,14 @@ private:
 	int topic;
 	int key;
 	int limit;
-
+	std::string created_at;
+	bool topic_restriction;
 	std::string topic_name;
 	std::string password;
 	std::string name;
 	std::vector<Client> clients;
 	std::vector<Client> admins;
+	std::vector<std::pair<char, bool> > modes;
 public:
 	Channel();
 	~Channel();
@@ -45,6 +47,7 @@ public:
 	void SetPassword(std::string password);
 	void SetName(std::string name);
 
+	bool Gettopic_restriction() const;
 	int GetInvitOnly();
 	int GetTopic();
 	int GetKey();
@@ -52,8 +55,17 @@ public:
 	//abdellah
 	std::string clientChannel_list();
 	void sendTo_all(std::string &rpl1, std::string &rpl2 , std::string &rpl3);
-	void sendTo_all(std::string &rpl1);
+	void sendTo_all(std::string rpl1);
 	void sendTo_all(std::string &rpl1, int fd);
+	bool clientInChannel(std::string &nick);
+	bool change_clientToAdmin(std::string& nick);
+	bool change_adminToClient(std::string& nick);
+	bool getModeAtindex(size_t index);
+	void setModeAtindex(size_t index, bool mode);
+	std::string getModes();
+	void set_createiontime();
+	std::string get_creationtime();
+	void set_topicRestriction(bool value);
 	//
 	std::string GetTopicName();
 	std::string GetPassword();
@@ -67,6 +79,7 @@ public:
 	void remove_admin(int fd);
 	int GetClientsNumber();
 	Client* GetClientInChannel(std::string name);
+
 };
 
 #endif

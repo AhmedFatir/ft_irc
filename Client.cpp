@@ -37,3 +37,10 @@ std::string Client::GetUserName(){return this->username;}
 int Client::GetFd(){return this->fd;}
 void Client::SetFd(int fd){this->fd = fd;}
 void Client::SetNickname(std::string& nickName){this->nickname = nickName;}
+
+std::string Client::getHostname()
+{
+	std::string hostname = this->GetNickName() + "!" + this->GetUserName();
+	return hostname;
+}
+
