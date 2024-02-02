@@ -6,7 +6,7 @@
 /*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/02/02 16:51:21 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/02/02 17:19:20 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -802,25 +802,25 @@ void Server::Topic(std::string &cmd, int &fd)
 	}
 }
 
-Client* Server::GetClientbynickname(std::string &nickname, std::vector<Client> clist)
+Client* Server::GetClientbynickname(std::string &nickname, Channel &channel)
 {
-	for (std::vector<Client>::iterator it = clist.begin(); it != clist.end(); it++)
+	for (size_t i = 0; i < channel.clients.size(); i++)
 	{
-        if ((*it).GetNickName() == nickname)
-            return &(*it);
-    }
-	return NULL;
+		
+	}
 }
 
 void Server::Invite(std::string &cmd, int &fd)
 {
 	(void)fd;
 	std::vector<std::string> scmd = split_cmd(cmd);
-	Client *client = GetClientbynickname(scmd[1],clients);
+	Channel *ch = GetChannel(scmd[2]);
 
-	if (client)
+	Client *clt = GetClientbynickname(scmd[1], ch);
+
+	if (clt)
 	{
-		std::cout << "--> nickname : " + client->GetNickName() << std::endl;
+		std::cout << "--> nickname : " + clt->GetNickName() << std::endl;
 	}
 	else
 	{

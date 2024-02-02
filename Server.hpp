@@ -6,7 +6,7 @@
 /*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/02/02 16:48:14 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/02/02 17:14:37 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,12 +109,6 @@ public:
 	// ########################### PART CMD
 	void   PART(std::string cmd, int fd);
 
-	//--------KHBOUYCh-------------
-	std::string tTopic();
-	void Topic(std::string &cmd, int &fd);
-	void Invite(std::string &cmd, int &fd);
-	Client* GetClientbynickname(std::string &nickname, std::vector<Client> clist);
-	//--------KHBOUYCh-------------
 	bool checkifchannelexist(std::string &namechannel);
 	bool checkifadmin(int &fd);
 	std::string getnamechannel(std::string &cmd);
@@ -133,6 +127,12 @@ public:
 	// ########################### PRIVMSG CMD
 	void   PRIVMSG(std::string cmd, int fd);
 	void CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
+	//--------KHBOUYCh-------------
+	std::string tTopic();
+	void Topic(std::string &cmd, int &fd);
+	void Invite(std::string &cmd, int &fd);
+	Client* GetClientbynickname(std::string &nickname,Channel &channel);
+	//--------KHBOUYCh-------------
 };
 
 #endif
