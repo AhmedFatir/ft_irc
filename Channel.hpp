@@ -6,7 +6,7 @@
 /*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 21:14:29 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/28 14:31:24 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/02/02 11:50:26 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ private:
 	int topic;
 	int key;
 	int limit;
+
 	std::string topic_name;
 	std::string password;
 	std::string name;
