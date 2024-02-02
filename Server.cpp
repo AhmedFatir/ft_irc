@@ -6,7 +6,7 @@
 /*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/02/02 13:37:27 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/02/02 16:51:21 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -266,6 +266,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 		PART(cmd, fd);
 	else if (splited_cmd[0] == "PRIVMSG")
 		PRIVMSG(cmd, fd);
+	else if (splited_cmd[0] == "INVITE")
+		Invite(cmd,fd);
 
 }
 
@@ -772,7 +774,7 @@ void Server::Topic(std::string &cmd, int &fd)
 			{
 				if (admin)
 				{
-					std::string restopic ;
+					std::string restopic;
 					for (size_t i = 2; i < scmd.size(); i++)
 						restopic += scmd[i] + " ";
 					ch->SetTopicName(restopic);
@@ -798,6 +800,33 @@ void Server::Topic(std::string &cmd, int &fd)
 		std::string respons = ":localhost 403 " + GetClient(fd)->GetNickName() + " " + nmch + " :No such channel\r\n";
 		send(fd, respons.c_str(), respons.size(),0);
 	}
+}
+
+Client* Server::GetClientbynickname(std::string &nickname, std::vector<Client> clist)
+{
+	for (std::vector<Client>::iterator it = clist.begin(); it != clist.end(); it++)
+	{
+        if ((*it).GetNickName() == nickname)
+            return &(*it);
+    }
+	return NULL;
+}
+
+void Server::Invite(std::string &cmd, int &fd)
+{
+	(void)fd;
+	std::vector<std::string> scmd = split_cmd(cmd);
+	Client *client = GetClientbynickname(scmd[1],clients);
+
+	if (client)
+	{
+		std::cout << "--> nickname : " + client->GetNickName() << std::endl;
+	}
+	else
+	{
+		puts("---> nop");
+	}
+
 }
 //---------------------------KHBOUYCH----------------------------------------------------------------
 //################################PART#####################################################

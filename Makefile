@@ -6,7 +6,7 @@
 #    By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/01/20 09:54:25 by afatir            #+#    #+#              #
-#    Updated: 2024/02/02 13:44:07 by khbouych         ###   ########.fr        #
+#    Updated: 2024/02/02 13:47:01 by khbouych         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,7 @@ all: $(NAME)
 $(NAME): $(OBJS)
 	@$(CC) $(CFLAGS) -g -o $(NAME) $(OBJS)
 
-%.o: %.cpp Server.hpp Client.hpp Channel.hpp
+%.o: %.cpp Server.hpp Client.hpp Channel.hpp 
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
