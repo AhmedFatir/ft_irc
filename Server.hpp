@@ -1,16 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/02/03 06:33:37 by afatir           ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
-
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
@@ -87,6 +74,8 @@ public:
 	void                        parse_exec_cmd(std::vector<std::string>& cmd, int fd);
 	// ########################### JOIN CMD
 	void	JOIN(std::string cmd, int fd);
+	void	senderror(int code, std::string clientname, int fd, std::string msg);
+	void	senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg);
 	void	ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd);
 	void	NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd);
 	int		SearchForClients(std::string nickname);
