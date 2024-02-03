@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/30 10:27:48 by afatir           ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
@@ -39,6 +27,7 @@ class Channel;
 class Server
 {
 private:
+	static bool Signal;
 	std::vector<Client> clients;
 	std::vector<Channel> channels;
 	std::vector<struct pollfd> fds;
@@ -74,15 +63,17 @@ public:
 	void RemoveChannel(std::string name);
 	void RemoveFds(int fd);
 	//######################
+	static void					SignalHandler(int signum);
+	void						close_fds();
 	void                        init(int port, std::string pass);
 	void                        set_sever_socket();
 	void                        accept_new_client();
 	void                        accept_new_message(int fd);
 	std::vector<std::string>    split_cmd(std::string &str);
-	void                        client_authen(int fd, std::string& pass, std::vector<struct pollfd> &fds);
-	void                        parse_exec_cmd(std::vector<std::string>& cmd, int fd);
 	// ########################### JOIN CMD
 	void	JOIN(std::string cmd, int fd);
+	void	senderror(int code, std::string clientname, int fd, std::string msg);
+	void	senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg);
 	void	ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd);
 	void	NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd);
 	int		SearchForClients(std::string nickname);
@@ -90,12 +81,6 @@ public:
 	std::vector<std::string>    split_recivedBuffer(std::string &str);
 	void                        client_authen(int fd, std::string& pass);
 	void                        parse_exec_cmd(std::string &cmd, int fd);
-	void						close_fds();
-	std::string 		get_clientList(Channel &channel);
-	// void						join_channel(std::vector<std::string>& cmd, int fd);
-	// bool						is_channlExist(std::string& channel_name);
-	// void                        set_username(std::vector<std::string>& cmd, int fd);
-	// Client*					isCliExist(int fd);
 	// ########################### BOOL METHODS 
 	bool	is_clientExist(int fd);
 	bool	nickNameInUse(std::string& nickname);
@@ -109,12 +94,9 @@ public:
 	// ########################### PART CMD
 	void   PART(std::string cmd, int fd);
 
-	//--------TOPIC----
-	void Topic(std::string &cmd, int &fd);
 	bool checkifchannelexist(std::string &namechannel);
 	bool checkifadmin(int &fd);
 	std::string getnamechannel(std::string &cmd);
-	std::string tTopic();
 	// Channel *GetChannelByName(const std::string &name);
 
 	// ########################### MODE CMD
@@ -130,9 +112,12 @@ public:
 	// ########################### PRIVMSG CMD
 	void   PRIVMSG(std::string cmd, int fd);
 	void CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
-	//
-	void senderror(int code, std::string clientname, int fd, std::string msg);
-	void senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg);
+	//--------KHBOUYCh-------------
+	std::string tTopic();
+	void Topic(std::string &cmd, int &fd);
+	void Invite(std::string &cmd, int &fd);
+	Client* GetClientbynickname(std::string &nickname,Channel &channel);
+	//--------KHBOUYCh-------------
 };
 
 #endif

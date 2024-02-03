@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Channel.cpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/01/22 21:19:08 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/31 14:35:24 by khbouych         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "Channel.hpp"
 
 Channel::Channel(){
@@ -32,6 +20,11 @@ Channel::~Channel(){}
 Channel::Channel(Channel const &src){
 	*this = src;
 }
+bool Channel::Gettopic_restriction() const
+{
+	return this->topic_restriction;
+}
+
 Channel &Channel::operator=(Channel const &src){
 	if (this != &src){
 		this->name = src.name;
@@ -114,7 +107,8 @@ void Channel::remove_admin(int fd){
 	}
 }
 int Channel::GetClientsNumber(){return this->clients.size() + this->admins.size();}
-Client* Channel::GetClientInChannel(std::string name){
+Client* Channel::GetClientInChannel(std::string name)
+{
 	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it){
 		if (it->GetNickName() == name)
 			return &(*it);
@@ -157,12 +151,10 @@ void Channel::sendTo_all(std::string &rpl1, int fd)
 	{
 		if(admins[i].GetFd() != fd)
 			send(admins[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
-		std::cout << "     admins i: " << clients.size() << std::endl; 
 	}
 	
 	for(size_t i = 0; i < clients.size(); i++)
 	{
-		std::cout << "     cli i: " << clients.size() << std::endl; 
 		if(clients[i].GetFd() != fd)
 			send(clients[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
 	}

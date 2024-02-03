@@ -1,19 +1,8 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/01/20 09:54:25 by afatir            #+#    #+#              #
-#    Updated: 2024/01/27 21:27:21 by khbouych         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 NAME = ircserv
 CC = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98  -g  -fsanitize=address,undefined
-SRCS = Server.cpp Client.cpp Channel.cpp main.cpp  Mode.cpp Authenti.cpp Join.cpp
+SRCS = Server.cpp Client.cpp Channel.cpp main.cpp  Mode.cpp \
+		CMD/JOIN.cpp CMD/PART.cpp CMD/PRIVMSG.cpp CMD/KICK.cpp Authenti.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(NAME)
@@ -31,5 +20,12 @@ fclean: clean
 	@rm -f $(NAME)
 
 re: fclean all
+
+khalid :
+	make fclean
+	make clean
+	git add .
+	git commit -m "auto commit khbouych"
+	git push
 
 .PHONY: all clean fclean re

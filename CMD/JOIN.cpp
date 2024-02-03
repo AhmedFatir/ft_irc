@@ -1,13 +1,7 @@
-#include "Server.hpp"
+#include "../Server.hpp"
 
-/*
-    JOIN COMMAND
-*/
-
-//####################################JOIN##################################################
 void SplitCmdJoin(std::string cmd, std::vector<std::string> &tmp)
 {
-	// cmd = cmd.substr(0, cmd.size() - 1);
 	std::string str;
 	for (size_t i = 0; i < cmd.size(); i++){
 		if (cmd[i] == ' ' || cmd[i] == ',')
@@ -16,17 +10,12 @@ void SplitCmdJoin(std::string cmd, std::vector<std::string> &tmp)
 	}
 	tmp.push_back(str);
 	tmp.erase(tmp.begin());
-	//print the vector
-	// for (size_t i = 0; i < tmp.size(); i++)
-	// 	std::cout << tmp[i] << std::endl;
-	// exit(0);
 }
 
 void SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::string cmd)
 {
 	std::vector<std::string> tmp;
 	SplitCmdJoin(cmd, tmp);
-	//print the vector
 	for (size_t i = 0; i < tmp.size(); i++)
 	{
 		std::string str, pass;
@@ -48,28 +37,7 @@ void SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::st
 		}
 		else token.push_back(std::make_pair(tmp[i], ""));
 	}
-	//print the vector
-	// for (size_t i = 0; i < token.size(); i++)
-	// 	std::cout << token[i].first << " " << token[i].second << std::endl;
-	// exit(0);
 }
-
-void Server::senderror(int code, std::string clientname, int fd, std::string msg)
-{
-	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << msg;
-	std::string resp = ss.str();
-    _sendResponse(resp, fd);
-}
-
-void Server::senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg)
-{
-	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << " " << channelname << msg;
-	std::string resp = ss.str();
-    _sendResponse(resp, fd);
-}
-
 
 int Server::SearchForClients(std::string nickname)
 {
@@ -101,7 +69,7 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, in
 	// add the client to the channel
 	Client *cli = GetClient(fd);
 	this->channels[j].add_client(*cli);
-    std::string response = RPL_JOINMSG(cli->getHostname(),std::string("localhost"),token[i].first) + \
+ 	std::string response = RPL_JOINMSG(cli->getHostname(),std::string("localhost"),token[i].first) + \
         RPL_NAMREPLY(GetClient(fd)->GetNickName(),token[i].first,channels[j].clientChannel_list()) + \
         RPL_ENDOFNAMES(GetClient(fd)->GetNickName(),token[i].first);
     channels[i].sendTo_all(response);
@@ -124,13 +92,15 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
         RPL_NAMREPLY(GetClient(fd)->GetNickName(),newChannel.GetName(),newChannel.clientChannel_list()) + \
         RPL_ENDOFNAMES(GetClient(fd)->GetNickName(),newChannel.GetName()),fd);
 }
+
 void Server::JOIN(std::string cmd, int fd)
 {
+	if (!GetClient(fd)) //ERR_NOTREGISTERED (451) // if the client is not registered
+		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	if (cmd.size() < 6)// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
 		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	std::vector<std::pair<std::string, std::string> > token;
 	SplitJoin(token, cmd);
-	std::cout <<"-------------------------"<< token[0].first << std::endl;
 	for (size_t i = 0; i < token.size(); i++){//ERR_NOSUCHCHANNEL (403) // if the channel doesn't exist
 		if (*(token[i].first.begin()) != '#' && *(token[i].first.begin()) != '&')
 			{senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n"); return;}
