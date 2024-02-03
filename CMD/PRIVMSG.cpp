@@ -20,7 +20,7 @@ std::string SplitCmdPrivmsg(std::string cmd, std::vector<std::string> &tmp)
 	tmp.push_back(str2);
 	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
 		{if (tmp[i].empty())tmp.erase(tmp.begin() + i);}
-	return str;
+	return str.erase(0, 1);
 }
 
 void	Server::CheckForChannels_Clients(std::vector<std::string> &tmp, int fd)
@@ -62,14 +62,19 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 	for (size_t i = 0; i < tmp.size(); i++){// send the message to the clients and channels
 		if (tmp[i][0] == '#'){
 			tmp[i].erase(tmp[i].begin());
-			std::string resp = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG #" + tmp[i] + " :" + message + "\r\n";
+			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG #" + tmp[i] + " :" + message + "\r\n";
 			GetChannel(tmp[i])->sendTo_all(resp, fd);
 			std::cout << "		" << resp;
 		}
 		else{
-			std::string resp = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + tmp[i] + " :" + message + "\r\n";
+			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + tmp[i] + " :" + message + "\r\n";
 			send(GetClientNick(tmp[i])->GetFd(), resp.c_str(), resp.size(),0);
 			std::cout << "		" << resp;
 		}
 	}
 }
+/*
+:anamnlhih!~ana@197.230.30.146 JOIN #wa7edchannel
+:anamnlhih!~ana@197.230.30.146 PRIVMSG #wa7edchannel :hello1
+:anamnlhih!~ana@197.230.30.146 QUIT :Remote host closed the connection
+*/

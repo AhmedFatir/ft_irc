@@ -8,7 +8,7 @@ int main(int ac, char **av)
 	std::cout << "---- SERVER ----" << std::endl;
 	try
 	{
-		signal(SIGINT, Server::SignalHandler);
+		// signal(SIGINT, Server::SignalHandler);
 		ser.init(std::atoi(av[1]), av[2]);
 	}
 	catch(const std::exception& e)

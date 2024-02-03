@@ -1,7 +1,6 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -111,6 +110,8 @@ public:
 	void 		_sendResponse(std::string response, int fd);
 	// ########################### PRIVMSG CMD
 	void   PRIVMSG(std::string cmd, int fd);
+	// ########################### QUITE CMD
+	void   QUIT(std::string cmd, int fd);
 	void CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
 	//--------KHBOUYCh-------------
 	std::string tTopic();

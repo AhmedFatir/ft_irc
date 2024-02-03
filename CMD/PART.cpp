@@ -45,13 +45,14 @@ void Server::PART(std::string cmd, int fd)
 					if (!reason.empty())
 						ss << " :" << reason << "\r\n";
 					else ss << "\r\n";
-					std::string resp = ss.str();
-					send(fd, resp.c_str(), resp.size(),0);
-					std::cout << "		" << resp;
+					send(fd, ss.str().c_str(), ss.str().size(),0);
+					std::cout << "		" << ss.str();
 					if (channels[j].get_admin(channels[j].GetClientInChannel(GetClient(fd)->GetNickName())->GetFd()))
 						channels[j].remove_admin(channels[j].GetClientInChannel(GetClient(fd)->GetNickName())->GetFd());
 					else
 						channels[j].remove_client(channels[j].GetClientInChannel(GetClient(fd)->GetNickName())->GetFd());
+					if (channels[j].GetClientsNumber() == 0)
+						channels.erase(channels.begin() + j);
 			}
 		}
 		if (!flag) // ERR_NOSUCHCHANNEL (403) // if the channel doesn't exist
