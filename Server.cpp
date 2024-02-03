@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/02/01 21:46:02 by afatir           ###   ########.fr       */
+/*   Updated: 2024/02/01 23:20:57 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,10 +106,11 @@ void Server::init(int port, std::string pass)
 	this->set_sever_socket();
 
 	std::cout << "Waiting to accept a connection...\n";
-	while (true)
+	while (Server::Signal == false)
 	{
-		if(poll(&fds[0],fds.size(),-1) == -1 || Server::Signal == true)
-			throw(std::runtime_error("poll() faild or signal recived"));
+		if(poll(&fds[0],fds.size(),-1) == -1)
+			std::cout << "poll() faild or signal recived" << std::endl;
+			// throw(std::runtime_error("poll() faild or signal recived"));
 		for (size_t i = 0; i < fds.size(); i++)
 		{
 			if (fds[i].revents == POLLIN)
@@ -520,6 +521,8 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 
 void Server::JOIN(std::string cmd, int fd)
 {
+	if (!GetClient(fd)) //ERR_NOTREGISTERED (451) // if the client is not registered
+		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	if (cmd.size() < 6)// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
 		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	std::vector<std::pair<std::string, std::string> > token;
@@ -565,6 +568,8 @@ void SplitCmdKick(std::string cmd, std::vector<std::string> &tmp)
 void	Server::KICK(std::string cmd, int fd)
 {
 	//ERR_BADCHANMASK (476) // if the channel mask is invalid
+	if (!GetClient(fd)) //ERR_NOTREGISTERED (451) // if the client is not registered
+		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	std::vector<std::string> tmp;
 	SplitCmdKick(cmd, tmp);
 	int flag = 0;
@@ -798,6 +803,8 @@ std::string SplitCmdPart(std::string cmd, std::vector<std::string> &tmp)
 
 void Server::PART(std::string cmd, int fd)
 {
+	if (!GetClient(fd)) //ERR_NOTREGISTERED (451) // if the client is not registered
+		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	if (cmd.size() < 6)// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
 		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	std::vector<std::string> tmp;
@@ -851,6 +858,7 @@ std::string SplitCmdPrivmsg(std::string cmd, std::vector<std::string> &tmp)
 		{if (tmp[i].empty())tmp.erase(tmp.begin() + i);}
 	return str;
 }
+
 void	Server::CheckForChannels_Clients(std::vector<std::string> &tmp, int fd)
 {
 	for(size_t i = 0; i < tmp.size(); i++){
@@ -876,6 +884,8 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 	ERR_NOTOPLEVEL (413) // if the client send the message to a server
 	ERR_WILDTOPLEVEL (414) // if the client send the message to a server
 */
+	if (!GetClient(fd)) //ERR_NOTREGISTERED (451) // if the client is not registered
+		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	std::vector<std::string> tmp;
 	std::string message = SplitCmdPrivmsg(cmd, tmp);
 	if (tmp.size() > 10) //ERR_TOOMANYTARGETS (407) // if the client send the message to more than 10 clients
