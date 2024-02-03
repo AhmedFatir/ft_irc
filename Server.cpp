@@ -81,6 +81,7 @@ void Server::SignalHandler(int signum)
 
 void Server::init(int port, std::string pass)
 {
+	std::string recived;
 	this->password = pass;
 	this->port = port;
 	this->set_sever_socket();
@@ -90,7 +91,6 @@ void Server::init(int port, std::string pass)
 	{
 		if(poll(&fds[0],fds.size(),-1) == -1)
 			std::cout << "poll() faild or signal recived" << std::endl;
-			// throw(std::runtime_error("poll() faild or signal recived"));
 		for (size_t i = 0; i < fds.size(); i++)
 		{
 			if (fds[i].revents == POLLIN)
@@ -99,7 +99,7 @@ void Server::init(int port, std::string pass)
 					this->accept_new_client();
 				}
 				else {
-					this->accept_new_message(fds[i].fd);
+					this->accept_new_message(fds[i].fd, recived);
 				}
 			}
 		}
@@ -157,11 +157,12 @@ std::vector<std::string> Server::split_recivedBuffer(std::string &str)
 	return vec;
 }
 
-void Server::accept_new_message(int fd)
+void Server::accept_new_message(int fd, std::string &recived)
 {
 	char buff[1024];
 	ssize_t bytes;
 	std::vector<std::string> cmd;
+	// std::string recived;
 	if((bytes = recv(fd, buff, sizeof(buff), 0)) == -1)
 		throw(std::runtime_error("recv() faild"));
 	if(bytes == 0)
@@ -174,14 +175,18 @@ void Server::accept_new_message(int fd)
 	else
 	{
 		buff[bytes] = '\0';
-		std::string recived = buff;
+		recived += buff;
+		if(recived.find_first_of("\r\n") == std::string::npos)
+			return;
 		if(recived != "PONG localhost\r\n")
 		{
 			std::cout << "recived: " << recived;
 			cmd = split_recivedBuffer(recived);
 			for(size_t i = 0; i < cmd.size(); i++)
 				this->parse_exec_cmd(cmd[i], fd);
+			recived.clear();
 		}
+
 	}
 }
 

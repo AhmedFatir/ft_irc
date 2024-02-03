@@ -68,7 +68,7 @@ public:
 	void                        init(int port, std::string pass);
 	void                        set_sever_socket();
 	void                        accept_new_client();
-	void                        accept_new_message(int fd);
+	void                        accept_new_message(int fd, std::string& recived);
 	std::vector<std::string>    split_cmd(std::string &str);
 	// ########################### JOIN CMD
 	void	JOIN(std::string cmd, int fd);
