@@ -11,6 +11,10 @@ std::string Server::tTopic()
 void Server::Topic(std::string &cmd, int &fd)
 {
 	std::vector<std::string> scmd = split_cmd(cmd);
+	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
+		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
+	else if (scmd.size() < 2)
+		return; //HANDL NOT ENOUGH PARAMTERS
 	std::string nmch = getnamechannel(scmd[1]);
 	Channel *ch = NULL;
 	int chexist = 0;
@@ -29,14 +33,14 @@ void Server::Topic(std::string &cmd, int &fd)
 		Client *admin = ch->get_admin(fd);
 		if (!admin)
 		{
-			std::cout << "You are not admin of this channel" << std::endl;
-            return;
+			std::string respons =  ":localhost 482 "+admin->GetNickName() + scmd[1] +" : You're Not a channel operator";
+			send(fd, respons.c_str(), respons.size(),0);
 		}
 		Client *client = ch->get_client(fd);
 		if (!client)
 		{
-			std::cout << "You are not in this channel" << std::endl;
-            return;
+			std::string respons =  ":localhost 482 "+admin->GetNickName() + scmd[1] +" : You are not in this channel";
+			send(fd, respons.c_str(), respons.size(),0);
 		}
 		if (scmd.size() == 2)
 		{

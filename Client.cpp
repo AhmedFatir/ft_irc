@@ -16,6 +16,7 @@ Client &Client::operator=(Client const &src){
 		this->nickname = src.nickname;
 		this->username = src.username;
 		this->fd = src.fd;
+		this->ChannelsInvite = src.ChannelsInvite;
 	}
 	return *this;
 }
@@ -31,4 +32,6 @@ std::string Client::getHostname()
 	std::string hostname = this->GetNickName() + "!" + this->GetUserName();
 	return hostname;
 }
+
+void AddChannelInvite(std::string)
 
