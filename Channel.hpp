@@ -6,7 +6,7 @@
 /*   By: khbouych <khbouych@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 21:14:29 by afatir            #+#    #+#             */
-/*   Updated: 2024/01/28 14:31:24 by khbouych         ###   ########.fr       */
+/*   Updated: 2024/02/02 16:51:56 by khbouych         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ private:
 	int limit;
 	std::string created_at;
 	bool topic_restriction;
+	// bool invite_restriction;
 	std::string topic_name;
 	std::string password;
 	std::string name;
@@ -47,6 +48,7 @@ public:
 	void SetPassword(std::string password);
 	void SetName(std::string name);
 
+	bool Gettopic_restriction() const;
 	int GetInvitOnly();
 	int GetTopic();
 	int GetKey();
@@ -79,7 +81,6 @@ public:
 	int GetClientsNumber();
 	Client* GetClientInChannel(std::string name);
 
-	
 };
 
 #endif

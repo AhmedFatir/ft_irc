@@ -6,9 +6,10 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 09:55:31 by afatir            #+#    #+#             */
-/*   Updated: 2024/02/01 04:10:22 by afatir           ###   ########.fr       */
+/*   Updated: 2024/02/03 06:33:37 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #ifndef SERVER_HPP
 #define SERVER_HPP
@@ -111,12 +112,9 @@ public:
 	// ########################### PART CMD
 	void   PART(std::string cmd, int fd);
 
-	//--------TOPIC----
-	void Topic(std::string &cmd, int &fd);
 	bool checkifchannelexist(std::string &namechannel);
 	bool checkifadmin(int &fd);
 	std::string getnamechannel(std::string &cmd);
-	std::string tTopic();
 	// Channel *GetChannelByName(const std::string &name);
 
 	// ########################### MODE CMD
@@ -132,6 +130,12 @@ public:
 	// ########################### PRIVMSG CMD
 	void   PRIVMSG(std::string cmd, int fd);
 	void CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
+	//--------KHBOUYCh-------------
+	std::string tTopic();
+	void Topic(std::string &cmd, int &fd);
+	void Invite(std::string &cmd, int &fd);
+	Client* GetClientbynickname(std::string &nickname,Channel &channel);
+	//--------KHBOUYCh-------------
 };
 
 #endif

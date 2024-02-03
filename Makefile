@@ -6,9 +6,10 @@
 #    By: afatir <afatir@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/01/20 09:54:25 by afatir            #+#    #+#              #
-#    Updated: 2024/02/01 21:46:34 by afatir           ###   ########.fr        #
+#    Updated: 2024/02/03 06:34:12 by afatir           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
+
 
 NAME = ircserv
 CC = c++
@@ -21,7 +22,7 @@ all: $(NAME)
 $(NAME): $(OBJS)
 	@$(CC) $(CFLAGS) -g -o $(NAME) $(OBJS)
 
-%.o: %.cpp Server.hpp Client.hpp Channel.hpp
+%.o: %.cpp Server.hpp Client.hpp Channel.hpp 
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
@@ -31,5 +32,12 @@ fclean: clean
 	@rm -f $(NAME)
 
 re: fclean all
+
+khalid :
+	make fclean
+	make clean
+	git add .
+	git commit -m "auto commit khbouych"
+	git push
 
 .PHONY: all clean fclean re

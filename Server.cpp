@@ -6,9 +6,10 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/02/01 23:20:57 by afatir           ###   ########.fr       */
+/*   Updated: 2024/02/03 06:36:33 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 
 
@@ -275,6 +276,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 		PART(cmd, fd);
 	else if (splited_cmd[0] == "PRIVMSG")
 		PRIVMSG(cmd, fd);
+	else if (splited_cmd[0] == "INVITE")
+		Invite(cmd,fd);
 
 }
 
@@ -738,34 +741,63 @@ void Server::Topic(std::string &cmd, int &fd)
 			if (admin)
 			{
 				std::string respons = ":localhost 332 " + admin->GetUserName() + " " + scmd[1] + " :" + ch->GetTopicName() + "\r\n";
+				ch->sendTo_all(scmd[1],fd);
 				send(fd, respons.c_str(), respons.size(),0);
 				std::string rep1 = ":localhost 333 " + admin->GetNickName() + " " + scmd[1] + " " + admin->GetNickName() + " " + tTopic() + "\r\n";
+				ch->sendTo_all(scmd[1],fd);
 				send(fd, rep1.c_str(), rep1.size(),0);
 			}
 			else if (client)
 			{
 				std::string respons = ":localhost 332 " + client->GetUserName() + " " + scmd[1] + " :" + ch->GetTopicName() + "\r\n";
+				ch->sendTo_all(scmd[1],fd);
 				send(fd, respons.c_str(), respons.size(),0);
 				std::string rep1 = ":localhost 333 " + client->GetNickName() + " " + scmd[1] + " " + client->GetNickName() + " " + tTopic() + "\r\n";
+				ch->sendTo_all(scmd[1],fd);
 				send(fd, rep1.c_str(), rep1.size(),0);
 			}
 		}
-		if (admin)
+
+		if (scmd.size() == 3)
 		{
-			if (scmd.size() >= 3)
+			if (ch->Gettopic_restriction() && client)
+			{
+				std::string respons =  ":localhost 482 "+client->GetNickName() + scmd[1] +" : You're Not a channel operator";
+				send(fd, respons.c_str(), respons.size(),0);
+			}
+			else if (ch->Gettopic_restriction() && admin)
 			{
 				std::string restopic ;
 				for (size_t i = 2; i < scmd.size(); i++)
 					restopic += scmd[i] + " ";
 				ch->SetTopicName(restopic);
 				std::string respons= ":" + admin->GetNickName() + "!" + admin->GetUserName() + "@localhost TOPIC #" + nmch + " :" + ch->GetTopicName() + "\r\n";
+				ch->sendTo_all(scmd[1],fd);
 				send(fd, respons.c_str(), respons.size(),0);
 			}
-		}
-		else
-		{
-			std::string respons = ":localhost 482 " + GetClient(fd)->GetNickName() + " " + nmch + " :You're not channel operator\r\n";
-			send(fd, respons.c_str(), respons.size(),0);
+			else
+			{
+				if (admin)
+				{
+					std::string restopic;
+					for (size_t i = 2; i < scmd.size(); i++)
+						restopic += scmd[i] + " ";
+					ch->SetTopicName(restopic);
+					std::string respons= ":" + admin->GetNickName() + "!" + admin->GetUserName() + "@localhost TOPIC #" + nmch + " :" + ch->GetTopicName() + "\r\n";
+					ch->sendTo_all(scmd[1],fd);
+					send(fd, respons.c_str(), respons.size(),0);
+				}
+				else if (client)
+				{
+					std::string restopic ;
+					for (size_t i = 2; i < scmd.size(); i++)
+						restopic += scmd[i] + " ";
+					ch->SetTopicName(restopic);
+					std::string respons= ":" + client->GetNickName() + "!" + client->GetUserName() + "@localhost TOPIC #" + nmch + " :" + ch->GetTopicName() + "\r\n";
+					ch->sendTo_all(scmd[1],fd);
+					send(fd, respons.c_str(), respons.size(),0);
+				}
+			}
 		}
 	}
 	else
@@ -773,6 +805,37 @@ void Server::Topic(std::string &cmd, int &fd)
 		std::string respons = ":localhost 403 " + GetClient(fd)->GetNickName() + " " + nmch + " :No such channel\r\n";
 		send(fd, respons.c_str(), respons.size(),0);
 	}
+}
+
+Client* Server::GetClientbynickname(std::string &nickname, Channel &channel)
+{
+	(void)channel;
+	(void)nickname;
+	return NULL;
+	// for (size_t i = 0; i < channel.clients.size(); i++)
+	// {
+	// 	if (channel.clients[i].GetNickName() == nickname)
+	// 		return &channel.clients[i];
+	// }
+}
+
+void Server::Invite(std::string &cmd, int &fd)
+{
+	(void)fd;
+	std::vector<std::string> scmd = split_cmd(cmd);
+	Channel *ch = GetChannel(scmd[2]);
+
+	Client *clt = GetClientbynickname(scmd[1], ch);
+
+	if (clt)
+	{
+		std::cout << "--> nickname : " + clt->GetNickName() << std::endl;
+	}
+	else
+	{
+		puts("---> nop");
+	}
+
 }
 //---------------------------KHBOUYCH----------------------------------------------------------------
 //################################PART#####################################################

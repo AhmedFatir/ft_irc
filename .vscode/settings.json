@@ -124,6 +124,14 @@
   "C_Cpp_Runner.useLeakSanitizer": false,
   "C_Cpp_Runner.showCompilationTime": false,
   "C_Cpp_Runner.useLinkTimeOptimization": false,
+<<<<<<< HEAD
   "C_Cpp_Runner.msvcSecureNoWarnings": false
 >>>>>>> 672c6f9442be0637382cc2155b3d5c53ea3d3927
+=======
+  "C_Cpp_Runner.msvcSecureNoWarnings": false,
+  "files.associations": {
+    "iosfwd": "cpp",
+    "string": "cpp"
+  }
+>>>>>>> acdaac80216479aed0eb3bdabfa8ec1a9e7f2ee7
 }
