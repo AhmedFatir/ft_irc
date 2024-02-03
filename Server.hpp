@@ -130,6 +130,9 @@ public:
 	// ########################### PRIVMSG CMD
 	void   PRIVMSG(std::string cmd, int fd);
 	void CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
+	//
+	void senderror(int code, std::string clientname, int fd, std::string msg);
+	void senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg);
 };
 
 #endif
