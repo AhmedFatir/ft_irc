@@ -29,7 +29,7 @@ void Server::mode_command(std::string& cmd, int fd)
 	std::stringstream mode_chain;
 	std::string arguments;
 	char opera = '\0';
-	
+
 	arguments.clear();
 	mode_chain.clear();
 	std::vector<std::string> splited = split_cmd(cmd);

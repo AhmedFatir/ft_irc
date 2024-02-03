@@ -19,7 +19,7 @@ public:
 	~Client();
 	Client(Client const &src);
 	Client &operator=(Client const &src);
-	
+
 	std::string GetNickName();
 	std::string GetUserName();
 	void SetFd(int fd);
