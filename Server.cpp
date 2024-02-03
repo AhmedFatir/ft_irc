@@ -6,7 +6,7 @@
 /*   By: afatir <afatir@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/20 10:06:56 by afatir            #+#    #+#             */
-/*   Updated: 2024/02/03 06:36:33 by afatir           ###   ########.fr       */
+/*   Updated: 2024/02/03 06:38:00 by afatir           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -825,7 +825,7 @@ void Server::Invite(std::string &cmd, int &fd)
 	std::vector<std::string> scmd = split_cmd(cmd);
 	Channel *ch = GetChannel(scmd[2]);
 
-	Client *clt = GetClientbynickname(scmd[1], ch);
+	Client *clt = GetClientbynickname(scmd[1], *ch);
 
 	if (clt)
 	{
