@@ -19,7 +19,7 @@ void	SplitQuit(std::vector<std::string> &tmp, std::string cmd)
 
 void Server::QUIT(std::string cmd, int fd)
 {
-	if (!GetClient(fd)) //ERR_NOTREGISTERED (451) // if the client is not registered
+	if (!GetClient(fd) ||  GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
 		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	std::vector<std::string> tmp;
 	SplitQuit(tmp, cmd);
@@ -30,7 +30,9 @@ void Server::QUIT(std::string cmd, int fd)
 			if (channels[i].GetClientsNumber() == 0)
 				channels.erase(channels.begin() + i);
 			else{
-				std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + tmp[0] + "\r\n";
+				// :huhuh!~u@qk3i8byd6tfyg.irc QUIT :Quit: wow
+				
+				std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + ":Quit: " + tmp[0] + "\r\n";
 				channels[i].sendTo_all(rpl);
 				std::cout << "QUIT: " << GetClient(fd)->GetNickName() << " has left the channel #" << channels[i].GetName() << std::endl;
 			}
@@ -40,13 +42,13 @@ void Server::QUIT(std::string cmd, int fd)
 			if (channels[i].GetClientsNumber() == 0)
 				channels.erase(channels.begin() + i);
 			else{
-				std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + tmp[0] + "\r\n";
+				std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + ":Quit: " + tmp[0] + "\r\n";
 				channels[i].sendTo_all(rpl);
 				std::cout << "QUIT: " << GetClient(fd)->GetNickName() << " has left the channel #" << channels[i].GetName() << std::endl;
 			}
 		}
 	}
-	std::cout << GetClient(fd)->GetNickName() << " has left the server " << tmp[0] << std::endl;
+	std::cout << GetClient(fd)->GetNickName() << " has left the server " << ":Quit: " << tmp[0]  << std::endl;
 	RemoveClient(fd);
 	RemoveFds(fd);
 	close(fd);

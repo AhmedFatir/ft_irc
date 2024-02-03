@@ -48,7 +48,7 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 	ERR_NOTOPLEVEL (413) // if the client send the message to a server
 	ERR_WILDTOPLEVEL (414) // if the client send the message to a server
 */
-	if (!GetClient(fd)) //ERR_NOTREGISTERED (451) // if the client is not registered
+	if (!GetClient(fd) ||  GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
 		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	std::vector<std::string> tmp;
 	std::string message = SplitCmdPrivmsg(cmd, tmp);

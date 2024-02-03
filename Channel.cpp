@@ -139,6 +139,7 @@ void Channel::sendTo_all(std::string &rpl1, std::string &rpl2 , std::string &rpl
 }
 void Channel::sendTo_all(std::string rpl1)
 {
+	// std::cout << rpl1;
 	for(size_t i = 0; i < admins.size(); i++)
 		send(admins[i].GetFd(), rpl1.c_str(), rpl1.size(),0);
 	for(size_t i = 0; i < clients.size(); i++)

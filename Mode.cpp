@@ -34,13 +34,13 @@ void Server::mode_command(std::string& cmd, int fd)
 	mode_chain.clear();
 	std::vector<std::string> splited = split_cmd(cmd);
 	Client *cli = GetClient(fd);
-	if(!cli) // client not registered yet
+	if(!cli ||  cli->GetNickName().empty() || cli->GetUserName().empty()) // client not registered yet
 	{
 		std::string resp = ": 451 nickname :You have not registered\r\n";
 		send(fd,resp.c_str(), resp.size(), 0);
-		close(fd);
-		RemoveFds(fd);
-		RemoveClient(fd);
+		// close(fd);
+		// RemoveFds(fd);
+		// RemoveClient(fd);
 		return ;
 	}
 	else if(splited.size() < 2) // Not enough parameters
