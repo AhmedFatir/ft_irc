@@ -36,15 +36,16 @@ void	Server::KICK(std::string cmd, int fd)
 					std::stringstream ss;
 					ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " KICK #" << tmp[0] << " " << tmp[1];
 					if (tmp.size() == 3)
-						ss << " :" <<tmp[2] << "\r\n";
+						ss << " :" << tmp[2] << "\r\n";
 					else ss << "\r\n";
-					std::string resp = ss.str();
-					this->channels[i].sendTo_all(resp);
-					std::cout << "		" << resp;
+					this->channels[i].sendTo_all(ss.str());
+					std::cout << "		" << ss.str();
 					if (channels[i].get_admin(channels[i].GetClientInChannel(tmp[1])->GetFd()))
 						channels[i].remove_admin(channels[i].GetClientInChannel(tmp[1])->GetFd());
 					else
 						channels[i].remove_client(channels[i].GetClientInChannel(tmp[1])->GetFd());
+					if (channels[i].GetClientsNumber() == 0)
+						channels.erase(channels.begin() + i);
 				}
 				else // if the client to kick is not in the channel
 					{senderror(441, GetClient(fd)->GetNickName(), tmp[0], GetClient(fd)->GetFd(), " :They aren't on that channel\r\n"); return;}
