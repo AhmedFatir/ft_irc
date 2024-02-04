@@ -12,8 +12,6 @@ void Server::Topic(std::string &cmd, int &fd)
 {
 	std::vector<std::string> scmd = split_cmd(cmd);
 	std::string nmch = scmd[1].substr(1);
-	if (GetChannel(nmch) && GetChannel(nmch)->GetTopicName().empty())
-		{senderror(331, "#"+nmch, fd, " :No topic is set\r\n"); return;}
 	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
 		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	if((scmd.size() == 2 && nmch == ":")|| !GetChannel(nmch))
