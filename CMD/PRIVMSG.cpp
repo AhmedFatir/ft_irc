@@ -48,8 +48,6 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 	ERR_NOTOPLEVEL (413) // if the client send the message to a server
 	ERR_WILDTOPLEVEL (414) // if the client send the message to a server
 */
-	if (!GetClient(fd) ||  GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
-		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	std::vector<std::string> tmp;
 	std::string message = SplitCmdPrivmsg(cmd, tmp);
 	if (tmp.size() > 10) //ERR_TOOMANYTARGETS (407) // if the client send the message to more than 10 clients
@@ -62,12 +60,12 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 	for (size_t i = 0; i < tmp.size(); i++){// send the message to the clients and channels
 		if (tmp[i][0] == '#'){
 			tmp[i].erase(tmp[i].begin());
-			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG #" + tmp[i] + " :" + message + "\r\n";
+			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG #" + tmp[i] + " " + message + "\r\n";
 			GetChannel(tmp[i])->sendTo_all(resp, fd);
 			std::cout << "		" << resp;
 		}
 		else{
-			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + tmp[i] + " :" + message + "\r\n";
+			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + tmp[i] + " " + message + "\r\n";
 			send(GetClientNick(tmp[i])->GetFd(), resp.c_str(), resp.size(),0);
 			std::cout << "		" << resp;
 		}

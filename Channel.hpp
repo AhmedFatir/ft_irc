@@ -43,7 +43,6 @@ public:
 	int GetLimit();
 	//abdellah
 	std::string clientChannel_list();
-	void sendTo_all(std::string &rpl1, std::string &rpl2 , std::string &rpl3);
 	void sendTo_all(std::string rpl1);
 	void sendTo_all(std::string &rpl1, int fd);
 	bool clientInChannel(std::string &nick);

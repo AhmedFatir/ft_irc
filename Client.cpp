@@ -34,3 +34,4 @@ std::string Client::getHostname()
 }
 
 void AddChannelInvite(std::string)
+

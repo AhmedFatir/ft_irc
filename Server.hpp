@@ -119,6 +119,7 @@ public:
 	void Invite(std::string &cmd, int &fd);
 	Client* GetClientbynickname(std::string &nickname,Channel &channel);
 	//--------KHBOUYCh-------------
+	bool notregistered(int fd);
 };
 
 #endif
