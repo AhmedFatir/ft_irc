@@ -25,15 +25,7 @@ void Server::Invite(std::string &cmd, int &fd)
 	    {senderror(442, scmd[2], fd, " :You're not on that channel\r\n"); return;}
 	if (GetChannel(scmd[2])->GetClientInChannel(scmd[1]))
 	    {senderror(443, GetClient(fd)->GetNickName(), scmd[2], fd, " :is already on channel\r\n"); return;}
-	Channel *ch = GetChannel(scmd[2]);
-	Client *clt = GetClientbynickname(scmd[1], *ch);
-	if (clt)
-	{
-		std::cout << "--> nickname : " + clt->GetNickName() << std::endl;
-	}
-	else
-	{
-		puts("---> nop");
-	}
+
+	
 
 }

@@ -33,12 +33,14 @@ void Server::Topic(std::string &cmd, int &fd)
 		Client *admin = ch->get_admin(fd);
 		if (!admin)
 		{
+			// senderror(451, "", fd, " :You have not registered\r\n")
 			std::string respons =  ":localhost 482 "+admin->GetNickName() + scmd[1] +" : You're Not a channel operator";
 			send(fd, respons.c_str(), respons.size(),0);
 		}
 		Client *client = ch->get_client(fd);
 		if (!client)
 		{
+			// senderror(451, "", fd, " :You have not registered\r\n")
 			std::string respons =  ":localhost 482 "+admin->GetNickName() + scmd[1] +" : You are not in this channel";
 			send(fd, respons.c_str(), respons.size(),0);
 		}
@@ -68,6 +70,7 @@ void Server::Topic(std::string &cmd, int &fd)
 		{
 			if (ch->Gettopic_restriction() && client)
 			{
+				// senderror(451, "", fd, " :You have not registered\r\n")
 				std::string respons =  ":localhost 482 "+client->GetNickName() + scmd[1] +" : You're Not a channel operator";
 				send(fd, respons.c_str(), respons.size(),0);
 			}
@@ -108,6 +111,7 @@ void Server::Topic(std::string &cmd, int &fd)
 	}
 	else
 	{
+		// senderror(451, "", fd, " :You have not registered\r\n")
 		std::string respons = ":localhost 403 " + GetClient(fd)->GetNickName() + " " + nmch + " :No such channel\r\n";
 		send(fd, respons.c_str(), respons.size(),0);
 	}
