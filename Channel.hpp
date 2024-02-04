@@ -15,7 +15,6 @@ private:
 	int limit;
 	std::string created_at;
 	bool topic_restriction;
-	// bool invite_restriction;
 	std::string topic_name;
 	std::string password;
 	std::string name;

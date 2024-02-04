@@ -70,7 +70,7 @@ void Server::Topic(std::string &cmd, int &fd)
 		{
 			if (ch->Gettopic_restriction() && client)
 			{
-				// senderror(451, "", fd, " :You have not registered\r\n")
+				// senderror(482, "", fd, " :You have not registered\r\n")
 				std::string respons =  ":localhost 482 "+client->GetNickName() + scmd[1] +" : You're Not a channel operator";
 				send(fd, respons.c_str(), respons.size(),0);
 			}
