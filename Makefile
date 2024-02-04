@@ -26,7 +26,7 @@ khalid :
 	make fclean
 	make clean
 	git add .
-	git commit -m "auto commit khbouych"
+	git commit -m "topic"
 	git push
 
 .PHONY: all clean fclean re

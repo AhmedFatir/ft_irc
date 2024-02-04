@@ -15,9 +15,9 @@ void Server::Topic(std::string &cmd, int &fd)
 	std::vector<std::string> scmd = split_cmd(cmd);
 	std::string nmch = scmd[1].substr(1);
 	if(!GetChannel(nmch))
-	    {senderror(403, nmch, fd, " :No such channel\r\n"); return;}
+	    {senderror(403, scmd[1], fd, " :No such channel\r\n"); return;}
 	if (!(GetChannel(nmch)->get_client(fd)) && !(GetChannel(nmch)->get_admin(fd)))
-	    {senderror(442, nmch, fd, " :You're not on that channel\r\n"); return;}
+	    {senderror(442, scmd[1], fd, " :You're not on that channel\r\n"); return;}
 	if (scmd.size() == 1)
 		{senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n"); return;}
 	else if (scmd.size() == 2)
