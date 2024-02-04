@@ -10,52 +10,26 @@ std::string Server::tTopic()
 }
 void Server::Topic(std::string &cmd, int &fd)
 {
-	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
-		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	std::vector<std::string> scmd = split_cmd(cmd);
 	std::string nmch = scmd[1].substr(1);
-	if(!GetChannel(nmch))
-	    {senderror(403, scmd[1], fd, " :No such channel\r\n"); return;}
+	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
+		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
+	if((scmd.size() == 2 && nmch == ":")|| !GetChannel(nmch))
+	    {senderror(403, "#"+nmch, fd, " :No such channel\r\n"); return;}
 	if (!(GetChannel(nmch)->get_client(fd)) && !(GetChannel(nmch)->get_admin(fd)))
-	    {senderror(442, scmd[1], fd, " :You're not on that channel\r\n"); return;}
-	if (scmd.size() == 1)
-		{senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n"); return;}
-	else if (scmd.size() == 2)
+	    {senderror(442, "#"+nmch, fd, " :You're not on that channel\r\n"); return;}
+	if (scmd.size() == 2)
+	{_sendResponse(": 332 " + GetClient(fd)->GetUserName() + " " + "#"+nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);_sendResponse(": 333 " + GetClient(fd)->GetNickName() + " " + "#"+nmch + " " + GetClient(fd)->GetNickName() + " " + tTopic() + "\r\n", fd);return;}
+	if (scmd.size() >= 3)
 	{
-		std::string respons = ":localhost 332 " + GetClient(fd)->GetUserName() + " " + scmd[1] + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
-		GetChannel(nmch)->sendTo_all(nmch,fd);
-		_sendResponse(respons, fd);
-		std::string rep1 = ":localhost 333 " + GetClient(fd)->GetNickName() + " " + scmd[1] + " " + GetClient(fd)->GetNickName() + " " + tTopic() + "\r\n";
-		GetChannel(nmch)->sendTo_all(nmch,fd);
-		_sendResponse(rep1, fd);
-	}
-
-	else if (scmd.size() >= 3)
-	{
+		std::string restopic ;
+		for (size_t i = 2; i < scmd.size(); i++)
+			restopic += scmd[i] + " ";
 		if (GetChannel(nmch)->Gettopic_restriction() && GetChannel(nmch)->get_client(fd))
-		{
-	    	senderror(442, nmch, fd, " :You're Not a channel operator\r\n");
-			return;
-		}
+		{senderror(442, nmch, fd, " :You're Not a channel operator\r\n");return;}
 		else if (GetChannel(nmch)->Gettopic_restriction() && GetChannel(nmch)->get_admin(fd))
-		{
-			std::string restopic ;
-			for (size_t i = 2; i < scmd.size(); i++)
-				restopic += scmd[i] + " ";
-			GetChannel(nmch)->SetTopicName(restopic);
-			std::string respons= ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
-			GetChannel(nmch)->sendTo_all(nmch,fd);
-			_sendResponse(respons, fd);
-		}
+		{GetChannel(nmch)->SetTopicName(restopic);GetChannel(nmch)->sendTo_all(nmch,fd);_sendResponse(":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);}
 		else
-		{
-			std::string restopic;
-			for (size_t i = 2; i < scmd.size(); i++)
-				restopic += scmd[i] + " ";
-			GetChannel(nmch)->SetTopicName(restopic);
-			std::string respons= ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
-			GetChannel(nmch)->sendTo_all(nmch,fd);
-			_sendResponse(respons, fd);
-		}
+			{GetChannel(nmch)->SetTopicName(restopic);GetChannel(nmch)->sendTo_all(nmch,fd);_sendResponse(":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);}
 	}
 }
