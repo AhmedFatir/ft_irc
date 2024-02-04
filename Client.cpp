@@ -33,5 +33,5 @@ std::string Client::getHostname()
 	return hostname;
 }
 
-void AddChannelInvite(std::string)
+// void AddChannelInvite(std::string)
 
