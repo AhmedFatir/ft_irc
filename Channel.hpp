@@ -67,7 +67,7 @@ public:
 	void remove_admin(int fd);
 	int GetClientsNumber();
 	Client* GetClientInChannel(std::string name);
-
+	
 };
 
 #endif

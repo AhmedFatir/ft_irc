@@ -13,8 +13,8 @@ private:
 	bool isOperator;
 	int fd;
 	bool registered;
-	std::vector<std::string> ChannelsInvite;
 public:
+	std::vector<std::string> ChannelsInvite;
 	Client();
 	Client(std::string nickname, std::string username, int fd);
 	~Client();
@@ -29,11 +29,8 @@ public:
 	//###############
 	void SetNickname(std::string& nickName);
 	void SetUsername(std::string& username)
-	{
-		this->username = username;
-	}
-	void AddChannelInvite(std::string);
-	bool GetChannelName(std::string name);
+	{this->username = username;}
+	void AddChannelInvite(std::string &chname);
 };
 
 #endif
