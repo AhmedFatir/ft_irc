@@ -26,7 +26,7 @@ fclean: clean
 
 re: fclean all
 
-git :
+khbouych :
 	make fclean
 	make clean
 	git add .
