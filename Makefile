@@ -22,11 +22,11 @@ fclean: clean
 
 re: fclean all
 
-khalid :
+git :
 	make fclean
 	make clean
 	git add .
-	git commit -m "auto commit $(USER) --> TOPIC INVITE √"
+	git commit -m "auto commit $(USER)"
 	git push
 
 .PHONY: all clean fclean re

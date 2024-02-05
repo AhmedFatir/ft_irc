@@ -11,9 +11,15 @@ std::string Server::tTopic()
 void Server::Topic(std::string &cmd, int &fd)
 {
 	std::vector<std::string> scmd = split_cmd(cmd);
+	// if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
+	// 	{senderror(451, "", fd, " :You have not registered\r\n"); return;}
+	// std::cout << "command ----> " << scmd[0] << std::endl;
+	// std::cout << "size ----> " << scmd.size() << std::endl;
+	if (scmd.size() == 1)
+		{senderror(403, "", fd, " :No such channel\r\n"); return;}
+	// else if (scmd[1].c_str()[0] != '#' || scmd.size() == 2)
+	// 	{senderror(403, "*", fd, " :No such channel\r\n"); return;}
 	std::string nmch = scmd[1].substr(1);
-	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
-		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	if((scmd.size() == 2 && nmch == ":")|| !GetChannel(nmch))
 	    {senderror(403, "#"+nmch, fd, " :No such channel\r\n"); return;}
 	if (!(GetChannel(nmch)->get_client(fd)) && !(GetChannel(nmch)->get_admin(fd)))
