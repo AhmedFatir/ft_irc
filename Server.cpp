@@ -245,7 +245,7 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << msg;
+	ss  << RED << ":localhost " << code << " " << clientname << msg << WHI;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild" << std::endl;
@@ -254,7 +254,7 @@ void Server::senderror(int code, std::string clientname, int fd, std::string msg
 void Server::senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << " " << channelname << msg;
+	ss << RED << ":localhost " << code << " " << clientname << " " << channelname << msg << WHI;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild" << std::endl;
