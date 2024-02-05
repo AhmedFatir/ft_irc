@@ -110,7 +110,7 @@ void	Server::set_username(std::string& cmd, int fd)
 		_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd);
 	else if(!cli || (cli && cli->GetNickName().empty()))
 	{
-		_sendResponse(ERR_NOTREGISTERED(cli->GetNickName()), fd);
+		_sendResponse(ERR_NOTREGISTERED(std::string("nickname")), fd);
 		close(fd);
 		RemoveFds(fd);
 		RemoveClient(fd);

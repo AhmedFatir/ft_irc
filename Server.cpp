@@ -162,7 +162,7 @@ void Server::accept_new_message(int fd, std::string &recived)
 	char buff[1024];
 	ssize_t bytes;
 	std::vector<std::string> cmd;
-	// std::string recived;
+
 	if((bytes = recv(fd, buff, sizeof(buff), 0)) == -1)
 		throw(std::runtime_error("recv() faild"));
 	if(bytes == 0)
@@ -205,7 +205,7 @@ std::vector<std::string> Server::split_cmd(std::string& cmd)
 
 bool Server::notregistered(int fd)
 {
-	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
+	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty())
 		return false;
 	return true;
 }
@@ -223,22 +223,28 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 		set_username(cmd, fd);
 	else if (splited_cmd[0] == "QUIT")
 		QUIT(cmd,fd);
-	else if (notregistered(fd) && splited_cmd[0] == "KICK")
-		KICK(cmd, fd);
-	else if (notregistered(fd) && splited_cmd[0] == "JOIN")
-		JOIN(cmd, fd);
-	else if (notregistered(fd) && splited_cmd[0] == "TOPIC")
-		Topic(cmd, fd);
-	else if (notregistered(fd)  && splited_cmd[0] == "MODE")
-		mode_command(cmd, fd);
-	else if (notregistered(fd)  && splited_cmd[0] == "PART")
-		PART(cmd, fd);
-	else if (notregistered(fd) && splited_cmd[0] == "PRIVMSG")
-		PRIVMSG(cmd, fd);
-	else if (notregistered(fd) && splited_cmd[0] == "INVITE")
-		Invite(cmd,fd);
+	else if(notregistered(fd))
+	{
+		if (splited_cmd[0] == "KICK")
+			KICK(cmd, fd);
+		else if (splited_cmd[0] == "JOIN")
+			JOIN(cmd, fd);
+		else if (splited_cmd[0] == "TOPIC")
+			Topic(cmd, fd);
+		else if (splited_cmd[0] == "MODE")
+			mode_command(cmd, fd);
+		else if (splited_cmd[0] == "PART")
+			PART(cmd, fd);
+		else if (splited_cmd[0] == "PRIVMSG")
+			PRIVMSG(cmd, fd);
+		else if (splited_cmd[0] == "INVITE")
+			Invite(cmd,fd);
+		else
+			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
+
+	}
 	else if (!notregistered(fd))
-			_sendResponse(ERR_NOTREGISTERED(std::string("nickname")),fd);
+		_sendResponse(ERR_NOTREGISTERED(std::string("nickname")),fd);
 
 }
 
@@ -260,7 +266,6 @@ void Server::senderror(int code, std::string clientname, std::string channelname
 		std::cerr << "send() faild" << std::endl;
 }
 
-//------------------------TOPIC--------------------------------------------------------------
 
 std::string Server::getnamechannel(std::string &name)
 {
@@ -276,159 +281,6 @@ Channel *Server::GetChannel(std::string name)
 	}
 	return NULL;
 }
-/*
-
-// bool Server::checkifadmin(int &fd)
-// {
-// 	for(size_t i=0; i < channels.size(); i++)
-// 		if (channels[i].get_admin(fd))
-// 			return true;
-// 	return false;
-// }
-
-// bool Server::checkifchannelexist(std::string &namechannel)
-// {
-// 	for (size_t i = 0; i < channels.size(); i++)
-// 	{
-// 		if (namechannel == (channels[i].GetName()))
-// 			return true;
-// 	}
-// 		return false;
-// }
-
-// //---------------------------KHBOUYCH-------------------------------------
-// std::string Server::tTopic()
-// {
-// 	std::time_t current = std::time(NULL);
-// 	std::stringstream res;
-
-// 	res << current;
-// 	return res.str();
-// }
-// void Server::Topic(std::string &cmd, int &fd)
-// {
-// 	std::vector<std::string> scmd = split_cmd(cmd);
-// 	std::string nmch = getnamechannel(scmd[1]);
-// 	Channel *ch = NULL;
-// 	int chexist = 0;
-// 	for (size_t i = 0; i < channels.size(); i++)
-// 	{
-// 		if (nmch == channels[i].GetName())
-// 		{
-// 			ch = &channels[i];
-// 			chexist = 1;
-// 			break;
-// 		}
-// 		chexist = 0;
-// 	}
-// 	if (chexist)
-// 	{
-// 		Client *admin = ch->get_admin(fd);
-// 		Client *client = ch->get_client(fd);
-// 		if (scmd.size() == 2)
-// 		{
-// 			if (admin)
-// 			{
-// 				std::string respons = ":localhost 332 " + admin->GetUserName() + " " + scmd[1] + " :" + ch->GetTopicName() + "\r\n";
-// 				ch->sendTo_all(scmd[1],fd);
-// 				send(fd, respons.c_str(), respons.size(),0);
-// 				std::string rep1 = ":localhost 333 " + admin->GetNickName() + " " + scmd[1] + " " + admin->GetNickName() + " " + tTopic() + "\r\n";
-// 				ch->sendTo_all(scmd[1],fd);
-// 				send(fd, rep1.c_str(), rep1.size(),0);
-// 			}
-// 			else if (client)
-// 			{
-// 				std::string respons = ":localhost 332 " + client->GetUserName() + " " + scmd[1] + " :" + ch->GetTopicName() + "\r\n";
-// 				ch->sendTo_all(scmd[1],fd);
-// 				send(fd, respons.c_str(), respons.size(),0);
-// 				std::string rep1 = ":localhost 333 " + client->GetNickName() + " " + scmd[1] + " " + client->GetNickName() + " " + tTopic() + "\r\n";
-// 				ch->sendTo_all(scmd[1],fd);
-// 				send(fd, rep1.c_str(), rep1.size(),0);
-// 			}
-// 		}
-
-// 		if (scmd.size() == 3)
-// 		{
-// 			if (ch->Gettopic_restriction() && client)
-// 			{
-// 				std::string respons =  ":localhost 482 "+client->GetNickName() + scmd[1] +" : You're Not a channel operator";
-// 				send(fd, respons.c_str(), respons.size(),0);
-// 			}
-// 			else if (ch->Gettopic_restriction() && admin)
-// 			{
-// 				std::string restopic ;
-// 				for (size_t i = 2; i < scmd.size(); i++)
-// 					restopic += scmd[i] + " ";
-// 				ch->SetTopicName(restopic);
-// 				std::string respons= ":" + admin->GetNickName() + "!" + admin->GetUserName() + "@localhost TOPIC #" + nmch + " :" + ch->GetTopicName() + "\r\n";
-// 				ch->sendTo_all(scmd[1],fd);
-// 				send(fd, respons.c_str(), respons.size(),0);
-// 			}
-// 			else
-// 			{
-// 				if (admin)
-// 				{
-// 					std::string restopic;
-// 					for (size_t i = 2; i < scmd.size(); i++)
-// 						restopic += scmd[i] + " ";
-// 					ch->SetTopicName(restopic);
-// 					std::string respons= ":" + admin->GetNickName() + "!" + admin->GetUserName() + "@localhost TOPIC #" + nmch + " :" + ch->GetTopicName() + "\r\n";
-// 					ch->sendTo_all(scmd[1],fd);
-// 					send(fd, respons.c_str(), respons.size(),0);
-// 				}
-// 				else if (client)
-// 				{
-// 					std::string restopic ;
-// 					for (size_t i = 2; i < scmd.size(); i++)
-// 						restopic += scmd[i] + " ";
-// 					ch->SetTopicName(restopic);
-// 					std::string respons= ":" + client->GetNickName() + "!" + client->GetUserName() + "@localhost TOPIC #" + nmch + " :" + ch->GetTopicName() + "\r\n";
-// 					ch->sendTo_all(scmd[1],fd);
-// 					send(fd, respons.c_str(), respons.size(),0);
-// 				}
-// 			}
-// 		}
-// 	}
-// 	else
-// 	{
-// 		std::string respons = ":localhost 403 " + GetClient(fd)->GetNickName() + " " + nmch + " :No such channel\r\n";
-// 		send(fd, respons.c_str(), respons.size(),0);
-// 	}
-// }
-
-// Client* Server::GetClientbynickname(std::string &nickname, Channel &channel)
-// {
-// 	(void)channel;
-// 	(void)nickname;
-// 	return NULL;
-// 	// for (size_t i = 0; i < channel.clients.size(); i++)
-// 	// {
-// 	// 	if (channel.clients[i].GetNickName() == nickname)
-// 	// 		return &channel.clients[i];
-// 	// }
-// }
-
-// void Server::Invite(std::string &cmd, int &fd)
-// {
-// 	(void)fd;
-// 	std::vector<std::string> scmd = split_cmd(cmd);
-// 	Channel *ch = GetChannel(scmd[2]);
-
-// 	Client *clt = GetClientbynickname(scmd[1], *ch);
-
-// 	if (clt)
-// 	{
-// 		std::cout << "--> nickname : " + clt->GetNickName() << std::endl;
-// 	}
-// 	else
-// 	{
-// 		puts("---> nop");
-// 	}
-
-// }
-//---------------------------KHBOUYCH----------------------------------------------------------------
-*/
-////////////// send
 
 void Server::_sendResponse(std::string response, int fd)
 {

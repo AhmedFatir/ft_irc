@@ -3,8 +3,6 @@
 void Server::Invite(std::string &cmd, int &fd)
 {
 	std::vector<std::string> scmd = split_cmd(cmd);
-	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
-		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	if(scmd.size() < 3)
 		{senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n"); return;}
 	std::cout << "|" << scmd[2]<< "|" << std::endl;
