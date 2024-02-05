@@ -31,6 +31,8 @@ public:
 	void SetUsername(std::string& username)
 	{this->username = username;}
 	void AddChannelInvite(std::string &chname);
+	void RmChannelInvite(std::string &chname);
+	bool GetInviteChannel(std::string &ChName);
 };
 
 #endif

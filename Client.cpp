@@ -33,8 +33,20 @@ std::string Client::getHostname()
 	return hostname;
 }
 
-void Client::AddChannelInvite(std::string &chname)
-{
+void Client::AddChannelInvite(std::string &chname){
 	ChannelsInvite.push_back(chname);
+}
+void Client::RmChannelInvite(std::string &chname){
+	for (size_t i = 0; i < this->ChannelsInvite.size(); i++){
+		if (this->ChannelsInvite[i] == chname)
+			{this->ChannelsInvite.erase(this->ChannelsInvite.begin() + i); return;}
+	}
+}
+bool Client::GetInviteChannel(std::string &ChName){
+	for (size_t i = 0; i < this->ChannelsInvite.size(); i++){
+		if (this->ChannelsInvite[i] == ChName)
+			return true;
+	}
+	return false;
 }
 
