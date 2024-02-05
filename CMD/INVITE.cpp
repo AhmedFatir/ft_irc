@@ -3,8 +3,6 @@
 void Server::Invite(std::string &cmd, int &fd)
 {
 	std::vector<std::string> scmd = split_cmd(cmd);
-	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
-		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	if(scmd.size() < 3)// ERR_NEEDMOREPARAMS (461) if there are not enough parameters
 		{senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n"); return;}
 	std::string channelname = scmd[2].substr(1);
@@ -24,7 +22,7 @@ void Server::Invite(std::string &cmd, int &fd)
 	// RPL_INVITING (341) if the invite was successfully sent
 	clt->AddChannelInvite(channelname);
 	std::string rep1 = ": 341 "+ GetClient(fd)->GetNickName()+" "+ clt->GetNickName()+" "+scmd[2]+"\r\n";
-	send(fd, rep1.c_str(), rep1.size(),0);
+	send(fd, rep1.c_str(), rep1.size(), 0);
 	std::string rep2 = ":"+ clt->getHostname() + " INVITE " + clt->GetNickName() + " " + scmd[2]+"\r\n";
 	send(clt->GetFd(), rep2.c_str(), rep2.size(),0);
 }

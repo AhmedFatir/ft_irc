@@ -19,8 +19,6 @@ void SplitCmdKick(std::string cmd, std::vector<std::string> &tmp)
 void	Server::KICK(std::string cmd, int fd)
 {
 	//ERR_BADCHANMASK (476) // if the channel mask is invalid
-	if (!GetClient(fd) ||  GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
-		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	std::vector<std::string> tmp;
 	SplitCmdKick(cmd, tmp);
 	int flag = 0;

@@ -104,8 +104,6 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 
 void Server::JOIN(std::string cmd, int fd)
 {
-	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
-		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	if (cmd.size() < 6)// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
 		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	std::vector<std::pair<std::string, std::string> > token;

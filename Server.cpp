@@ -162,7 +162,7 @@ void Server::accept_new_message(int fd, std::string &recived)
 	char buff[1024];
 	ssize_t bytes;
 	std::vector<std::string> cmd;
-	// std::string recived;
+
 	if((bytes = recv(fd, buff, sizeof(buff), 0)) == -1)
 		throw(std::runtime_error("recv() faild"));
 	if(bytes == 0)
@@ -205,7 +205,7 @@ std::vector<std::string> Server::split_cmd(std::string& cmd)
 
 bool Server::notregistered(int fd)
 {
-	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
+	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty())
 		return false;
 	return true;
 }
@@ -223,29 +223,35 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 		set_username(cmd, fd);
 	else if (splited_cmd[0] == "QUIT")
 		QUIT(cmd,fd);
-	else if (notregistered(fd) && splited_cmd[0] == "KICK")
-		KICK(cmd, fd);
-	else if (notregistered(fd) && splited_cmd[0] == "JOIN")
-		JOIN(cmd, fd);
-	else if (notregistered(fd) && splited_cmd[0] == "TOPIC")
-		Topic(cmd, fd);
-	else if (notregistered(fd)  && splited_cmd[0] == "MODE")
-		mode_command(cmd, fd);
-	else if (notregistered(fd)  && splited_cmd[0] == "PART")
-		PART(cmd, fd);
-	else if (notregistered(fd) && splited_cmd[0] == "PRIVMSG")
-		PRIVMSG(cmd, fd);
-	else if (notregistered(fd) && splited_cmd[0] == "INVITE")
-		Invite(cmd,fd);
+	else if(notregistered(fd))
+	{
+		if (splited_cmd[0] == "KICK")
+			KICK(cmd, fd);
+		else if (splited_cmd[0] == "JOIN")
+			JOIN(cmd, fd);
+		else if (splited_cmd[0] == "TOPIC")
+			Topic(cmd, fd);
+		else if (splited_cmd[0] == "MODE")
+			mode_command(cmd, fd);
+		else if (splited_cmd[0] == "PART")
+			PART(cmd, fd);
+		else if (splited_cmd[0] == "PRIVMSG")
+			PRIVMSG(cmd, fd);
+		else if (splited_cmd[0] == "INVITE")
+			Invite(cmd,fd);
+		else
+			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
+
+	}
 	else if (!notregistered(fd))
-			_sendResponse(ERR_NOTREGISTERED(std::string("nickname")),fd);
+		_sendResponse(ERR_NOTREGISTERED(std::string("nickname")),fd);
 
 }
 
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << msg;
+	ss  << RED << ":localhost " << code << " " << clientname << msg << WHI;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild" << std::endl;
@@ -254,7 +260,7 @@ void Server::senderror(int code, std::string clientname, int fd, std::string msg
 void Server::senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << " " << channelname << msg;
+	ss << RED << ":localhost " << code << " " << clientname << " " << channelname << msg << WHI;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild" << std::endl;
