@@ -15,7 +15,6 @@ private:
 	int limit;
 	std::string created_at;
 	bool topic_restriction;
-	// bool invite_restriction;
 	std::string topic_name;
 	std::string password;
 	std::string name;
@@ -43,7 +42,6 @@ public:
 	int GetLimit();
 	//abdellah
 	std::string clientChannel_list();
-	void sendTo_all(std::string &rpl1, std::string &rpl2 , std::string &rpl3);
 	void sendTo_all(std::string rpl1);
 	void sendTo_all(std::string &rpl1, int fd);
 	bool clientInChannel(std::string &nick);
@@ -68,7 +66,7 @@ public:
 	void remove_admin(int fd);
 	int GetClientsNumber();
 	Client* GetClientInChannel(std::string name);
-
+	
 };
 
 #endif
