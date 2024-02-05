@@ -10,10 +10,10 @@ std::string Server::tTopic()
 }
 void Server::Topic(std::string &cmd, int &fd)
 {
-	std::vector<std::string> scmd = split_cmd(cmd);
 	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
 		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
-	else if (scmd.size() < 2)
+	std::vector<std::string> scmd = split_cmd(cmd);
+	if (scmd.size() < 2)
 		return; //HANDL NOT ENOUGH PARAMTERS
 	std::string nmch = getnamechannel(scmd[1]);
 	Channel *ch = NULL;

@@ -33,5 +33,13 @@ std::string Client::getHostname()
 	return hostname;
 }
 
-void AddChannelInvite(std::string)
+void Client::AddChannelInvite(std::string name){ChannelsInvite.push_back(name);}
+
+bool Client::GetChannelName(std::string name){
+	for (size_t i = 0; i < ChannelsInvite.size(); i++){
+		if (ChannelsInvite[i] == name)
+			return true;
+	}
+	return false;
+}
 

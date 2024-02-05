@@ -73,8 +73,3 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 		}
 	}
 }
-/*
-:anamnlhih!~ana@197.230.30.146 JOIN #wa7edchannel
-:anamnlhih!~ana@197.230.30.146 PRIVMSG #wa7edchannel :hello1
-:anamnlhih!~ana@197.230.30.146 QUIT :Remote host closed the connection
-*/

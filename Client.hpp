@@ -32,7 +32,7 @@ public:
 	{
 		this->username = username;
 	}
-	void AddChannelInvite(std::string);
+	void AddChannelInvite(std::string name);
 	bool GetChannelName(std::string name);
 };
 

@@ -30,8 +30,6 @@ void Server::QUIT(std::string cmd, int fd)
 			if (channels[i].GetClientsNumber() == 0)
 				channels.erase(channels.begin() + i);
 			else{
-				// :huhuh!~u@qk3i8byd6tfyg.irc QUIT :Quit: wow
-				
 				std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + ":Quit: " + tmp[0] + "\r\n";
 				channels[i].sendTo_all(rpl);
 				std::cout << "QUIT: " << GetClient(fd)->GetNickName() << " has left the channel #" << channels[i].GetName() << std::endl;
