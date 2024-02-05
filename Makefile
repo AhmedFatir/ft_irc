@@ -1,3 +1,4 @@
+BOUNUS= bot
 NAME = ircserv
 CC = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98  -g  -fsanitize=address,undefined
@@ -10,6 +11,9 @@ all: $(NAME)
 
 $(NAME): $(OBJS)
 	@$(CC) $(CFLAGS) -g -o $(NAME) $(OBJS)
+
+bounus:
+	c++ -Wall -Wextra -Werror Bot.cpp -o bot
 
 %.o: %.cpp Server.hpp Client.hpp Channel.hpp replies.hpp
 	$(CC) $(CFLAGS) -c $< -o $@
