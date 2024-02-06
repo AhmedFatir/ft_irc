@@ -275,7 +275,6 @@ void Server::senderror(int code, std::string clientname, std::string channelname
 		std::cerr << "send() faild" << std::endl;
 }
 
-
 std::string Server::getnamechannel(std::string &name)
 {
 	if (!name.empty() && name[0] == '#')
