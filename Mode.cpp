@@ -34,19 +34,21 @@ void Server::mode_command(std::string& cmd, int fd)
 	mode_chain.clear();
 	std::vector<std::string> splited = split_cmd(cmd);
 	Client *cli = GetClient(fd);
-	
 	if(splited.size() < 2) // Not enough parameters
 	{
 		_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd); 
 		return ;
-	}	
-		
+	}
 	std::string channelName = splited[1].substr(1);
 	Channel *channel = GetChannel(channelName);
 	if(!channel) // No such channel
 	{
-		_sendResponse(ERR_CHANNELNOTFOUND(cli->GetUserName(),channel->GetName()), fd);
+		_sendResponse(ERR_CHANNELNOTFOUND(cli->GetUserName(),channelName), fd);
 		return ;
+	}
+	else if (!channel->get_client(fd) && !channel->get_admin(fd))
+	{
+		senderror(442, GetClient(fd)->GetNickName(), channelName, GetClient(fd)->GetFd(), " :You're not on that channel\r\n"); return;
 	}
 	else if (splited.size() == 2) // response with the channel modes (MODE #channel)
 	{
@@ -143,7 +145,7 @@ std::string Server::password_mode(std::vector<std::string> splited, Channel *cha
 		pass = splited[pos++];
 	else
 	{
-		_sendResponse(ERR_NEEDMODEPARM(channel->GetName(),"(k)"),fd);
+		_sendResponse(ERR_NEEDMODEPARM(channel->GetName(),std::string("(k)")),fd);
 		return param;
 	}
 	if(opera == '+')
@@ -203,7 +205,13 @@ std::string Server::operator_privilege(std::vector<std::string> splited, Channel
 	{
 		channel->setModeAtindex(3,false);
 		if(channel->change_adminToClient(user))
-				param = mode_toAppend(chain, opera, 'o');
+		{
+			param = mode_toAppend(chain, opera, 'o');
+				if(!arguments.empty())
+				arguments += " ";
+			arguments += user;
+
+		}
 	}
 	return param;
 }

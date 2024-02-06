@@ -1,10 +1,5 @@
 #include "Bot.hpp"
-
-const char* api_key = "LOzgqOjUO2qTsjgGPqDBB4LBDdIVGEzz";
-const char* location = "London";
-
-const char* host = "api.weatherapi.com";
-// const int port = 80;
+#include <vector>
 
 void _sendMessage(std::string message, int fd)
 {
@@ -12,101 +7,91 @@ void _sendMessage(std::string message, int fd)
         std::cerr << "Send failed" << std::endl;
 }
 
-std::string makeRequest()
+std::string age_calculator(std::string age)
 {
-    // std::stringstream ss;
-    // ss.clear();
+    int year, month, day;
+    year = std::atoi(age.substr(0, 4).c_str());
+    month = std::atoi(age.substr(5, 2).c_str());
+    day = std::atoi(age.substr(8, 2).c_str());
 
-    // // ss << "GET /v1/current.json?key=" << std::string(API_KEY) << std::string(LOCATION) + "&aqi=no HTTP/1.1\r\n" << "Host: " + std::string(HOST) + "\r\n" << "Connection: close\r\n\r\n";
-    // return ss.str();
-    std::string request = "GET /v1/current.json?key=" + std::string(api_key) + std::string(location) + "&aqi=no HTTP/1.1\r\n"
-                          "Host: " + std::string(host) + "\r\n"
-                          "Connection: close\r\n"
-                          "\r\n";
-                        return request;
+    std::cout << "year: " << year << "month: " << month << "day: " << day << std::endl;
+    std::tm date;
+    memset(&date, 0, sizeof(date));
+    date.tm_year = year - 1900;
+    date.tm_mon = month - 1;
+    date.tm_mday = day;
+
+    std::time_t age_in_sec = mktime(&date);
+    std::time_t current_time;
+    std::time(&current_time);
+    int age_int = (current_time - age_in_sec) / (365.25 * 24 * 60 * 60);
+    std::stringstream ss;
+    ss << age_int;
+    std::string str = ss.str();
+    return str;
 }
 
-    // std::string request = "GET /v1/current.json?key=" + std::string(api_key) + std::string(location) + "&aqi=no HTTP/1.1\r\n"
-    //                       "Host: " + std::string(host) + "\r\n"
-    //                       "Connection: close\r\n"
-    //                       "\r\n";
+
+std::vector<std::string> split_cmd(std::string& cmd)
+{
+	std::vector<std::string> vec;
+	std::istringstream stm(cmd);
+	std::string token;
+	while(stm >> token)
+	{
+		vec.push_back(token);
+		token.clear();
+	}
+	return vec;
+}
+
+void send_privmsg(int srvsock,std::string age, std::string nickname)
+{
+    std::string msg = "PRIVMSG " +nickname + " :your age is: " +age +"\r\n";
+    send(srvsock, msg.c_str(), msg.size(),0);
+}
 
 int main()
 {
-    // int ircsock;
-    int apisock;
-    struct hostent* apihost;
-    // struct sockaddr_in ircHints;
-    struct sockaddr_in apiHints;
-    
-    // ircsock = socket(AF_INET, SOCK_STREAM, 0);
-    // if(ircsock == -1)
-    // {
-    //     std::cerr << "failed to create socket (ircsock)" << std::endl;
-    //     return 1;
-    // }
+    int ircsock;
+    struct sockaddr_in ircHints;
 
-    apisock = socket(AF_INET, SOCK_STREAM, 0);
-    if(apisock == -1)
+    ircsock = socket(AF_INET, SOCK_STREAM, 0);
+    if(ircsock == -1)
     {
-        std::cerr << "failed to create socket (apisock)" << std::endl;
+        std::cerr << "failed to create socket (ircsock)" << std::endl;
         return 1;
     }
-    // ircHints.sin_family = AF_INET;
-    // ircHints.sin_port = htons(9009);
-    // inet_pton(AF_INET, "127.0.0.1", &(ircHints.sin_addr));
-    // if(connect(ircsock, (struct sockaddr*)&ircHints, sizeof(ircHints)) == -1) {
-    //     std::cerr << "connect failed\n" << std::endl;
-    //     return 1;
-    // }
-    // // connection to irc server
-    // _sendMessage("PASS 123\r\n", ircsock);
-    // _sendMessage("NICK bot\r\n", ircsock);
-    // _sendMessage("USER bot 0 * bot\r\n", ircsock);
 
-    // connection to the api socket
-    apihost = gethostbyname("api.weatherapi.com");
-    if(!apihost) {
-        std::cerr << "gethostbyname failed\n" << std::endl;
+    ircHints.sin_family = AF_INET;
+    ircHints.sin_port = htons(9009);
+    inet_pton(AF_INET, "127.0.0.1", &(ircHints.sin_addr));
+    if(connect(ircsock, (struct sockaddr*)&ircHints, sizeof(ircHints)) == -1) {
+        std::cerr << "connect failed\n" << std::endl;
         return 1;
     }
-    apiHints.sin_family = AF_INET;
-    apiHints.sin_port = htons(80);
-    memcpy((char*)&apiHints.sin_addr.s_addr, apihost->h_addr, apihost->h_length);
-    if(connect(apisock, (struct sockaddr*)&apiHints, sizeof(apiHints)) == -1) {
-        std::cerr << "connect II failed\n" << std::endl;
-        return 1;
-    }
-    std::string request = makeRequest();
-    if(send(apisock,request.c_str(), request.size(), 0) == -1)
+    // connection to irc server
+    _sendMessage("PASS 123\r\n", ircsock);
+    _sendMessage("NICK bot\r\n", ircsock);
+    _sendMessage("USER bot 0 * bot\r\n", ircsock);
+
+    std::string resp;
+    std::string recived;
+    ssize_t recivedBytes;
+
+    char buff[1024];
+    while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)
     {
-        std::cerr << "send II failed\n" << std::endl;
-        return 1;
-    }
-    std::cout << "request: " << request;
-
-
-    char buffer[4096];
-    ssize_t bytes_received;
-    std::string rec;
-    while ((bytes_received = recv(apisock, buffer, sizeof(buffer) - 1, 0)) > 0) {
-        buffer[bytes_received] = '\0';
-        rec += buffer;
-    }
-
-    std::cout << "recived: " << rec;
-
-
-
-    // std::string resp;
-    // ssize_t recivedBytes;
-    // char buff[1024];
-    // while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)
-    // {
-    //     buff[recivedBytes] = '\0';
-    //     std::cout << "recived |" <<  buff;
-        // resp = "PRIVMSG b hello wow wow wowow\r\n";
+        buff[recivedBytes] = '\0';
+        std::cout << "recived: " <<  buff;
+        recived = buff;
+        std::vector<std::string> splited = split_cmd(recived);
+        if(splited[0] == "age")
+        {
+            resp = age_calculator(splited[1]);
+            send_privmsg(ircsock, resp, splited[2]);
+        }
         // send(ircsock, resp.c_str(), resp.size(), 0);
-        // resp.clear();
-    // }
+        resp.clear();
+    }
 }

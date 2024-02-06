@@ -81,7 +81,7 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, in
  	std::string response = RPL_JOINMSG(cli->getHostname(),std::string("localhost"),token[i].first) + \
         RPL_NAMREPLY(GetClient(fd)->GetNickName(),token[i].first,channels[j].clientChannel_list()) + \
         RPL_ENDOFNAMES(GetClient(fd)->GetNickName(),token[i].first);
-    channels[i].sendTo_all(response);
+    channels[j].sendTo_all(response);
 }
 
 

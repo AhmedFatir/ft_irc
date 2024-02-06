@@ -31,13 +31,10 @@ void Server::client_authen(int fd, std::string& cmd)
 		else
 		{
             _sendResponse(ERR_INCORPASS(std::string("nickname")), fd);
-			close(fd);
-			RemoveFds(fd);
-			RemoveClient(fd);
 		}
 	}
 	else
-        _sendResponse(std::string("nickname"), fd);
+        _sendResponse(ERR_ALREADYREGISTERED(GetClient(fd)->GetNickName()), fd);
 }
 
 
