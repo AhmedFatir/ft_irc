@@ -237,6 +237,15 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 			PRIVMSG(cmd, fd);
 		else if (splited_cmd[0] == "INVITE")
 			Invite(cmd,fd);
+		else if (splited_cmd[0] == "BOT")
+		{
+			std::string botmsg = cmd.substr(4);
+			botmsg += " ";
+			botmsg += GetClient(fd)->GetNickName();
+			botmsg += "\r\n";
+			std::cout << "Bott: " << botmsg;
+			send(GetClientNick("bot")->GetFd(), botmsg.c_str(), botmsg.size(), 0);
+		}
 		else
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
 
@@ -263,7 +272,6 @@ void Server::senderror(int code, std::string clientname, std::string channelname
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild" << std::endl;
 }
-
 
 std::string Server::getnamechannel(std::string &name)
 {

@@ -11,8 +11,8 @@ std::string Server::tTopic()
 void Server::Topic(std::string &cmd, int &fd)
 {
 	std::vector<std::string> scmd = split_cmd(cmd);
-	if(scmd.size() < 2)
-		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
+	if (scmd.size() == 1)
+		{senderror(403, "", fd, " :No such channel\r\n"); return;}
 	std::string nmch = scmd[1].substr(1);
 	if((scmd.size() == 2 && nmch == ":")|| !GetChannel(nmch))
 	    {senderror(403, "#"+nmch, fd, " :No such channel\r\n"); return;}

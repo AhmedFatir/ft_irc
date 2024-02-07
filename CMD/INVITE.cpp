@@ -18,11 +18,11 @@ void Server::Invite(std::string &cmd, int &fd)
 	if (GetChannel(channelname)->GetInvitOnly() && !GetChannel(channelname)->get_admin(fd))// ERR_INVITEONLYCHAN (473) if the channel is invite-only
 		{senderror(482,GetChannel(channelname)->get_client(fd)->GetNickName(),scmd[1],fd," :You're not channel operator\r\n"); return;}
 	if (GetChannel(channelname)->GetLimit() && GetChannel(channelname)->GetClientsNumber() >= GetChannel(channelname)->GetLimit()) // ERR_CHANNELISFULL (471) if the channel is full
-		{senderror(473,GetChannel(channelname)->get_client(fd)->GetNickName(),channelname,fd," :Cannot join channel (+l)\r\n"); return;}
+		{senderror(473,GetChannel(channelname)->get_client(fd)->GetNickName(),channelname,fd," :Cannot invit to channel (+i)\r\n"); return;}
 	// RPL_INVITING (341) if the invite was successfully sent
 	clt->AddChannelInvite(channelname);
 	std::string rep1 = ": 341 "+ GetClient(fd)->GetNickName()+" "+ clt->GetNickName()+" "+scmd[2]+"\r\n";
 	send(fd, rep1.c_str(), rep1.size(), 0);
 	std::string rep2 = ":"+ clt->getHostname() + " INVITE " + clt->GetNickName() + " " + scmd[2]+"\r\n";
-	send(clt->GetFd(), rep2.c_str(), rep2.size(), 0);
+	send(clt->GetFd(), rep2.c_str(), rep2.size(),0);
 }
