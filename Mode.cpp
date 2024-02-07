@@ -45,7 +45,7 @@ void Server::mode_command(std::string& cmd, int fd)
 	Channel *channel = GetChannel(channelName);
 	if(!channel) // No such channel
 	{
-		_sendResponse(ERR_CHANNELNOTFOUND(cli->GetUserName(),channel->GetName()), fd);
+		_sendResponse(ERR_CHANNELNOTFOUND(cli->GetUserName(),channelName), fd);
 		return ;
 	}
 	else if (splited.size() == 2) // response with the channel modes (MODE #channel)

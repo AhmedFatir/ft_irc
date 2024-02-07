@@ -22,16 +22,8 @@ void SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::st
 		if (tmp[i][0] == '#'){
 			str = tmp[i];
 			for (size_t j = i + 1; j < tmp.size(); j++){
-				if (tmp[j][0] != '#' && tmp[j][0] != '&')
+				if (tmp[j][0] != '#')
 					{pass = tmp[j];tmp.erase(tmp.begin() + j);break;}
-			}
-			token.push_back(std::make_pair(str, pass));
-		}
-		else if (tmp[i][0] == '&'){
-			str = tmp[i];
-			for (size_t j = i + 1; j < tmp.size(); j++){
-				if (tmp[j][0] != '#' && tmp[j][0] != '&')
-					{pass = tmp[j]; tmp.erase(tmp.begin() + j); break;}
 			}
 			token.push_back(std::make_pair(str, pass));
 		}
@@ -66,13 +58,13 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, in
 		{senderror(405, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :You have joined too many channels\r\n"); return;}
 	if (this->channels[j].GetInvitOnly()){// ERR_INVITEONLYCHAN (473) // if the channel is invit only
 		if (!IsInvited(GetClient(fd), token[i].first))
-			{senderror(473, GetClient(fd)->GetNickName(), token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+i)\r\n"); return;}
+			{senderror(473, GetClient(fd)->GetNickName(), "#" + token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+i)\r\n"); return;}
 	}
 	else if (!this->channels[j].GetPassword().empty() && this->channels[j].GetPassword() != token[i].second)// ERR_BADCHANNELKEY (475) // if the password is incorrect
-		{senderror(475, GetClient(fd)->GetNickName(), token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+k) - bad key\r\n"); return;}
+		{senderror(475, GetClient(fd)->GetNickName(), "#" + token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+k) - bad key\r\n"); return;}
 
 	if (this->channels[j].GetLimit() && this->channels[j].GetClientsNumber() >= this->channels[j].GetLimit())// ERR_CHANNELISFULL (471) // if the channel reached the limit of number of clients
-		{senderror(471, GetClient(fd)->GetNickName(), token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+l)\r\n"); return;}
+		{senderror(471, GetClient(fd)->GetNickName(), "#" + token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+l)\r\n"); return;}
 	if (this->channels[j].GetClientInChannel(GetClient(fd)->GetNickName()))// ERR_ALREADYREGISTRED (462) // if the client is already registered
 		{senderror(462, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :You may not reregister\r\n"); return;}
 	// add the client to the channel
@@ -81,7 +73,7 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, in
  	std::string response = RPL_JOINMSG(cli->getHostname(),std::string("localhost"),token[i].first) + \
         RPL_NAMREPLY(GetClient(fd)->GetNickName(),token[i].first,channels[j].clientChannel_list()) + \
         RPL_ENDOFNAMES(GetClient(fd)->GetNickName(),token[i].first);
-    channels[i].sendTo_all(response);
+    channels[j].sendTo_all(response);
 }
 
 
@@ -109,7 +101,7 @@ void Server::JOIN(std::string cmd, int fd)
 	std::vector<std::pair<std::string, std::string> > token;
 	SplitJoin(token, cmd);
 	for (size_t i = 0; i < token.size(); i++){//ERR_NOSUCHCHANNEL (403) // if the channel doesn't exist
-		if (*(token[i].first.begin()) != '#' && *(token[i].first.begin()) != '&')
+		if (*(token[i].first.begin()) != '#')
 			{senderror(403, GetClient(fd)->GetUserName(), GetClient(fd)->GetFd(), " :No such channel\r\n"); return;}
 		else
 			token[i].first.erase(token[i].first.begin());

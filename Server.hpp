@@ -20,10 +20,6 @@
 #include "Channel.hpp"
 #include "replies.hpp"
 
-#define RED "\e[1;31m"
-#define WHI "\e[0;37m"
-#define GRE "\e[1;32m"
-#define YEL "\e[1;33m"
 
 class Client;
 class Channel;
@@ -96,6 +92,7 @@ public:
 	void   KICK(std::string cmd, int fd);
 	// Channel* GetClientInChannel(Channel chnnel, std::string name);
 	// ########################### PART CMD
+	std::string SplitCmdPart(std::string cmd, std::vector<std::string> &tmp, int fd);
 	void   PART(std::string cmd, int fd);
 
 	bool checkifchannelexist(std::string &namechannel);

@@ -28,7 +28,7 @@ void	Server::KICK(std::string cmd, int fd)
 		if (this->channels[i].GetName() == tmp[0]){ // check if the channel exist
 			flag = 1;
 			if (!channels[i].get_client(fd) && !channels[i].get_admin(fd)) // check if the client is in the channel
-				{senderror(442, GetClient(fd)->GetNickName(), tmp[0], GetClient(fd)->GetFd(), " :You're not on that channel\r\n"); return;}
+				{senderror(442, GetClient(fd)->GetNickName(), "#" + tmp[0], GetClient(fd)->GetFd(), " :You're not on that channel\r\n"); return;}
 			if(this->channels[i].get_admin(fd)){ // check if the client is admin
 				if (channels[i].GetClientInChannel(tmp[1])){ // check if the client to kick is in the channel
 					std::stringstream ss;
@@ -46,12 +46,12 @@ void	Server::KICK(std::string cmd, int fd)
 						channels.erase(channels.begin() + i);
 				}
 				else // if the client to kick is not in the channel
-					{senderror(441, GetClient(fd)->GetNickName(), tmp[0], GetClient(fd)->GetFd(), " :They aren't on that channel\r\n"); return;}
+					{senderror(441, GetClient(fd)->GetNickName(), "#" + tmp[0], GetClient(fd)->GetFd(), " :They aren't on that channel\r\n"); return;}
 			}
 			else // if the client is not admin
-				{senderror(482, GetClient(fd)->GetNickName(), tmp[0], GetClient(fd)->GetFd(), " :You're not channel operator\r\n"); return;}
+				{senderror(482, GetClient(fd)->GetNickName(), "#" + tmp[0], GetClient(fd)->GetFd(), " :You're not channel operator\r\n"); return;}
 		}
 	}
 	if (flag == 0) // if the channel doesn't exist
-		senderror(403, GetClient(fd)->GetNickName(), tmp[0], GetClient(fd)->GetFd(), " :No such channel\r\n");
+		senderror(403, GetClient(fd)->GetNickName(), "#" + tmp[0], GetClient(fd)->GetFd(), " :No such channel\r\n");
 }

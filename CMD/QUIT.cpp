@@ -32,8 +32,6 @@ void	SplitQuit(std::vector<std::string> &tmp, std::string cmd)
 
 void Server::QUIT(std::string cmd, int fd)
 {
-	if (!GetClient(fd) ||  GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty()) //ERR_NOTREGISTERED (451) // if the client is not registered
-		{senderror(451, "", fd, " :You have not registered\r\n"); return;}
 	std::vector<std::string> tmp;
 	SplitQuit(tmp, cmd);
 	for (size_t i = 0; i < channels.size(); i++)
