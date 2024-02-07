@@ -63,6 +63,8 @@ public:
 	void RemoveChannel(std::string name);
 	void RemoveFds(int fd);
 	//######################
+	void	senderror(int code, std::string clientname, int fd, std::string msg);
+	void	senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg);
 	static void					SignalHandler(int signum);
 	void						close_fds();
 	void                        init(int port, std::string pass);
@@ -70,13 +72,25 @@ public:
 	void                        accept_new_client();
 	void                        accept_new_message(int fd, std::string& recived);
 	std::vector<std::string>    split_cmd(std::string &str);
+	//-----------------afatir----------------
 	// ########################### JOIN CMD
 	void	JOIN(std::string cmd, int fd);
-	void	senderror(int code, std::string clientname, int fd, std::string msg);
-	void	senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg);
+	void	SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::string cmd, int fd);
 	void	ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd);
 	void	NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd);
 	int		SearchForClients(std::string nickname);
+	// ########################### PART CMD
+	void	PART(std::string cmd, int fd);
+	std::string	SplitCmdPart(std::string cmd, std::vector<std::string> &tmp, int fd);
+	// ########################### CKIK CMD
+	void	KICK(std::string cmd, int fd);
+	std::string SplitCmdKick(std::string cmd, std::vector<std::string> &tmp, std::string &user, int fd);
+	// ########################### PRIVMSG CMD
+	void	PRIVMSG(std::string cmd, int fd);
+	// ########################### QUITE CMD
+	void	QUIT(std::string cmd, int fd);
+	void	CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
+	//-----------------afatir----------------
 	// ########### CMDS RECIVED
 	std::vector<std::string>    split_recivedBuffer(std::string &str);
 	void                        client_authen(int fd, std::string& pass);
@@ -88,12 +102,6 @@ public:
 	// ########################### GETTERS & SETTERS 
 	void						set_username(std::string& username, int fd);
 	void						set_nickname(std::string& nickname, int fd);
-	// ########################### CKIK CMD
-	void   KICK(std::string cmd, int fd);
-	// Channel* GetClientInChannel(Channel chnnel, std::string name);
-	// ########################### PART CMD
-	std::string SplitCmdPart(std::string cmd, std::vector<std::string> &tmp, int fd);
-	void   PART(std::string cmd, int fd);
 
 	bool checkifchannelexist(std::string &namechannel);
 	bool checkifadmin(int &fd);
@@ -110,11 +118,6 @@ public:
 	bool		isvalid_limit(std::string& limit);
 	std::string mode_toAppend(std::string chain, char opera, char mode);
 	void 		_sendResponse(std::string response, int fd);
-	// ########################### PRIVMSG CMD
-	void   PRIVMSG(std::string cmd, int fd);
-	// ########################### QUITE CMD
-	void   QUIT(std::string cmd, int fd);
-	void CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
 	//--------KHBOUYCh-------------
 	std::string tTopic();
 	void Topic(std::string &cmd, int &fd);

@@ -9,6 +9,7 @@ int main(int ac, char **av)
 	try
 	{
 		// signal(SIGINT, Server::SignalHandler);
+		// ser.KICK("KICK #aa,bb,#cc,dd kk ", 1);
 		ser.init(std::atoi(av[1]), av[2]);
 	}
 	catch(const std::exception& e)

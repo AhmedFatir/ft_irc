@@ -27,7 +27,7 @@ void	SplitQuit(std::vector<std::string> &tmp, std::string cmd)
 	str = ":Quit" + str;
 	tmp.push_back(str);
 	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
-		{if (tmp[i].empty())tmp.erase(tmp.begin() + i);}
+		{if (tmp[i].empty())tmp.erase(tmp.begin() + i--);}
 }
 
 void Server::QUIT(std::string cmd, int fd)

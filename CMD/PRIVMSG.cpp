@@ -19,7 +19,7 @@ std::string SplitCmdPrivmsg(std::string cmd, std::vector<std::string> &tmp)
 	}
 	tmp.push_back(str2);
 	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
-		{if (tmp[i].empty())tmp.erase(tmp.begin() + i);}
+		{if (tmp[i].empty())tmp.erase(tmp.begin() + i--);}
 	return str.erase(0, 1);
 }
 
@@ -50,12 +50,12 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 */
 	std::vector<std::string> tmp;
 	std::string message = SplitCmdPrivmsg(cmd, tmp);
-	if (tmp.size() > 10) //ERR_TOOMANYTARGETS (407) // if the client send the message to more than 10 clients
-		{senderror(407, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Too many recipients\r\n"); return;}
+	if (*tmp.begin() == "PRIVMSG")//ERR_NORECIPIENT (411) // if the client doesn't specify the recipient
+		{senderror(411, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No recipient given (PRIVMSG)\r\n"); return;}
 	if (message.empty())//ERR_NOTEXTTOSEND (412) // if the client doesn't specify the message
 		{senderror(412, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No text to send\r\n"); return;}
-	if (tmp.size() < 1)//ERR_NORECIPIENT (411) // if the client doesn't specify the recipient
-		{senderror(411, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No recipient given (PRIVMSG)\r\n"); return;}
+	if (tmp.size() > 10) //ERR_TOOMANYTARGETS (407) // if the client send the message to more than 10 clients
+		{senderror(407, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Too many recipients\r\n"); return;}
 	CheckForChannels_Clients(tmp, fd); // check if the channels and clients exist
 	for (size_t i = 0; i < tmp.size(); i++){// send the message to the clients and channels
 		if (tmp[i][0] == '#'){
