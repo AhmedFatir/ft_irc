@@ -20,11 +20,6 @@
 #include "Channel.hpp"
 #include "replies.hpp"
 
-#define RED "\e[1;31m"
-#define WHI "\e[0;37m"
-#define GRE "\e[1;32m"
-#define YEL "\e[1;33m"
-
 class Client;
 class Channel;
 
@@ -82,7 +77,7 @@ public:
 	void	NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd);
 	int		SearchForClients(std::string nickname);
 	// ########### CMDS RECIVED
-	std::vector<std::string>    split_recivedBuffer(std::string &str);
+	std::vector<std::string>    split_recivedBuffer(std::string str);
 	void                        client_authen(int fd, std::string& pass);
 	void                        parse_exec_cmd(std::string &cmd, int fd);
 	// ########################### BOOL METHODS 
@@ -124,6 +119,7 @@ public:
 	void Invite(std::string &cmd, int &fd);
 	//--------KHBOUYCh-------------
 	bool notregistered(int fd);
+	void addNewClient(int fd);
 };
 
 #endif
