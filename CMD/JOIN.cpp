@@ -91,6 +91,11 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
     _sendResponse(RPL_JOINMSG(GetClient(fd)->getHostname(),std::string("10.11.13.2"),newChannel.GetName()) + \
         RPL_NAMREPLY(GetClient(fd)->GetNickName(),newChannel.GetName(),newChannel.clientChannel_list()) + \
         RPL_ENDOFNAMES(GetClient(fd)->GetNickName(),newChannel.GetName()),fd);
+	// if(GetClient(fd))
+	// {
+	// 	std::string weclome = "create " + newChannel.GetName() + GetClient(fd)->GetNickName() + "\r\n";
+	// 	_sendResponse(weclome, GetClientNick("bot")->GetFd());
+	// }
 }
 
 void Server::JOIN(std::string cmd, int fd)

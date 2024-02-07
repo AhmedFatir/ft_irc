@@ -13,6 +13,7 @@ private:
 	bool isOperator;
 	int fd;
 	bool registered;
+	std::string buffer;
 public:
 	std::vector<std::string> ChannelsInvite;
 	Client();
@@ -33,6 +34,26 @@ public:
 	void AddChannelInvite(std::string &chname);
 	void RmChannelInvite(std::string &chname);
 	bool GetInviteChannel(std::string &ChName);
+	void setBuffer(std::string recived)
+	{
+		buffer +=recived;
+	}
+	std::string getBuffer()
+	{
+		return buffer;
+	}
+	void clearBuffer()
+	{
+		buffer.clear();
+	}
+	void setRegistered(bool value)
+	{
+		registered = value;
+	}
+	bool getRegistered()
+	{
+		return registered;
+	}
 };
 
 #endif

@@ -12,8 +12,8 @@ all: $(NAME)
 $(NAME): $(OBJS)
 	@$(CC) $(CFLAGS) -g -o $(NAME) $(OBJS)
 
-bounus:
-	c++ -Wall -Wextra -Werror Bot.cpp -o bot
+bounus_abdo:
+	c++ -Wall -Wextra -Werror Bot.cpp -o bot_abdo
 
 %.o: %.cpp Server.hpp Client.hpp Channel.hpp replies.hpp
 	$(CC) $(CFLAGS) -c $< -o $@

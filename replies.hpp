@@ -18,7 +18,6 @@
 
 
 ///////// ERRORS ////////////////
-// #define ERR_NEEDMODEPARM(channelname, mode) (RED_COLOR ": 696 #" + channelname + " * You must specify a parameter for the key mode. " + mode + RESET_COLOR + CRLF)
 #define ERR_NEEDMODEPARM(channelname, mode) (": 696 #" + channelname + " * You must specify a parameter for the key mode. " + mode + CRLF)
 #define ERR_INVALIDMODEPARM(channelname, mode) ": 696 #" + channelname + " Invalid mode parameter. " + mode + CRLF
 #define ERR_KEYSET(channelname) ": 467 #" + channelname + " Channel key already set. " + CRLF

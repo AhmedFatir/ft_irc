@@ -92,7 +92,7 @@ public:
 	void	CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
 	//-----------------afatir----------------
 	// ########### CMDS RECIVED
-	std::vector<std::string>    split_recivedBuffer(std::string &str);
+	std::vector<std::string>    split_recivedBuffer(std::string str);
 	void                        client_authen(int fd, std::string& pass);
 	void                        parse_exec_cmd(std::string &cmd, int fd);
 	// ########################### BOOL METHODS 
@@ -124,6 +124,7 @@ public:
 	void Invite(std::string &cmd, int &fd);
 	//--------KHBOUYCh-------------
 	bool notregistered(int fd);
+	void addNewClient(int fd);
 };
 
 #endif
