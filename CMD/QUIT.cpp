@@ -57,7 +57,7 @@ void Server::QUIT(std::string cmd, int fd)
 			}
 		}
 	}
-	std::cout << GetClient(fd)->GetNickName() << " has left the server " << tmp[0]  << std::endl;
+	std::cout << GetClient(fd)->GetNickName() << " has left the server " << tmp[0] << std::endl;
 	RemoveClient(fd);
 	RemoveFds(fd);
 	close(fd);
