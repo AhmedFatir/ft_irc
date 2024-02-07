@@ -172,12 +172,8 @@ void Server::accept_new_message(int fd, std::string &recived)
 {
 	(void)recived;
 	char buff[1024];
-<<<<<<< HEAD
-	ssize_t bytes;
 	Client *cli = GetClient(fd);
-=======
 	ssize_t bytes = recv(fd, buff, sizeof(buff), 0);
->>>>>>> 5d16271dd43e62fc71638bf87aa25a945081505f
 	std::vector<std::string> cmd;
 
 	if(bytes <= 0)
