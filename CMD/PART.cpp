@@ -1,6 +1,6 @@
 #include "../Server.hpp"
 
-std::string SplitCmdPart(std::string cmd, std::vector<std::string> &tmp)
+std::string Server::SplitCmdPart(std::string cmd, std::vector<std::string> &tmp, int fd)
 {
 	std::istringstream stm(cmd);
 	std::string reason;
@@ -19,9 +19,17 @@ std::string SplitCmdPart(std::string cmd, std::vector<std::string> &tmp)
 	}
 	tmp.push_back(str1);
 	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
-		{if (tmp[i].empty())tmp.erase(tmp.begin() + i);}
-	for (size_t i = 0; i < tmp.size(); i++)// erase the '#' from the channel name
-		{if (*(tmp[i].begin()) == '#' || *(tmp[i].begin()) == '&') tmp[i].erase(tmp[i].begin());}
+		{if (tmp[i].empty())tmp.erase(tmp.begin() + i--);}
+	reason.erase(reason.begin());
+	if (reason[0] == ':') reason.erase(reason.begin());
+	else //shrink to the first space
+		{for (size_t i = 0; i < reason.size(); i++){if (reason[i] == ' '){reason = reason.substr(0, i);break;}}}
+	for (size_t i = 0; i < tmp.size(); i++){// erase the '#' from the channel name and check if the channel valid
+			if (*(tmp[i].begin()) == '#')
+				tmp[i].erase(tmp[i].begin());
+			else
+				{senderror(403, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :No such channel\r\n"); tmp.erase(tmp.begin() + i--);}
+		}
 	return reason;
 }
 
@@ -30,14 +38,14 @@ void Server::PART(std::string cmd, int fd)
 	if (cmd.size() < 6)// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
 		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	std::vector<std::string> tmp;
-	std::string reason = SplitCmdPart(cmd, tmp);
+	std::string reason = SplitCmdPart(cmd, tmp, fd);
 	for (size_t i = 0; i < tmp.size(); i++){
 		bool flag = false;
 		for (size_t j = 0; j < this->channels.size(); j++){ // search for the channel
 			if (this->channels[j].GetName() == tmp[i]){ // check if the channel exist
 				flag = true;
 				if (!channels[j].get_client(fd) && !channels[j].get_admin(fd)) // ERR_NOTONCHANNEL (442) // if the client is not in the channel
-					{senderror(442, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :You're not on that channel\r\n"); return;}
+					{senderror(442, GetClient(fd)->GetNickName(), "#" + tmp[i], GetClient(fd)->GetFd(), " :You're not on that channel\r\n"); continue;}
 					std::stringstream ss;
 					ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " PART #" << tmp[i];
 					if (!reason.empty())
@@ -54,6 +62,6 @@ void Server::PART(std::string cmd, int fd)
 			}
 		}
 		if (!flag) // ERR_NOSUCHCHANNEL (403) // if the channel doesn't exist
-			senderror(403, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :No such channel\r\n");
+			senderror(403, GetClient(fd)->GetNickName(), "#" + tmp[i], GetClient(fd)->GetFd(), " :No such channel\r\n");
 	}
 }
