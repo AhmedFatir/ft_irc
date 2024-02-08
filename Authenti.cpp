@@ -4,34 +4,19 @@
     PASS COMMAND
 */
 
-bool Server::is_clientExist(int fd)
-{
-	for (size_t i = 0; i < this->clients.size(); i++)
-	{
-		if (this->clients[i].GetFd() == fd)
-			return true;
-	}
-	return false;
-}
-
 void Server::client_authen(int fd, std::string& cmd)
 {
-	Client cli;
+	Client *cli = GetClient(fd);
 	std::vector<std::string> splited_cmd = split_cmd(cmd);
 	if(splited_cmd.size() < 2)
         _sendResponse(ERR_NOTENOUGHPARAM(std::string("nickname")), fd);
-	else if(!is_clientExist(fd))
+	else if(!cli->getRegistered())
 	{
 		std::string pass = splited_cmd[1];
 		if(pass == password)
-		{
-			cli.SetFd(fd);
-			clients.push_back(cli);
-		}
+			cli->setRegistered(true);
 		else
-		{
             _sendResponse(ERR_INCORPASS(std::string("nickname")), fd);
-		}
 	}
 	else
         _sendResponse(ERR_ALREADYREGISTERED(GetClient(fd)->GetNickName()), fd);
@@ -77,19 +62,19 @@ void Server::set_nickname(std::string& nickname, int fd)
 	else
 	{
 		Client *cli = GetClient(fd);
-		if(cli)
+		if(cli && cli->GetNickName().empty() && cli->getRegistered())
 		{
 			std::string oldNick = cli->GetNickName();
 			if(!oldNick.empty())
 				_sendResponse(RPL_NICKCHANGE(oldNick,nickname), fd);
 			cli->SetNickname(nickname);
 		}
-		else
+		else if (cli && !cli->getRegistered())
 		{
 			_sendResponse(ERR_NOTREGISTERED(nickname), fd);
-			close(fd);
-			RemoveFds(fd);
-			RemoveClient(fd);
+			// RemoveFds(fd);
+			// RemoveClient(fd);
+			// close(fd);
 		}
 	}
 }
@@ -105,12 +90,12 @@ void	Server::set_username(std::string& cmd, int fd)
 	Client *cli = GetClient(fd); 
 	if((cli && splited_cmd.size() < 5))
 		_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd);
-	else if(!cli || (cli && cli->GetNickName().empty()))
+	else if(!cli || (cli && cli->GetNickName().empty()) || !cli->getRegistered())
 	{
 		_sendResponse(ERR_NOTREGISTERED(std::string("nickname")), fd);
-		close(fd);
-		RemoveFds(fd);
-		RemoveClient(fd);
+		// close(fd);
+		// RemoveFds(fd);
+		// RemoveClient(fd);
 	}
 	else if (cli && !cli->GetUserName().empty())
 		_sendResponse(ERR_ALREADYREGISTERED(cli->GetNickName()), fd);
@@ -119,4 +104,5 @@ void	Server::set_username(std::string& cmd, int fd)
 		cli->SetUsername(splited_cmd[1]);
 		_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
 	}
+	std::cout << "ana heraaaaaaaaa" << std::endl;
 }

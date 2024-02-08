@@ -9,6 +9,7 @@ class Client;
 class Channel
 {
 private:
+
 	int invit_only;
 	int topic;
 	int key;

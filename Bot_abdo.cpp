@@ -1,4 +1,4 @@
-#include "Bot.hpp"
+#include "Bot_abdo.hpp"
 #include <vector>
 
 void _sendMessage(std::string message, int fd)
@@ -90,6 +90,11 @@ int main()
         {
             resp = age_calculator(splited[1]);
             send_privmsg(ircsock, resp, splited[2]);
+        }
+        else if (splited[0] == "create")
+        {
+            resp = "PRIVMSG #" + splited[1] + " : " +splited[2] + " You have just create new channel. " +splited[1] + "\n\r";
+            _sendMessage(resp, ircsock);
         }
         // send(ircsock, resp.c_str(), resp.size(), 0);
         resp.clear();

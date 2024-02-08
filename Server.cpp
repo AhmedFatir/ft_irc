@@ -79,6 +79,14 @@ void Server::SignalHandler(int signum)
 	Server::Signal = true;
 }
 
+void Server::addNewClient(int fd)
+{
+	Client client;
+
+	client.SetFd(fd);
+	clients.push_back(client);
+}
+
 void Server::init(int port, std::string pass)
 {
 	std::string recived;
@@ -98,7 +106,10 @@ void Server::init(int port, std::string pass)
 				if (fds[i].fd == server_fdsocket){
 					this->accept_new_client();
 				}
-				else {
+				else 
+				{
+					if(!GetClient(fds[i].fd))
+						addNewClient(fds[i].fd);
 					this->accept_new_message(fds[i].fd, recived);
 				}
 			}
@@ -141,7 +152,7 @@ void Server::accept_new_client()
 	fds.push_back(new_cli);
 }
 
-std::vector<std::string> Server::split_recivedBuffer(std::string &str)
+std::vector<std::string> Server::split_recivedBuffer(std::string str)
 {
 
 	std::vector<std::string> vec;
@@ -159,13 +170,13 @@ std::vector<std::string> Server::split_recivedBuffer(std::string &str)
 
 void Server::accept_new_message(int fd, std::string &recived)
 {
+	(void)recived;
 	char buff[1024];
-	ssize_t bytes;
+	ssize_t bytes = 0;
+	Client *cli = GetClient(fd);
 	std::vector<std::string> cmd;
 
-	if((bytes = recv(fd, buff, sizeof(buff), 0)) == -1)
-		throw(std::runtime_error("recv() faild"));
-	if(bytes == 0)
+	if(bytes <= 0)
 	{
 		std::cout << "clinet: " << fd << " disconnected" << std::endl;
 		RemoveClient(fd);
@@ -175,16 +186,21 @@ void Server::accept_new_message(int fd, std::string &recived)
 	else
 	{
 		buff[bytes] = '\0';
-		recived += buff;
-		if(recived.find_first_of("\r\n") == std::string::npos)
+		cli->setBuffer(buff);
+		// recived += buff;
+		// if(recived.find_first_of("\r\n") == std::string::npos)
+		// 	return;
+		if(cli->getBuffer().find_first_of("\r\n") == std::string::npos)
 			return;
-		if(recived != "PONG localhost\r\n")
+		if(cli->getBuffer() != "PONG localhost\r\n")
 		{
-			std::cout << "recived: " << recived;
-			cmd = split_recivedBuffer(recived);
+			std::cout << "recived" <<" [" << cli->GetFd() << "]: " << cli->getBuffer();
+			cmd = split_recivedBuffer(cli->getBuffer());
 			for(size_t i = 0; i < cmd.size(); i++)
 				this->parse_exec_cmd(cmd[i], fd);
-			recived.clear();
+			// recived.clear();
+			if(GetClient(fd))
+				GetClient(fd)->clearBuffer();
 		}
 
 	}
@@ -239,8 +255,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 			PRIVMSG(cmd, fd);
 		else if (splited_cmd[0] == "INVITE")
 			Invite(cmd,fd);
-		else if (splited_cmd[0] == "KHBOUYCHBOT")
-			khbouych_bot(cmd, fd);
+		else if (splited_cmd[0] == "BOTKH")
+			khbouychbot(cmd,fd);
 		else if (splited_cmd[0] == "BOT")
 		{
 			std::string botmsg = cmd.substr(4);
@@ -262,7 +278,7 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss  << RED << ":localhost " << code << " " << clientname << msg << WHI;
+	ss << ":localhost " << code << " " << clientname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild" << std::endl;
@@ -271,7 +287,7 @@ void Server::senderror(int code, std::string clientname, int fd, std::string msg
 void Server::senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << RED << ":localhost " << code << " " << clientname << " " << channelname << msg << WHI;
+	ss << ":localhost " << code << " " << clientname << " " << channelname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild" << std::endl;

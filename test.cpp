@@ -30,7 +30,7 @@ int main() {
         std::cin >> github_username;
 
         // Build the API URL with the user-input GitHub username
-        std::string api_url = "https://api.github.com/users/" + github_username + "/repos";
+        std::string api_url = "https://api.github.com/users/" + github_username ;
 
         curl_easy_setopt(curl, CURLOPT_URL, api_url.c_str());
 
@@ -56,8 +56,8 @@ int main() {
             char *rok = strtok((char *)response_data.c_str(), ",");
             while(rok != NULL)
             {
-                std::cout << rok << std::endl;
-                rok = strtok(NULL, ",");
+                std::cout << rok;
+                rok = strtok(r, ",");
             }
             // printdata(response_data);
         }
@@ -71,3 +71,14 @@ int main() {
 
     return 0;
 }
+
+
+/*
+    expected output:
+    "id": 133979873
+    "login": "khbouych"
+    "name": "khalid bouychou"
+    "avatar_url": "https://avatars.githubusercontent.com"
+    "bio": "alx student"
+    "location": "khouribga"
+*/
