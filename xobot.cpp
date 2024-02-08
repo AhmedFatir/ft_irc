@@ -1,13 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <cstdlib>
-#include <netdb.h>
-#include <sstream>
 #include <ctime>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #define RED "\e[1;31m"
 #define WHI "\e[0;37m"
 #define GRE "\e[1;32m"
@@ -121,47 +116,8 @@ void playTicTacToe()
 	std::cout << YEL << "It's a draw!" << WHI << std::endl;
 }
 
-// void send_privmsg(int srvsock,std::string age, std::string nickname)
-// {
-//     std::string msg = "PRIVMSG " +nickname + " :your age is: " +age +"\r\n";
-//     send(srvsock, msg.c_str(), msg.size(),0);
-// }
-
-// void _sendMessage(std::string message, int fd)
-// {
-//     if(send(fd, message.c_str(), message.size(), 0) == -1)
-//         std::cerr << "Send failed" << std::endl;
-// }
-
 int main()
 {
-	// int ircsock;
-    // struct sockaddr_in ircHints;
-
-    // ircsock = socket(AF_INET, SOCK_STREAM, 0);
-    // if(ircsock == -1)
-    // {
-    //     std::cerr << "failed to create socket (ircsock)" << std::endl;
-    //     return 1;
-    // }
-
-    // ircHints.sin_family = AF_INET;
-    // ircHints.sin_port = htons(9009);
-    // inet_pton(AF_INET, "127.0.0.1", &(ircHints.sin_addr));
-    // if(connect(ircsock, (struct sockaddr*)&ircHints, sizeof(ircHints)) == -1) {
-    //     std::cerr << "connect failed\n" << std::endl;
-    //     return 1;
-    // }
-    // // connection to irc server
-    // _sendMessage("PASS 123\r\n", ircsock);
-    // _sendMessage("NICK bot\r\n", ircsock);
-    // _sendMessage("USER bot 0 * bot\r\n", ircsock);
-
-    // std::string resp;
-    // std::string recived;
-    // ssize_t recivedBytes;
-	
-	
 	while (1){
 		system("clear");
 		std::srand((std::time(NULL)));
