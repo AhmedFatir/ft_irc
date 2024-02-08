@@ -51,13 +51,14 @@ bool Server::nickNameInUse(std::string& nickname)
 	return false;
 }
 
-void Server::set_nickname(std::string& nickname, int fd)
+void Server::set_nickname(std::string cmd, int fd)
 {
-	if(nickname == ":" || nickname.empty())
+	std::vector<std::string> splited_cmd = split_cmd(cmd);
+	if(splited_cmd.size() < 2 || splited_cmd[1] == ":")
         _sendResponse(ERR_NONICKNAME(std::string("nickname")), fd);
-	else if (nickNameInUse(nickname))
+	else if (nickNameInUse(splited_cmd[1]))
         _sendResponse(ERR_NICKINUSE(std::string("nickname")), fd);
-	else if(!is_validNickname(nickname))
+	else if(!is_validNickname(splited_cmd[1]))
         _sendResponse(ERR_ERRONEUSNICK(std::string("nickname")), fd);
 	else
 	{
@@ -66,12 +67,12 @@ void Server::set_nickname(std::string& nickname, int fd)
 		{
 			std::string oldNick = cli->GetNickName();
 			if(!oldNick.empty())
-				_sendResponse(RPL_NICKCHANGE(oldNick,nickname), fd);
-			cli->SetNickname(nickname);
+				_sendResponse(RPL_NICKCHANGE(oldNick,splited_cmd[1]), fd);
+			cli->SetNickname(splited_cmd[1]);
 		}
 		else if (cli && !cli->getRegistered())
 		{
-			_sendResponse(ERR_NOTREGISTERED(nickname), fd);
+			_sendResponse(ERR_NOTREGISTERED(splited_cmd[1]), fd);
 			// RemoveFds(fd);
 			// RemoveClient(fd);
 			// close(fd);

@@ -14,6 +14,7 @@ private:
 	int fd;
 	bool registered;
 	std::string buffer;
+	std::string ipadd;
 public:
 	std::vector<std::string> ChannelsInvite;
 	Client();
@@ -53,6 +54,14 @@ public:
 	bool getRegistered()
 	{
 		return registered;
+	}
+	std::string getIpAdd()
+	{
+		return ipadd;
+	}
+	void setIpAdd(std::string ipadd)
+	{
+		this->ipadd = ipadd;
 	}
 };
 

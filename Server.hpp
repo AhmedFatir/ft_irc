@@ -101,7 +101,7 @@ public:
 	bool	is_validNickname(std::string& nickname);
 	// ########################### GETTERS & SETTERS 
 	void						set_username(std::string& username, int fd);
-	void						set_nickname(std::string& nickname, int fd);
+	void						set_nickname(std::string cmd, int fd);
 
 	bool checkifchannelexist(std::string &namechannel);
 	bool checkifadmin(int &fd);

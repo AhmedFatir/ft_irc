@@ -54,7 +54,7 @@ bool checkWin(const std::vector<char>& board, char player)
 int GetNumber(std::string prompt)
 {
   	std::string	command;
-	int number;
+	// int number;
 	while (1){
 		std::cout << prompt;
 		if (std::getline(std::cin, command)){
