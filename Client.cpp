@@ -8,6 +8,8 @@ Client::Client()
 	this->isOperator= false;
 	this->registered = false;
 	this->buffer = "";
+	// memset(&cliadd, 0, sizeof(cliadd));
+	this->ipadd = "";
 }
 Client::Client(std::string nickname, std::string username, int fd) : nickname(nickname), username(username), fd(fd){}
 Client::~Client(){}
@@ -20,6 +22,7 @@ Client &Client::operator=(Client const &src){
 		this->ChannelsInvite = src.ChannelsInvite;
 		this->buffer = src.buffer;
 		this->registered = src.registered;
+		this->ipadd = src.ipadd;
 	}
 	return *this;
 }

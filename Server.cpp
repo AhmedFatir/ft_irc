@@ -141,14 +141,20 @@ void Server::set_sever_socket()
 
 void Server::accept_new_client()
 {
+	Client cli;
+	// socklen_t len = sizeof(*cli.getCliAdd());
+	memset(&cliadd, 0, sizeof(cliadd));
 	socklen_t len = sizeof(cliadd);
-
-	int incofd = accept(server_fdsocket, (sockaddr *)&cliadd, &len);
+	int incofd = accept(server_fdsocket, (sockaddr *)&(cliadd), &len);
 	if (incofd == -1)
 		throw(std::runtime_error("faccept() failed"));
+	std::cout << "----------------->" << inet_ntoa((cliadd.sin_addr)) << std::endl;
 	new_cli.fd = incofd;
 	new_cli.events = POLLIN;
 	new_cli.revents = 0;
+	cli.SetFd(incofd);
+	cli.setIpAdd(inet_ntoa((cliadd.sin_addr)));
+	clients.push_back(cli);
 	fds.push_back(new_cli);
 }
 
@@ -172,8 +178,8 @@ void Server::accept_new_message(int fd, std::string &recived)
 {
 	(void)recived;
 	char buff[1024];
-	ssize_t bytes = 0;
 	Client *cli = GetClient(fd);
+	ssize_t bytes = recv(fd, buff, sizeof(buff), 0);
 	std::vector<std::string> cmd;
 
 	if(bytes <= 0)
@@ -234,7 +240,7 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
     if(splited_cmd[0] == "PASS")
         client_authen(fd, cmd);
 	else if (splited_cmd[0] == "NICK")
-		set_nickname(splited_cmd[1],fd);
+		set_nickname(cmd,fd);
 	else if(splited_cmd[0] == "USER")
 		set_username(cmd, fd);
 	else if (splited_cmd[0] == "QUIT")
