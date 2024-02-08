@@ -1,82 +1,73 @@
-
-#include <stdio.h>
-#include <curl/curl.h>
 #include <iostream>
-#include <string>
-#include <stdlib.h>
+#include <curl/curl.h>
 
-using namespace std;
-
-
-struct MemoryStruct {
-  char *memory;
-  size_t size;
-};
-typedef struct  {
-  char *memory;
-  size_t size;
-} Response;
-
-// static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
-// {
-//   size_t realsize = size * nmemb;
-//   struct MemoryStruct *mem = (struct MemoryStruct *)userp;
-
-//   char *ptr = (char *)realloc(mem->memory, mem->size + realsize + 1);
-//   if(ptr == NULL) {
-//     /* out of memory! */
-//     printf("not enough memory (realloc returned NULL)\n");
-//     return 0;
-//   }
-
-//   mem->memory = ptr;
-//   memcpy(&(mem->memory[mem->size]), contents, realsize);
-//   mem->size += realsize;
-//   mem->memory[mem->size] = 0;
-
-//   return realsize;
-// }
-
-size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
-{
-    puts("\n\n BEGIN CHUNK \n\n");
-    for (int i = 0; i < size * nmemb; i++)
-    {
-        printf("%c", ((char *)contents)[i]);
-    }
-    puts("\n\n END CHUNK \n\n");
-    return nmemb;
+// Callback function to handle the response data
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
+    size_t total_size = size * nmemb;
+    output->append(static_cast<char*>(contents), total_size);
+    return total_size;
 }
+
+void printdata(std::string data)
+{
+   
+}
+
 int main() {
-   
-   CURL *curl;
-   CURLcode res;
+    CURL* curl;
+    CURLcode res = curl_global_init(CURL_GLOBAL_DEFAULT);
 
-   struct MemoryStruct chunk;
-    chunk.memory = (char *)malloc(1);  /* will be grown as needed by the realloc above */
-    chunk.size = 0;    /* no data at this point */
-   
-   curl = curl_easy_init();
+    if (res != CURLE_OK) {
+        std::cerr << "Error initializing libcurl: " << curl_easy_strerror(res) << std::endl;
+        return 1;
+    }
 
-   if (!curl)
-   {
-        cerr << "Error: curl_easy_init() failed" << endl;
-        return -1;
-   }
-   Response response;
-   
-   curl_easy_setopt(curl, CURLOPT_URL, "https://www.google.com");
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-   res = curl_easy_perform(curl);
+    curl = curl_easy_init();
 
-   if (res != CURLE_OK)
-   {
-        cerr << "Error: curl_easy_perform() failed: " << curl_easy_strerror(res) << endl;
-        return -1;
-   }
-   cout << "res ----- > " << chunk.memory << endl;
-   free(chunk.memory);
-   curl_easy_cleanup(curl);
+    if (curl) {
+        std::string github_username;
+        std::cout << "Enter the GitHub username: ";
+        std::cin >> github_username;
+
+        // Build the API URL with the user-input GitHub username
+        std::string api_url = "https://api.github.com/users/" + github_username + "/repos";
+
+        curl_easy_setopt(curl, CURLOPT_URL, api_url.c_str());
+
+        // GitHub API requires a user-agent header
+        struct curl_slist* headers = NULL;
+        headers = curl_slist_append(headers, "User-Agent: MyApplication/1.0");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+        std::string response_data;
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
+
+        res = curl_easy_perform(curl);
+
+        // Cleanup headers
+        curl_slist_free_all(headers);
+
+        if (res != CURLE_OK) {
+            std::cerr << "Error performing HTTP request: " << curl_easy_strerror(res) << std::endl;
+        } else {
+            // Parse and display the response (you might want to use a JSON library for proper parsing)
+            std::cout << response_data << std::endl;
+            char *rok = strtok((char *)response_data.c_str(), ",");
+            while(rok != NULL)
+            {
+                std::cout << rok << std::endl;
+                rok = strtok(NULL, ",");
+            }
+            // printdata(response_data);
+        }
+
+        curl_easy_cleanup(curl);
+    } else {
+        std::cerr << "Error creating curl handle." << std::endl;
+    }
+
+    curl_global_cleanup();
+
     return 0;
 }

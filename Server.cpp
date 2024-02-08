@@ -239,6 +239,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 			PRIVMSG(cmd, fd);
 		else if (splited_cmd[0] == "INVITE")
 			Invite(cmd,fd);
+		else if (splited_cmd[0] == "KHBOUYCHBOT")
+			khbouych_bot(cmd, fd);
 		else if (splited_cmd[0] == "BOT")
 		{
 			std::string botmsg = cmd.substr(4);
