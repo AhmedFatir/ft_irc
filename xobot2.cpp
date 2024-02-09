@@ -8,10 +8,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#define RED "\e[1;31m"
-#define WHI "\e[0;37m"
-#define GRE "\e[1;32m"
-#define YEL "\e[1;33m"
+
 
 void send_privmsg(int srvsock,std::string age, std::string nickname)
 {
@@ -28,24 +25,30 @@ void _sendMessage(std::string message, int fd)
 void drawBoard(const std::vector<char>& board, int ircsock)
 {
 	std::stringstream stm;
-	stm << "-----------" << std::endl;
+	stm << "-----------" << "\n";
 	for (int i = 0; i < 9; ++i){
 		if (board[i] == 'X')
-			stm << GRE << " " << board[i] << " " << WHI;
+			stm << " " << board[i] << " ";
 		else if (board[i] == 'O')
-			stm << RED << " " << board[i] << " " << WHI;
+			stm << " " << board[i] << " ";
 		else
 			stm << " " << board[i] << " ";
 
 		if (i == 2 || i == 5)
-			stm << std::endl << "-----------" << std::endl;
+			stm << "\n" << "-----------" << "\n";
 		else if (i == 8)
-			stm << std::endl;
+			stm << "\n";
 		else
 			stm << "|";
 	}
-	stm << "-----------" << "\n\r";
-	_sendMessage(stm.str(), ircsock);
+	stm << "-----------" << "\n";
+
+	std::string line;
+	while(std::getline(stm, line))
+	{
+		_sendMessage("PRIVMSG aa :"+line +"\r\n", ircsock);
+		line.clear();
+	}
 	std::cout << stm.str() << std::endl;
 }
 
@@ -75,16 +78,16 @@ int GetNumber(std::string prompt, int ircsock)
 {
   	std::string	command;
 	while (1){
-		_sendMessage(prompt, ircsock);
+		_sendMessage("PRIVMSG aa : " + prompt, ircsock);
 		if (std::getline(std::cin, command)){
 			if(command.empty() || command.size() > 1 || !isdigit(command[0]))
 				return -1;
 			else break;
 		}
-		// else{
-		// 	if (std::cin.eof())
-		// 		{std::cin.clear(); rewind(stdin); std::cout << std::endl;}
-		// }
+		else{
+			if (std::cin.eof())
+				{std::cin.clear(); rewind(stdin); std::cout << std::endl;}
+		}
 	}
 	return (std::atoi(command.c_str()));
 }
@@ -93,8 +96,8 @@ void playTicTacToe(int ircsock)
 {
 	std::vector<char> board(9, '-');
 	std::stringstream stm;
-	stm << YEL << "Welcome to (X | O) Game!" << WHI << std::endl;
-	stm << "YOU : " << GRE << "X" << WHI << " | Computer: " << RED <<  "O" << WHI << "\n\r";
+	stm << "PRIVMSG aa : Welcome to (X | O) Game!" << std::endl;
+	stm << "YOU : "  << "X" << " | Computer: " <<  "O" << "\r\n";
 	_sendMessage(stm.str(), ircsock);
 	std::cout << stm.str() << std::endl;
 	
@@ -105,19 +108,19 @@ void playTicTacToe(int ircsock)
 		drawBoard(board, ircsock);
 
 		if (currentPlayer == 'X'){ // Player's turn
-			int move = GetNumber("YOU, enter your move (1-9): \n\r", ircsock);
+			int move = GetNumber("YOU, enter your move (1-9): \r\n", ircsock);
 			if (move == -1 || board[move - 1] != '-'){// Validate the move
 				stm.str("");
-				stm << RED << "Invalid move. Try again!" << WHI << "\n\r";
+				stm << "Invalid move. Try again!" << "\r\n";
 				_sendMessage(stm.str(), ircsock);
-				std::cout << RED << "Invalid move. Try again!" << WHI << std::endl;
+				std::cout << "Invalid move. Try again!" << std::endl;
 				continue;
 			}
 			board[move - 1] = currentPlayer;
 		}
 		else{ // Computer's turn
 			stm.str("");
-			stm << "Computer's turn..." << "\n\r";
+			stm << "Computer's turn..." << "\r\n";
 			_sendMessage(stm.str(), ircsock);
 			std::cout << "Computer's turn..." << std::endl;
 			sleep(1);
@@ -133,15 +136,15 @@ void playTicTacToe(int ircsock)
 			drawBoard(board, ircsock);
 			if (currentPlayer == 'X'){
 				stm.str("");
-				stm << GRE << "YOU win!" << WHI << "\n\r";
+				stm << "YOU win!" << "\r\n";
 				_sendMessage(stm.str(), ircsock);
-				std::cout << GRE << "YOU win!" << WHI << std::endl;
+				std::cout  << "YOU win!"  << std::endl;
 			}
 			else{
 				stm.str("");
-				stm << RED << "Computer wins!" << WHI << "\n\r";
+				stm  << "Computer wins!" << "\r\n";
 				_sendMessage(stm.str(), ircsock);
-				std::cout << RED << "Computer wins!" << WHI << std::endl;
+				std::cout  << "Computer wins!" << std::endl;
 			}
 			return;
 		}
@@ -152,9 +155,9 @@ void playTicTacToe(int ircsock)
 	}
 	drawBoard(board, ircsock);
 	stm.str("");
-	stm << YEL << "It's a draw!" << WHI << "\n\r";
+	stm  << "It's a draw!" << "\r\n";
 	_sendMessage(stm.str(), ircsock);
-	std::cout << YEL << "It's a draw!" << WHI << std::endl;
+	std::cout << "It's a draw!" << std::endl;
 }
 
 
@@ -172,14 +175,14 @@ int main()
     }
 
     ircHints.sin_family = AF_INET;
-    ircHints.sin_port = htons(4444);
+    ircHints.sin_port = htons(9009);
     inet_pton(AF_INET, "127.0.0.1", &(ircHints.sin_addr));
     if(connect(ircsock, (struct sockaddr*)&ircHints, sizeof(ircHints)) == -1) {
         std::cerr << "connect failed\n" << std::endl;
         return 1;
     }
     // connection to irc server
-    _sendMessage("PASS 1234\r\n", ircsock);
+    _sendMessage("PASS 123\r\n", ircsock);
     _sendMessage("NICK bot\r\n", ircsock);
     _sendMessage("USER bot 0 * bot\r\n", ircsock);
 
@@ -191,18 +194,21 @@ int main()
 	while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)
     {
         buff[recivedBytes] = '\0';
-        std::cout << "recived: " <<  buff;
+        std::cout << "recived: " <<  buff << "|\n";
         recived = buff;
-        // if(recived == "PLAY")
-		// {
-			resp = "PRIVMSG #test :I'm ready to play\n\r";
+        if(recived == "PLAY\r\n")
+		{
+			resp = "PRIVMSG aa :I'm ready to play\r\n";
 			_sendMessage(resp, ircsock);
 			std::srand((std::time(NULL)));
 			playTicTacToe(ircsock);
-			int i = GetNumber("Play again? if yes enter 1: \n\r", ircsock);
+			int i = GetNumber("Play again? if yes enter 1: \r\n", ircsock);
 			if (i != 1)
-				{std::cout << "Goodbye!" << std::endl; break;}
-		// }
+			{
+				std::cout << "Goodbye!" << std::endl; break;
+				_sendMessage("QUIT\r\n", ircsock);
+			}
+		}
     }
 	return 0;
 }

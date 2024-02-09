@@ -70,7 +70,7 @@ public:
 	void                        init(int port, std::string pass);
 	void                        set_sever_socket();
 	void                        accept_new_client();
-	void                        accept_new_message(int fd, std::string& recived);
+	void                        accept_new_message(int fd);
 	std::vector<std::string>    split_cmd(std::string &str);
 	//-----------------afatir----------------
 	// ########################### JOIN CMD
