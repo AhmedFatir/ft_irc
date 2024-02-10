@@ -14,15 +14,17 @@ $(NAME): $(OBJS)
 
 bounus_abdo:
 	c++ -Wall -Wextra -Werror bot_abdo.cpp -o bot_abdo
+bonus:
+	c++ -Wall -Wextra -Werror botXO.cpp -o botXO
 
 %.o: %.cpp Server.hpp Client.hpp Channel.hpp replies.hpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	@rm -f $(OBJS)
+	@rm -f $(OBJS) 
 
 fclean: clean
-	@rm -f $(NAME) $(BOUNUS)
+	@rm -f $(NAME) $(BOUNUS) botXO
 
 re: fclean all
 

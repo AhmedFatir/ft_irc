@@ -10,10 +10,12 @@
 #include <arpa/inet.h>
 
 
-void send_privmsg(int srvsock,std::string age, std::string nickname)
+void send_privmsg(std::string message, int srvsock)
 {
-    std::string msg = "PRIVMSG " +nickname + " :your age is: " +age +"\r\n";
-    send(srvsock, msg.c_str(), msg.size(),0);
+	std::cout << message << std::endl;
+    std::string msg = "PRIVMSG cc :" + message + "\r\n";
+    if (send(srvsock, msg.c_str(), msg.size(),0) == -1)
+		std::cerr << "Send failed" << std::endl;
 }
 
 void _sendMessage(std::string message, int fd)
@@ -42,14 +44,11 @@ void drawBoard(const std::vector<char>& board, int ircsock)
 			stm << "|";
 	}
 	stm << "-----------" << "\n";
-
 	std::string line;
-	while(std::getline(stm, line))
-	{
-		_sendMessage("PRIVMSG aa :"+line +"\r\n", ircsock);
+	while(std::getline(stm, line)){
+		send_privmsg(line, ircsock);
 		line.clear();
 	}
-	std::cout << stm.str() << std::endl;
 }
 
 // Function to check if a player has won
@@ -73,20 +72,32 @@ bool checkWin(const std::vector<char>& board, char player)
 	return false;
 }
 
+std::string SplitBuff(std::string buff)
+{
+	std::string command;
+	size_t found = buff.find("bot");
+	if (found != std::string::npos)
+		command = buff.substr(found+4);
+	else return "";
+	found = command.find("\r\n");
+	if (found != std::string::npos)
+		command = command.substr(0, found);
+	return command;
+}
 // Function to play the Tic-Tac-Toe game against the computer
 int GetNumber(std::string prompt, int ircsock)
 {
+	ssize_t recivedBytes;
+    char buff[1024];
+
   	std::string	command;
 	while (1){
-		_sendMessage("PRIVMSG aa : " + prompt, ircsock);
-		if (std::getline(std::cin, command)){
+		send_privmsg(prompt, ircsock);
+		if ((recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0){
+			command = SplitBuff(buff);
 			if(command.empty() || command.size() > 1 || !isdigit(command[0]))
 				return -1;
 			else break;
-		}
-		else{
-			if (std::cin.eof())
-				{std::cin.clear(); rewind(stdin); std::cout << std::endl;}
 		}
 	}
 	return (std::atoi(command.c_str()));
@@ -95,11 +106,8 @@ int GetNumber(std::string prompt, int ircsock)
 void playTicTacToe(int ircsock)
 {
 	std::vector<char> board(9, '-');
-	std::stringstream stm;
-	stm << "PRIVMSG aa : Welcome to (X | O) Game!" << std::endl;
-	stm << "YOU : "  << "X" << " | Computer: " <<  "O" << "\r\n";
-	_sendMessage(stm.str(), ircsock);
-	std::cout << stm.str() << std::endl;
+	send_privmsg("Welcome to (X | O) Game!", ircsock);
+	send_privmsg("YOU : X | Computer: O", ircsock);
 	
 	
 	char currentPlayer = 'X';
@@ -108,21 +116,15 @@ void playTicTacToe(int ircsock)
 		drawBoard(board, ircsock);
 
 		if (currentPlayer == 'X'){ // Player's turn
-			int move = GetNumber("YOU, enter your move (1-9): \r\n", ircsock);
+			int move = GetNumber("YOU, enter your move (1-9):", ircsock);
 			if (move == -1 || board[move - 1] != '-'){// Validate the move
-				stm.str("");
-				stm << "Invalid move. Try again!" << "\r\n";
-				_sendMessage(stm.str(), ircsock);
-				std::cout << "Invalid move. Try again!" << std::endl;
+				send_privmsg("Invalid move. Try again!", ircsock);
 				continue;
 			}
 			board[move - 1] = currentPlayer;
 		}
 		else{ // Computer's turn
-			stm.str("");
-			stm << "Computer's turn..." << "\r\n";
-			_sendMessage(stm.str(), ircsock);
-			std::cout << "Computer's turn..." << std::endl;
+			send_privmsg("Computer's turn...", ircsock);
 			sleep(1);
 			int computerMove;
 			while (1){
@@ -135,16 +137,10 @@ void playTicTacToe(int ircsock)
 		if (checkWin(board, currentPlayer)){ // Check if the current player has won
 			drawBoard(board, ircsock);
 			if (currentPlayer == 'X'){
-				stm.str("");
-				stm << "YOU win!" << "\r\n";
-				_sendMessage(stm.str(), ircsock);
-				std::cout  << "YOU win!"  << std::endl;
+				send_privmsg("YOU win!", ircsock);
 			}
 			else{
-				stm.str("");
-				stm  << "Computer wins!" << "\r\n";
-				_sendMessage(stm.str(), ircsock);
-				std::cout  << "Computer wins!" << std::endl;
+				send_privmsg("Computer wins!", ircsock);
 			}
 			return;
 		}
@@ -154,16 +150,19 @@ void playTicTacToe(int ircsock)
 		movesLeft--;
 	}
 	drawBoard(board, ircsock);
-	stm.str("");
-	stm  << "It's a draw!" << "\r\n";
-	_sendMessage(stm.str(), ircsock);
-	std::cout << "It's a draw!" << std::endl;
+	send_privmsg("It's a draw!", ircsock);
+}
+bool isPortValid(std::string port)
+{
+	return (port.find_first_not_of("0123456789") == std::string::npos && std::atoi(port.c_str()) >= 1024 && std::atoi(port.c_str()) < 65535);
 }
 
-
-
-int main()
+int main(int ac, char **av)
 {
+	if (ac != 3)
+	{std::cerr << "Usage: " << av[0] << "<port> <password>" << std::endl; return 1;}
+	if (!isPortValid(av[1]))
+		{std::cerr << "Invalid port!" << std::endl; return 1;}
 	int ircsock;
     struct sockaddr_in ircHints;
 
@@ -175,21 +174,21 @@ int main()
     }
 
     ircHints.sin_family = AF_INET;
-    ircHints.sin_port = htons(9009);
+    ircHints.sin_port = htons(std::atoi(av[1]));
     inet_pton(AF_INET, "127.0.0.1", &(ircHints.sin_addr));
     if(connect(ircsock, (struct sockaddr*)&ircHints, sizeof(ircHints)) == -1) {
         std::cerr << "connect failed\n" << std::endl;
         return 1;
     }
     // connection to irc server
-    _sendMessage("PASS 123\r\n", ircsock);
+    _sendMessage("PASS " + std::string(av[2]) + "\r\n", ircsock);
     _sendMessage("NICK bot\r\n", ircsock);
     _sendMessage("USER bot 0 * bot\r\n", ircsock);
 
     std::string resp;
     std::string recived;
     ssize_t recivedBytes;
-	
+
     char buff[1024];
 	while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)
     {
@@ -198,17 +197,14 @@ int main()
         recived = buff;
         if(recived == "PLAY\r\n")
 		{
-			resp = "PRIVMSG aa :I'm ready to play\r\n";
-			_sendMessage(resp, ircsock);
+			send_privmsg("I'm ready to play", ircsock);
 			std::srand((std::time(NULL)));
 			playTicTacToe(ircsock);
-			int i = GetNumber("Play again? if yes enter 1: \r\n", ircsock);
-			if (i != 1)
-			{
-				std::cout << "Goodbye!" << std::endl; break;
-				_sendMessage("QUIT\r\n", ircsock);
-			}
 		}
+        // if(recived == "AGE\r\n")
+		// {
+			
+		// }
     }
 	return 0;
 }

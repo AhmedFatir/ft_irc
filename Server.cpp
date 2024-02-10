@@ -225,6 +225,18 @@ bool Server::notregistered(int fd)
 	return true;
 }
 
+void Server::StartBot(std::string &cmd, int fd)
+{
+	std::string botmsg;
+	if (cmd == "BOT")
+		botmsg = "PLAY\r\n";
+	else botmsg = "AGE\r\n";
+	if (!GetClientNick("bot"))
+		{senderror(401, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :bot not found\r\n"); return;}
+	if (send(GetClientNick("bot")->GetFd(), botmsg.c_str(), botmsg.size(), 0) == -1)
+		std::cerr << "send() faild" << std::endl;
+}
+
 void Server::parse_exec_cmd(std::string &cmd, int fd)
 {
 	if(cmd.empty())
@@ -254,11 +266,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 			PRIVMSG(cmd, fd);
 		else if (splited_cmd[0] == "INVITE")
 			Invite(cmd,fd);
-		else if (splited_cmd[0] == "BOT")
-		{
-			std::string botmsg = "PLAY\r\n";
-			send(GetClientNick("bot")->GetFd(), botmsg.c_str(), botmsg.size(), 0);
-		}
+		else if (splited_cmd[0] == "BOT" || splited_cmd[0] == "BOT2")
+			StartBot(splited_cmd[0], fd);
 		else
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
 

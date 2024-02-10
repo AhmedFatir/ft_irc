@@ -63,6 +63,7 @@ public:
 	void RemoveChannel(std::string name);
 	void RemoveFds(int fd);
 	//######################
+	void	StartBot(std::string &cmd, int fd);
 	void	senderror(int code, std::string clientname, int fd, std::string msg);
 	void	senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg);
 	static void					SignalHandler(int signum);
