@@ -28,7 +28,7 @@ void _sendMessage(std::string message, int fd)
 void drawBoard(const std::vector<char>& board, int ircsock)
 {
 	std::stringstream stm;
-	stm << "-----------" << std::endl;
+	stm << "\n-----------" << "\n";
 	for (int i = 0; i < 9; ++i){
 		if (board[i] == 'X')
 			stm << GRE << " " << board[i] << " " << WHI;
@@ -38,15 +38,15 @@ void drawBoard(const std::vector<char>& board, int ircsock)
 			stm << " " << board[i] << " ";
 
 		if (i == 2 || i == 5)
-			stm << std::endl << "-----------" << std::endl;
+			stm << "\n" << "-----------" << "\n";
 		else if (i == 8)
-			stm << std::endl;
+			stm << "\n";
 		else
 			stm << "|";
 	}
-	stm << "-----------" << "\n\r";
+	stm << "-----------" << "\r\n";
 	_sendMessage(stm.str(), ircsock);
-	std::cout << stm.str() << std::endl;
+	std::cout << stm.str() << "\n";
 }
 
 // Function to check if a player has won
@@ -94,7 +94,7 @@ void playTicTacToe(int ircsock)
 	std::vector<char> board(9, '-');
 	std::stringstream stm;
 	stm << YEL << "Welcome to (X | O) Game!" << WHI << std::endl;
-	stm << "YOU : " << GRE << "X" << WHI << " | Computer: " << RED <<  "O" << WHI << "\n\r";
+	stm << "YOU : " << GRE << "X" << WHI << " | Computer: " << RED <<  "O" << WHI << "\r\n";
 	_sendMessage(stm.str(), ircsock);
 	std::cout << stm.str() << std::endl;
 	
@@ -105,10 +105,10 @@ void playTicTacToe(int ircsock)
 		drawBoard(board, ircsock);
 
 		if (currentPlayer == 'X'){ // Player's turn
-			int move = GetNumber("YOU, enter your move (1-9): \n\r", ircsock);
+			int move = GetNumber("YOU, enter your move (1-9): \r\n", ircsock);
 			if (move == -1 || board[move - 1] != '-'){// Validate the move
 				stm.str("");
-				stm << RED << "Invalid move. Try again!" << WHI << "\n\r";
+				stm << RED << "Invalid move. Try again!" << WHI << "\r\n";
 				_sendMessage(stm.str(), ircsock);
 				std::cout << RED << "Invalid move. Try again!" << WHI << std::endl;
 				continue;
@@ -117,7 +117,7 @@ void playTicTacToe(int ircsock)
 		}
 		else{ // Computer's turn
 			stm.str("");
-			stm << "Computer's turn..." << "\n\r";
+			stm << "Computer's turn..." << "\r\n";
 			_sendMessage(stm.str(), ircsock);
 			std::cout << "Computer's turn..." << std::endl;
 			sleep(1);
@@ -133,13 +133,13 @@ void playTicTacToe(int ircsock)
 			drawBoard(board, ircsock);
 			if (currentPlayer == 'X'){
 				stm.str("");
-				stm << GRE << "YOU win!" << WHI << "\n\r";
+				stm << GRE << "YOU win!" << WHI << "\r\n";
 				_sendMessage(stm.str(), ircsock);
 				std::cout << GRE << "YOU win!" << WHI << std::endl;
 			}
 			else{
 				stm.str("");
-				stm << RED << "Computer wins!" << WHI << "\n\r";
+				stm << RED << "Computer wins!" << WHI << "\r\n";
 				_sendMessage(stm.str(), ircsock);
 				std::cout << RED << "Computer wins!" << WHI << std::endl;
 			}
@@ -152,7 +152,7 @@ void playTicTacToe(int ircsock)
 	}
 	drawBoard(board, ircsock);
 	stm.str("");
-	stm << YEL << "It's a draw!" << WHI << "\n\r";
+	stm << YEL << "It's a draw!" << WHI << "\r\n";
 	_sendMessage(stm.str(), ircsock);
 	std::cout << YEL << "It's a draw!" << WHI << std::endl;
 }
@@ -195,13 +195,13 @@ int main()
         recived = buff;
         // if(recived == "PLAY")
 		// {
-			resp = "PRIVMSG #test :I'm ready to play\n\r";
+			resp = "PRIVMSG #test :I'm ready to play\r\n";
 			_sendMessage(resp, ircsock);
 			std::srand((std::time(NULL)));
 			playTicTacToe(ircsock);
-			int i = GetNumber("Play again? if yes enter 1: \n\r", ircsock);
+			int i = GetNumber("Play again? if yes enter 1: \r\n", ircsock);
 			if (i != 1)
-				{std::cout << "Goodbye!" << std::endl; break;}
+				{std::cout << "Goodbye!" << std::endl; _sendMessage("QUIT\r\n", ircsock); break;}
 		// }
     }
 	return 0;
