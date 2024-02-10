@@ -63,7 +63,7 @@ void Server::set_nickname(std::string cmd, int fd)
 	else
 	{
 		Client *cli = GetClient(fd);
-		if(cli && cli->GetNickName().empty() && cli->getRegistered())
+		if(cli && cli->getRegistered())
 		{
 			std::string oldNick = cli->GetNickName();
 			if(!oldNick.empty())
@@ -73,9 +73,6 @@ void Server::set_nickname(std::string cmd, int fd)
 		else if (cli && !cli->getRegistered())
 		{
 			_sendResponse(ERR_NOTREGISTERED(splited_cmd[1]), fd);
-			// RemoveFds(fd);
-			// RemoveClient(fd);
-			// close(fd);
 		}
 	}
 }
@@ -94,9 +91,6 @@ void	Server::set_username(std::string& cmd, int fd)
 	else if(!cli || (cli && cli->GetNickName().empty()) || !cli->getRegistered())
 	{
 		_sendResponse(ERR_NOTREGISTERED(std::string("nickname")), fd);
-		// close(fd);
-		// RemoveFds(fd);
-		// RemoveClient(fd);
 	}
 	else if (cli && !cli->GetUserName().empty())
 		_sendResponse(ERR_ALREADYREGISTERED(cli->GetNickName()), fd);
@@ -105,5 +99,4 @@ void	Server::set_username(std::string& cmd, int fd)
 		cli->SetUsername(splited_cmd[1]);
 		_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
 	}
-	std::cout << "ana heraaaaaaaaa" << std::endl;
 }
