@@ -9,11 +9,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
-void send_privmsg(std::string message, int srvsock)
+void send_privmsg(std::string message, int srvsock, std::string UserNick)
 {
 	std::cout << message << std::endl;
-    std::string msg = "PRIVMSG cc :" + message + "\r\n";
+    std::string msg = "PRIVMSG " + UserNick + " :" + message + "\r\n";
     if (send(srvsock, msg.c_str(), msg.size(),0) == -1)
 		std::cerr << "Send failed" << std::endl;
 }
@@ -24,7 +23,7 @@ void _sendMessage(std::string message, int fd)
         std::cerr << "Send failed" << std::endl;
 }
 
-void drawBoard(const std::vector<char>& board, int ircsock)
+void drawBoard(const std::vector<char>& board, int ircsock, std::string UserNick)
 {
 	std::stringstream stm;
 	stm << "-----------" << "\n";
@@ -45,25 +44,19 @@ void drawBoard(const std::vector<char>& board, int ircsock)
 	}
 	stm << "-----------" << "\n";
 	std::string line;
-	while(std::getline(stm, line)){
-		send_privmsg(line, ircsock);
-		line.clear();
-	}
+	while(std::getline(stm, line))
+		{send_privmsg(line, ircsock, UserNick); line.clear();}
 }
 
 // Function to check if a player has won
 bool checkWin(const std::vector<char>& board, char player)
 {
 	// Check rows
-	for (int i = 0; i <= 6; i += 3){
-		if (board[i] == player && board[i+1] == player && board[i+2] == player)
-			return true;
-	}
+	for (int i = 0; i <= 6; i += 3)
+		{if (board[i] == player && board[i+1] == player && board[i+2] == player) return true;}
 	// Check columns
-	for (int i = 0; i < 3; i++){
-		if (board[i] == player && board[i+3] == player && board[i+6] == player)
-			return true;
-	}
+	for (int i = 0; i < 3; i++)
+		{if (board[i] == player && board[i+3] == player && board[i+6] == player) return true;}
 	// Check diagonals
 	if ((board[0] == player && board[4] == player && board[8] == player) ||
 		(board[2] == player && board[4] == player && board[6] == player))
@@ -84,15 +77,23 @@ std::string SplitBuff(std::string buff)
 		command = command.substr(0, found);
 	return command;
 }
+std::string SplitBuff(std::string buff, std::string &UserNick)
+{
+	std::istringstream stm(buff);
+	std::string token;
+	stm >> UserNick;
+	stm >> token;
+	return token;
+}
 // Function to play the Tic-Tac-Toe game against the computer
-int GetNumber(std::string prompt, int ircsock)
+int GetNumber(std::string prompt, int ircsock, std::string UserNick)
 {
 	ssize_t recivedBytes;
     char buff[1024];
 
   	std::string	command;
 	while (1){
-		send_privmsg(prompt, ircsock);
+		send_privmsg(prompt, ircsock, UserNick);
 		if ((recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0){
 			command = SplitBuff(buff);
 			if(command.empty() || command.size() > 1 || !isdigit(command[0]))
@@ -103,54 +104,52 @@ int GetNumber(std::string prompt, int ircsock)
 	return (std::atoi(command.c_str()));
 }
 
-void playTicTacToe(int ircsock)
+void playTicTacToe(int ircsock, std::string UserNick)
 {
 	std::vector<char> board(9, '-');
-	send_privmsg("Welcome to (X | O) Game!", ircsock);
-	send_privmsg("YOU : X | Computer: O", ircsock);
+	send_privmsg("Welcome to (X | O) Game!", ircsock, UserNick);
+	send_privmsg("YOU : X | Computer: O", ircsock, UserNick);
 	
 	
-	char currentPlayer = 'X';
+	char Player = 'X';
 	int movesLeft = 9;
 	while (movesLeft > 0){
-		drawBoard(board, ircsock);
+		std::srand((std::time(NULL)));
+		drawBoard(board, ircsock, UserNick);
 
-		if (currentPlayer == 'X'){ // Player's turn
-			int move = GetNumber("YOU, enter your move (1-9):", ircsock);
+		if (Player == 'X'){ // Player's turn
+			int move = GetNumber("YOU, enter your move (1-9):", ircsock, UserNick);
 			if (move == -1 || board[move - 1] != '-'){// Validate the move
-				send_privmsg("Invalid move. Try again!", ircsock);
+				send_privmsg("Invalid move. Try again!", ircsock, UserNick);
 				continue;
 			}
-			board[move - 1] = currentPlayer;
+			board[move - 1] = Player;
 		}
 		else{ // Computer's turn
-			send_privmsg("Computer's turn...", ircsock);
+			send_privmsg("Computer's turn...", ircsock, UserNick);
 			sleep(1);
-			int computerMove;
+			int Move;
 			while (1){
-				computerMove = std::rand() % 9;
-				if (board[computerMove] == '-')
-					{board[computerMove] = currentPlayer; break;}
+				Move = std::rand() % 9;
+				if (board[Move] == '-')
+					{board[Move] = Player; break;}
 			}
-			board[computerMove] = currentPlayer;
 		}
-		if (checkWin(board, currentPlayer)){ // Check if the current player has won
-			drawBoard(board, ircsock);
-			if (currentPlayer == 'X'){
-				send_privmsg("YOU win!", ircsock);
-			}
-			else{
-				send_privmsg("Computer wins!", ircsock);
-			}
+		if (checkWin(board, Player)){ // Check who wins
+			drawBoard(board, ircsock, UserNick);
+			if (Player == 'X')
+				send_privmsg("YOU win!", ircsock, UserNick);
+			else
+				send_privmsg("Computer wins!", ircsock, UserNick);
 			return;
 		}
 		// Switch players
-		if(currentPlayer == 'X') currentPlayer = 'O';
-		else currentPlayer = 'X';
+		if (Player == 'X') Player = 'O';
+		else Player = 'X';
 		movesLeft--;
 	}
-	drawBoard(board, ircsock);
-	send_privmsg("It's a draw!", ircsock);
+	drawBoard(board, ircsock, UserNick);
+	send_privmsg("It's a draw!", ircsock, UserNick);
 }
 bool isPortValid(std::string port)
 {
@@ -160,7 +159,7 @@ bool isPortValid(std::string port)
 int main(int ac, char **av)
 {
 	if (ac != 3)
-	{std::cerr << "Usage: " << av[0] << "<port> <password>" << std::endl; return 1;}
+	{std::cerr << "Usage: " << av[0] << " <port> <password>" << std::endl; return 1;}
 	if (!isPortValid(av[1]))
 		{std::cerr << "Invalid port!" << std::endl; return 1;}
 	int ircsock;
@@ -168,42 +167,32 @@ int main(int ac, char **av)
 
     ircsock = socket(AF_INET, SOCK_STREAM, 0);
     if(ircsock == -1)
-    {
-        std::cerr << "failed to create socket (ircsock)" << std::endl;
-        return 1;
-    }
+    	{std::cerr << "failed to create socket (ircsock)" << std::endl; return 1;}
 
     ircHints.sin_family = AF_INET;
     ircHints.sin_port = htons(std::atoi(av[1]));
     inet_pton(AF_INET, "127.0.0.1", &(ircHints.sin_addr));
-    if(connect(ircsock, (struct sockaddr*)&ircHints, sizeof(ircHints)) == -1) {
-        std::cerr << "connect failed\n" << std::endl;
-        return 1;
-    }
+    if(connect(ircsock, (struct sockaddr*)&ircHints, sizeof(ircHints)) == -1)
+		{std::cerr << "connect failed\n" << std::endl; return 1;}
     // connection to irc server
     _sendMessage("PASS " + std::string(av[2]) + "\r\n", ircsock);
     _sendMessage("NICK bot\r\n", ircsock);
     _sendMessage("USER bot 0 * bot\r\n", ircsock);
 
-    std::string resp;
-    std::string recived;
+    std::string resp, recived, UserNick;
     ssize_t recivedBytes;
 
     char buff[1024];
 	while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)
     {
         buff[recivedBytes] = '\0';
-        std::cout << "recived: " <<  buff << "|\n";
-        recived = buff;
-        if(recived == "PLAY\r\n")
-		{
-			send_privmsg("I'm ready to play", ircsock);
-			std::srand((std::time(NULL)));
-			playTicTacToe(ircsock);
-		}
-        // if(recived == "AGE\r\n")
+        std::cout << "recived: " <<  buff;
+        recived = SplitBuff(buff, UserNick);
+        if(recived == "PLAY")
+			playTicTacToe(ircsock, UserNick);
+        // if(recived == "AGE")
 		// {
-			
+		// 	return 0;
 		// }
     }
 	return 0;

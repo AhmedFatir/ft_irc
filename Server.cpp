@@ -233,6 +233,7 @@ void Server::StartBot(std::string &cmd, int fd)
 	else botmsg = "AGE\r\n";
 	if (!GetClientNick("bot"))
 		{senderror(401, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :bot not found\r\n"); return;}
+	botmsg = GetClient(fd)->GetNickName() + " " + botmsg;
 	if (send(GetClientNick("bot")->GetFd(), botmsg.c_str(), botmsg.size(), 0) == -1)
 		std::cerr << "send() faild" << std::endl;
 }
