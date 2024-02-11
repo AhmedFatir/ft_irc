@@ -8,6 +8,39 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+int ircsock;
+
+void _sendMessage(std::string message, int fd)
+{
+    if(send(fd, message.c_str(), message.size(), 0) == -1)
+        std::cerr << "Send failed" << std::endl;
+}
+
+
+void ageCalculator(std::string age, std::string Nickname)
+{
+    int year, month, day;
+    year = std::atoi(age.substr(0, 4).c_str());
+    month = std::atoi(age.substr(5, 2).c_str());
+    day = std::atoi(age.substr(8, 2).c_str());
+
+    std::cout << "year: " << year << "month: " << month << "day: " << day << std::endl;
+    std::tm date;
+    memset(&date, 0, sizeof(date));
+    date.tm_year = year - 1900;
+    date.tm_mon = month - 1;
+    date.tm_mday = day;
+
+    std::time_t age_in_sec = mktime(&date);
+    std::time_t current_time;
+    std::time(&current_time);
+    int age_int = (current_time - age_in_sec) / (365.25 * 24 * 60 * 60);
+    std::stringstream ss;
+    ss << age_int;
+    std::string str = ss.str();
+    str = "PRIVMSG " + Nickname + " : Your age is : " + str + " year(s) old\r\n";
+	_sendMessage(str, ircsock); 
+}
 
 void send_privmsg(std::string message, int srvsock, std::string UserNick)
 {
@@ -15,12 +48,6 @@ void send_privmsg(std::string message, int srvsock, std::string UserNick)
     std::string msg = "PRIVMSG " + UserNick + " :" + message + "\r\n";
     if (send(srvsock, msg.c_str(), msg.size(),0) == -1)
 		std::cerr << "Send failed" << std::endl;
-}
-
-void _sendMessage(std::string message, int fd)
-{
-    if(send(fd, message.c_str(), message.size(), 0) == -1)
-        std::cerr << "Send failed" << std::endl;
 }
 
 void drawBoard(const std::vector<char>& board, int ircsock, std::string UserNick)
@@ -77,12 +104,13 @@ std::string SplitBuff(std::string buff)
 		command = command.substr(0, found);
 	return command;
 }
-std::string SplitBuff(std::string buff, std::string &UserNick)
+std::string SplitBuff(std::string buff, std::string &UserNick, std::string &date)
 {
 	std::istringstream stm(buff);
 	std::string token;
 	stm >> UserNick;
 	stm >> token;
+	stm >> date;
 	return token;
 }
 // Function to play the Tic-Tac-Toe game against the computer
@@ -156,15 +184,23 @@ bool isPortValid(std::string port)
 	return (port.find_first_not_of("0123456789") == std::string::npos && std::atoi(port.c_str()) >= 1024 && std::atoi(port.c_str()) < 65535);
 }
 
+void signalHandler(int signum)
+{
+	(void)signum;
+	std::string quit = "QUIT\r\n";
+	if(send(ircsock, quit.c_str(), quit.size(), 0))
+		std::cerr << "send() faild" << std::endl;
+}
+
 int main(int ac, char **av)
 {
 	if (ac != 3)
 	{std::cerr << "Usage: " << av[0] << " <port> <password>" << std::endl; return 1;}
 	if (!isPortValid(av[1]))
 		{std::cerr << "Invalid port!" << std::endl; return 1;}
-	int ircsock;
+	// int ircsock;
     struct sockaddr_in ircHints;
-
+	signal(SIGINT, signalHandler);
     ircsock = socket(AF_INET, SOCK_STREAM, 0);
     if(ircsock == -1)
     	{std::cerr << "failed to create socket (ircsock)" << std::endl; return 1;}
@@ -179,7 +215,7 @@ int main(int ac, char **av)
     _sendMessage("NICK bot\r\n", ircsock);
     _sendMessage("USER bot 0 * bot\r\n", ircsock);
 
-    std::string resp, recived, UserNick;
+    std::string recived, UserNick, date;
     ssize_t recivedBytes;
 
     char buff[1024];
@@ -187,13 +223,12 @@ int main(int ac, char **av)
     {
         buff[recivedBytes] = '\0';
         std::cout << "recived: " <<  buff;
-        recived = SplitBuff(buff, UserNick);
+        recived = SplitBuff(buff, UserNick, date);
+		std::cout << "splited: " << recived << std::endl;
         if(recived == "PLAY")
 			playTicTacToe(ircsock, UserNick);
-        // if(recived == "AGE")
-		// {
-		// 	return 0;
-		// }
+        else if(recived == "AGE")
+			ageCalculator(date, UserNick);
     }
 	return 0;
 }

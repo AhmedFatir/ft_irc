@@ -16,9 +16,6 @@ all: $(NAME)
 $(NAME): $(OBJS)
 	@$(CC) $(CFLAGS) -o $(NAME) $(OBJS)
 
-bounus_abdo:
-	c++ -Wall -Wextra -Werror bot_abdo.cpp -o bot_abdo
-
 bonus: $(OBJS_BONUS)
 	@$(CC) $(CFLAGS) -o $(NAME_BOUNUS) $(OBJS_BONUS)
 

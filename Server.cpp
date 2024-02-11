@@ -96,11 +96,12 @@ void Server::init(int port, std::string pass)
 	std::cout << "Waiting to accept a connection...\n";
 	while (Server::Signal == false)
 	{
-		if(poll(&fds[0],fds.size(),-1) == -1)
+		// if(poll(&fds[0],fds.size(),-1) == -1)
+		if(poll(fds.data(),fds.size(),-1) == -1)
 			std::cout << "poll() faild or signal recived" << std::endl;
 		for (size_t i = 0; i < fds.size(); i++)
 		{
-			if (fds[i].revents == POLLIN)
+			if (fds[i].revents & POLLIN)
 			{
 				if (fds[i].fd == server_fdsocket){
 					this->accept_new_client();
@@ -145,8 +146,6 @@ void Server::accept_new_client()
 	if (incofd == -1)
 		throw(std::runtime_error("faccept() failed"));
 	fcntl(incofd, F_SETFL, O_NONBLOCK);
-
-	std::cout << "----------------->" << inet_ntoa((cliadd.sin_addr)) << std::endl;
 	new_cli.fd = incofd;
 	new_cli.events = POLLIN;
 	new_cli.revents = 0;
@@ -178,7 +177,6 @@ void Server::accept_new_message(int fd)
 	Client *cli = GetClient(fd);
 	ssize_t bytes = recv(fd, buff, sizeof(buff), 0);
 	std::vector<std::string> cmd;
-
 	if(bytes <= 0)
 	{
 		std::cout << "clinet: " << fd << " disconnected" << std::endl;
@@ -225,15 +223,16 @@ bool Server::notregistered(int fd)
 	return true;
 }
 
-void Server::StartBot(std::string &cmd, int fd)
+void Server::StartBot(std::string cmd, int fd)
 {
 	std::string botmsg;
-	if (cmd == "BOT")
-		botmsg = "PLAY\r\n";
-	else botmsg = "AGE\r\n";
+	// if (cmd == "BOT")
+	// 	botmsg = "PLAY\r\n";
+	// else botmsg = "AGE\r\n";
+	std::cout << " ===> Recived Msg For Bot :" << cmd;
 	if (!GetClientNick("bot"))
 		{senderror(401, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :bot not found\r\n"); return;}
-	botmsg = GetClient(fd)->GetNickName() + " " + botmsg;
+	botmsg = GetClient(fd)->GetNickName() + " " + cmd + "\r\n";
 	if (send(GetClientNick("bot")->GetFd(), botmsg.c_str(), botmsg.size(), 0) == -1)
 		std::cerr << "send() faild" << std::endl;
 }
@@ -267,8 +266,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 			PRIVMSG(cmd, fd);
 		else if (splited_cmd[0] == "INVITE")
 			Invite(cmd,fd);
-		else if (splited_cmd[0] == "BOT" || splited_cmd[0] == "BOT2")
-			StartBot(splited_cmd[0], fd);
+		else if (splited_cmd[0] == "PLAY" || splited_cmd[0] == "AGE")
+			StartBot(cmd, fd);
 		else
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
 
