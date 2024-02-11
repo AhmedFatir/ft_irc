@@ -139,6 +139,7 @@ std::string SplitBuff(std::string buff)
 	found = command.find("\r\n");
 	if (found != std::string::npos)
 		command = command.substr(0, found);
+	command.erase(command.begin());
 	return command;
 }
 std::string SplitBuff(std::string buff, std::string &UserNick, std::string &date)
@@ -161,6 +162,7 @@ int GetNumber(std::string prompt, int ircsock, std::string UserNick)
 		send_privmsg(prompt, ircsock, UserNick);
 		if ((recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0){
 			command = SplitBuff(buff);
+			if (command == "exit") return -2;
 			if(command.empty() || command.size() > 1 || !isdigit(command[0]))
 				return -1;
 			else break;
@@ -183,7 +185,8 @@ void playTicTacToe(int ircsock, std::string UserNick)
 		drawBoard(board, ircsock, UserNick);
 
 		if (Player == 'X'){ // Player's turn
-			int move = GetNumber("YOU, enter your move (1-9):", ircsock, UserNick);
+			int move = GetNumber("To Quit Send (exit)/ YOU, enter your move (1-9):", ircsock, UserNick);
+			if (move == -2) return;
 			if (move == -1 || board[move - 1] != '-'){// Validate the move
 				send_privmsg("Invalid move. Try again!", ircsock, UserNick);
 				continue;
@@ -290,11 +293,11 @@ int main(int ac, char **av)
         std::cout << "recived: " <<  buff;
         recived = SplitBuff(buff, UserNick, date);
 		std::cout << "splited: " << recived << std::endl;
-        if(recived == "PLAY")
+        if(recived == "PLAY" || recived == "play")
 			playTicTacToe(ircsock, UserNick);
-        else if(recived == "AGE")
+        else if(recived == "AGE" || recived == "age")
 			ageCalculator(date, UserNick);
-		else if (recived == "NOKTA")
+		else if (recived == "NOKTA" || recived == "nokta")
 			nokta(UserNick,vnokat,ircsock);
 	}
 	return 0;

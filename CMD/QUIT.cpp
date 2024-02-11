@@ -14,17 +14,13 @@ void	SplitQuit(std::vector<std::string> &tmp, std::string cmd)
 				{str += " " + tmp[j];tmp.erase(tmp.begin() + j);j--;}
 	}
 	str.erase(str.begin());
-	if (str[0] == ':') //if the message starts with ':'
-		{str.insert(str.begin()+1 , ' ');}
-	else if (str[0] != ':'){ //if the message does not start with ':'
+	if (str[0] != ':'){ //if the message does not start with ':'
 		for (size_t i = 0; i < str.size(); i++){
 			if (str[i] == ' ')
 				{str.erase(str.begin() + i, str.end());break;}
 		}
-		str.insert(str.begin(), ' ');
 		str.insert(str.begin(), ':');
 	}
-	str = ":Quit" + str;
 	tmp.push_back(str);
 	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
 		{if (tmp[i].empty())tmp.erase(tmp.begin() + i--);}
@@ -57,7 +53,7 @@ void Server::QUIT(std::string cmd, int fd)
 			}
 		}
 	}
-	std::cout << GetClient(fd)->GetNickName() << " has left the server " << tmp[0] << std::endl;
+	std::cout << GetClient(fd)->GetNickName() << " has left the server QUIT " << tmp[0] << std::endl;
 	RmChannels(fd);
 	RemoveClient(fd);
 	RemoveFds(fd);
