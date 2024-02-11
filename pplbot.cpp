@@ -1,24 +1,25 @@
-#include <iostream>
-#include <curl/curl.h>
-#include <map>
-#include <iostream>
-#include <curl/curl.h>
-#include <map>
+#include "Server.hpp"
 
-#include <iostream>
-#include <string>
-
-#include <iostream>
-
+void _sendMessage(std::string message, int fd)
+{
+    if (send(fd, message.c_str(), message.size(), 0) == -1)
+        std::cerr << "Send failed" << std::endl;
+}
+//----------
 std::string getpickline(const std::string pickuplines[], int size)
 {
     std::srand(static_cast<unsigned int>(std::time(NULL)));
     int index = std::rand() % size;
     return pickuplines[index];
 }
-
-int main()
+void Server::pickuplinesbot(std::string &cmd, int &fd)
 {
+    std::vector<std::string> scmd = split_cmd(cmd);
+    // if (scmd.size() != 1)
+    // {
+    //     senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n");
+    //     return;
+    // }
     const std::string pickuplines[] = {
         "When I look in your eyes, I see a very kind soul.",
         "Do you happen to have a Band-Aid? ‘Cause I scraped my knees falling for you.",
@@ -33,8 +34,9 @@ int main()
         "I’m not a genie, but I can make your dreams come true.",
         "You know, your smile has been lighting up the room all night and I just had to come and say hello.",
         "I can’t tell if that was an earthquake, or if you just seriously rocked my world.",
-        };
-    std::string random_pickupline = getpickline(pickuplines, sizeof(pickuplines) / sizeof(pickuplines[0]));
-    std::cout << "\n[💓💓 " << random_pickupline << " 💓💓]" << std::endl;
-    return 0;
+    };
+    std::string resp = "💓 " + getpickline(pickuplines, sizeof(pickuplines) / sizeof(pickuplines[0])) + " 💓";
+    std::string botmsg = "PRIVMSG " + GetClient(fd)->GetNickName() + " : " + resp + "\r\n";
+    _sendMessage(botmsg, fd);
 }
+//----------

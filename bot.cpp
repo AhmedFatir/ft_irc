@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 int ircsock;
 
 void _sendMessage(std::string message, int fd)
@@ -227,17 +228,27 @@ void signalHandler(int signum)
 		std::cerr << "send() faild" << std::endl;
 }
 
+std::vector<std::string> getnokat(char *filename)
+{
+}
+
+void nokta(std::string nick, std::vector<std::string> &vnokat)
+{
+
+}
+
 int main(int ac, char **av)
 {
-	if (ac != 3)
+	if (ac != 4)
 	{std::cerr << "Usage: " << av[0] << " <port> <password>" << std::endl; return 1;}
 	if (!isPortValid(av[1]))
 		{std::cerr << "Invalid port!" << std::endl; return 1;}
 	// int ircsock;
-    struct sockaddr_in ircHints;
-	signal(SIGINT, signalHandler);
-    ircsock = socket(AF_INET, SOCK_STREAM, 0);
-    if(ircsock == -1)
+		std::vector<std::string> vnokat = getnokat(av[3]);
+		struct sockaddr_in ircHints;
+		signal(SIGINT, signalHandler);
+		ircsock = socket(AF_INET, SOCK_STREAM, 0);
+		if (ircsock == -1)
     	{std::cerr << "failed to create socket (ircsock)" << std::endl; return 1;}
 
     ircHints.sin_family = AF_INET;
@@ -264,6 +275,8 @@ int main(int ac, char **av)
 			playTicTacToe(ircsock, UserNick);
         else if(recived == "AGE")
 			ageCalculator(date, UserNick);
-    }
+		else if (recived == "NOKTA")
+			nokta(UserNick,vnokat);
+	}
 	return 0;
 }

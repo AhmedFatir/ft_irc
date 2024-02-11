@@ -283,8 +283,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 			Invite(cmd,fd);
 		else if (splited_cmd[0] == "PLAY" || splited_cmd[0] == "AGE")
 			StartBot(cmd, fd);
-		else if (splited_cmd[0] == "GITHUB")
-			botgithub(cmd, fd);
+		else if (splited_cmd[0] == "PPL")
+			pickuplinesbot(cmd, fd);
 		else
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
 
