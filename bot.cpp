@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fstream>
 
 int ircsock;
 
@@ -228,29 +229,45 @@ void signalHandler(int signum)
 		std::cerr << "send() faild" << std::endl;
 }
 
-std::vector<std::string> getnokat(char *filename)
+//-----------------------------------------------------------------------------------//
+std::string getnokta(std::vector<std::string> &vnokat, int size)
 {
+	std::srand(static_cast<unsigned int>(std::time(NULL)));
+	return vnokat[std::rand() % size];
+}
+std::vector<std::string> getnokat(std::string filename)
+{
+	std::vector<std::string> vnokat;
+	std::string line;
+	std::ifstream file(filename);
+	if (file.is_open())
+	{
+		while (std::getline(file, line))
+			vnokat.push_back(line);
+		file.close();
+	}
+	return vnokat;
 }
 
-void nokta(std::string nick, std::vector<std::string> &vnokat)
+void nokta(std::string nick, std::vector<std::string> &vnokat ,int &ircsock)
 {
-
+	std::string response = "PRIVMSG " + nick + " : " + getnokta(vnokat, vnokat.size()) + "\r\n";
+	_sendMessage(response, ircsock);
 }
+//-----------------------------------------------------------------------------------//
 
 int main(int ac, char **av)
 {
-	if (ac != 4)
+	if (ac != 3)
 	{std::cerr << "Usage: " << av[0] << " <port> <password>" << std::endl; return 1;}
 	if (!isPortValid(av[1]))
 		{std::cerr << "Invalid port!" << std::endl; return 1;}
 	// int ircsock;
-		std::vector<std::string> vnokat = getnokat(av[3]);
 		struct sockaddr_in ircHints;
 		signal(SIGINT, signalHandler);
 		ircsock = socket(AF_INET, SOCK_STREAM, 0);
 		if (ircsock == -1)
     	{std::cerr << "failed to create socket (ircsock)" << std::endl; return 1;}
-
     ircHints.sin_family = AF_INET;
     ircHints.sin_port = htons(std::atoi(av[1]));
     inet_pton(AF_INET, "127.0.0.1", &(ircHints.sin_addr));
@@ -265,6 +282,8 @@ int main(int ac, char **av)
     ssize_t recivedBytes;
 
     char buff[1024];
+	std::string filename = "qoutes";
+	std::vector<std::string> vnokat = getnokat(filename);
 	while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)
     {
         buff[recivedBytes] = '\0';
@@ -276,7 +295,7 @@ int main(int ac, char **av)
         else if(recived == "AGE")
 			ageCalculator(date, UserNick);
 		else if (recived == "NOKTA")
-			nokta(UserNick,vnokat);
+			nokta(UserNick,vnokat,ircsock);
 	}
 	return 0;
 }
