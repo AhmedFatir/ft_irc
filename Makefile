@@ -5,7 +5,7 @@ CFLAGS = -Wall -Wextra -Werror -std=c++98 -g -fsanitize=address,undefined
 
 SRCS = Server.cpp Client.cpp Channel.cpp main.cpp  Mode.cpp \
 		CMD/JOIN.cpp CMD/PART.cpp CMD/PRIVMSG.cpp CMD/KICK.cpp Authenti.cpp CMD/QUIT.cpp \
-		CMD/TOPIC.cpp CMD/INVITE.cpp khbouychbot.cpp
+		CMD/TOPIC.cpp CMD/INVITE.cpp 
 SRCS_BONUS = bot.cpp
 
 OBJS = $(SRCS:.cpp=.o)
@@ -29,12 +29,5 @@ fclean: clean
 	@rm -f $(NAME) $(NAME_BOUNUS)
 
 re: fclean all
-
-khbouych :
-	make fclean
-	make clean
-	git add .
-	git commit -m "auto commit $(USER) -- botcommand"
-	git push
 
 .PHONY: all clean fclean re

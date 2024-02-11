@@ -8,6 +8,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fstream>
+
 int ircsock;
 
 void _sendMessage(std::string message, int fd)
@@ -137,6 +139,7 @@ std::string SplitBuff(std::string buff)
 	found = command.find("\r\n");
 	if (found != std::string::npos)
 		command = command.substr(0, found);
+	command.erase(command.begin());
 	return command;
 }
 std::string SplitBuff(std::string buff, std::string &UserNick, std::string &date)
@@ -159,6 +162,7 @@ int GetNumber(std::string prompt, int ircsock, std::string UserNick)
 		send_privmsg(prompt, ircsock, UserNick);
 		if ((recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0){
 			command = SplitBuff(buff);
+			if (command == "exit") return -2;
 			if(command.empty() || command.size() > 1 || !isdigit(command[0]))
 				return -1;
 			else break;
@@ -181,7 +185,8 @@ void playTicTacToe(int ircsock, std::string UserNick)
 		drawBoard(board, ircsock, UserNick);
 
 		if (Player == 'X'){ // Player's turn
-			int move = GetNumber("YOU, enter your move (1-9):", ircsock, UserNick);
+			int move = GetNumber("To Quit Send (exit)/ YOU, enter your move (1-9):", ircsock, UserNick);
+			if (move == -2) return;
 			if (move == -1 || board[move - 1] != '-'){// Validate the move
 				send_privmsg("Invalid move. Try again!", ircsock, UserNick);
 				continue;
@@ -227,6 +232,33 @@ void signalHandler(int signum)
 		std::cerr << "send() faild" << std::endl;
 }
 
+//-----------------------------------------------------------------------------------//
+std::string getnokta(std::vector<std::string> &vnokat, int size)
+{
+	std::srand(static_cast<unsigned int>(std::time(NULL)));
+	return vnokat[std::rand() % size];
+}
+std::vector<std::string> getnokat(std::string filename)
+{
+	std::vector<std::string> vnokat;
+	std::string line;
+	std::ifstream file(filename);
+	if (file.is_open())
+	{
+		while (std::getline(file, line))
+			vnokat.push_back(line);
+		file.close();
+	}
+	return vnokat;
+}
+
+void nokta(std::string nick, std::vector<std::string> &vnokat ,int &ircsock)
+{
+	std::string response = "PRIVMSG " + nick + " : " + getnokta(vnokat, vnokat.size()) + "\r\n";
+	_sendMessage(response, ircsock);
+}
+//-----------------------------------------------------------------------------------//
+
 int main(int ac, char **av)
 {
 	if (ac != 3)
@@ -234,12 +266,11 @@ int main(int ac, char **av)
 	if (!isPortValid(av[1]))
 		{std::cerr << "Invalid port!" << std::endl; return 1;}
 	// int ircsock;
-    struct sockaddr_in ircHints;
-	signal(SIGINT, signalHandler);
-    ircsock = socket(AF_INET, SOCK_STREAM, 0);
-    if(ircsock == -1)
+		struct sockaddr_in ircHints;
+		signal(SIGINT, signalHandler);
+		ircsock = socket(AF_INET, SOCK_STREAM, 0);
+		if (ircsock == -1)
     	{std::cerr << "failed to create socket (ircsock)" << std::endl; return 1;}
-
     ircHints.sin_family = AF_INET;
     ircHints.sin_port = htons(std::atoi(av[1]));
     inet_pton(AF_INET, "127.0.0.1", &(ircHints.sin_addr));
@@ -254,16 +285,20 @@ int main(int ac, char **av)
     ssize_t recivedBytes;
 
     char buff[1024];
+	std::string filename = "qoutes";
+	std::vector<std::string> vnokat = getnokat(filename);
 	while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)
     {
         buff[recivedBytes] = '\0';
         std::cout << "recived: " <<  buff;
         recived = SplitBuff(buff, UserNick, date);
 		std::cout << "splited: " << recived << std::endl;
-        if(recived == "PLAY")
+        if(recived == "PLAY" || recived == "play")
 			playTicTacToe(ircsock, UserNick);
-        else if(recived == "AGE")
+        else if(recived == "AGE" || recived == "age")
 			ageCalculator(date, UserNick);
-    }
+		else if (recived == "NOKTA" || recived == "nokta")
+			nokta(UserNick,vnokat,ircsock);
+	}
 	return 0;
 }

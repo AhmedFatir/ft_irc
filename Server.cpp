@@ -59,15 +59,33 @@ Client *Server::GetClientNick(std::string nickname){
 	return NULL;
 }
 //######################################CLOSE
+void	Server::RmChannels(int fd)
+{
+	for (size_t i = 0; i < this->channels.size(); i++){
+		int flag = 0;
+		if (channels[i].get_client(fd))
+			{channels[i].remove_client(fd); flag = 1;}
+		else if (channels[i].get_admin(fd))
+			{channels[i].remove_admin(fd); flag = 1;}
+		if (channels[i].GetClientsNumber() == 0)
+			{channels.erase(channels.begin() + i); i--; continue;}
+		if (flag){
+			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT Quit\r\n";
+			channels[i].sendTo_all(rpl);
+			std::cout << "QUIT: " << GetClient(fd)->GetNickName() << " has left the channel #" << channels[i].GetName() << std::endl;
+		}
+	}
+}
+
 void	Server::close_fds()
 {
-		for(size_t i = 0; i < clients.size(); i++)
-		{
-			std::cout << "close index: " << i << " /NumFd: "<< clients[i].GetFd() << std::endl;
-			close(clients[i].GetFd());
-		}
-		std::cout << "close the server's Fd: " << server_fdsocket << std::endl;
-		close(server_fdsocket);
+	for(size_t i = 0; i < clients.size(); i++)
+	{
+		std::cout << "close index: " << i << " /NumFd: "<< clients[i].GetFd() << std::endl;
+		close(clients[i].GetFd());
+	}
+	std::cout << "close the server's Fd: " << server_fdsocket << std::endl;
+	close(server_fdsocket);
 }
 
 bool Server::Signal = false;
@@ -180,13 +198,15 @@ void Server::accept_new_message(int fd)
 	if(bytes <= 0)
 	{
 		std::cout << "clinet: " << fd << " disconnected" << std::endl;
+		RmChannels(fd);
 		RemoveClient(fd);
 		RemoveFds(fd);
 		close(fd);
 	}
 	else
 	{
-		buff[bytes] = '\0';
+		if (bytes < 1024) buff[bytes] = '\0';
+		else buff[1023] = '\0';
 		cli->setBuffer(buff);
 		if(cli->getBuffer().find_first_of("\r\n") == std::string::npos)
 			return;
@@ -226,9 +246,6 @@ bool Server::notregistered(int fd)
 void Server::StartBot(std::string cmd, int fd)
 {
 	std::string botmsg;
-	// if (cmd == "BOT")
-	// 	botmsg = "PLAY\r\n";
-	// else botmsg = "AGE\r\n";
 	std::cout << " ===> Recived Msg For Bot :" << cmd;
 	if (!GetClientNick("bot"))
 		{senderror(401, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :bot not found\r\n"); return;}
@@ -242,34 +259,33 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 	if(cmd.empty())
 		return ;
 	std::vector<std::string> splited_cmd = split_cmd(cmd);
-    if(splited_cmd[0] == "PASS")
+    if(splited_cmd[0] == "PASS" || splited_cmd[0] == "pass")
         client_authen(fd, cmd);
-	else if (splited_cmd[0] == "NICK")
+	else if (splited_cmd[0] == "NICK" || splited_cmd[0] == "nick")
 		set_nickname(cmd,fd);
-	else if(splited_cmd[0] == "USER")
+	else if(splited_cmd[0] == "USER" || splited_cmd[0] == "user")
 		set_username(cmd, fd);
-	else if (splited_cmd[0] == "QUIT")
+	else if (splited_cmd[0] == "QUIT" || splited_cmd[0] == "quit")
 		QUIT(cmd,fd);
 	else if(notregistered(fd))
 	{
-		if (splited_cmd[0] == "KICK")
+		if (splited_cmd[0] == "KICK" || splited_cmd[0] == "kick")
 			KICK(cmd, fd);
-		else if (splited_cmd[0] == "JOIN")
+		else if (splited_cmd[0] == "JOIN" || splited_cmd[0] == "join")
 			JOIN(cmd, fd);
-		else if (splited_cmd[0] == "TOPIC")
+		else if (splited_cmd[0] == "TOPIC" || splited_cmd[0] == "topic")
 			Topic(cmd, fd);
-		else if (splited_cmd[0] == "MODE")
+		else if (splited_cmd[0] == "MODE" || splited_cmd[0] == "mode")
 			mode_command(cmd, fd);
-		else if (splited_cmd[0] == "PART")
+		else if (splited_cmd[0] == "PART" || splited_cmd[0] == "part")
 			PART(cmd, fd);
-		else if (splited_cmd[0] == "PRIVMSG")
+		else if (splited_cmd[0] == "PRIVMSG" || splited_cmd[0] == "privmsg")
 			PRIVMSG(cmd, fd);
-		else if (splited_cmd[0] == "INVITE")
+		else if (splited_cmd[0] == "INVITE" || splited_cmd[0] == "invite")
 			Invite(cmd,fd);
-		else if (splited_cmd[0] == "PLAY" || splited_cmd[0] == "AGE")
+		else if (splited_cmd[0] == "PLAY" || splited_cmd[0] == "AGE" || splited_cmd[0] == "NOKTA" \
+			|| splited_cmd[0] == "play" || splited_cmd[0] == "age" || splited_cmd[0] == "nokta")
 			StartBot(cmd, fd);
-		else if (splited_cmd[0] == "GITHUB")
-			botgithub(cmd, fd);
 		else
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
 

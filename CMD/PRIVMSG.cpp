@@ -20,7 +20,12 @@ std::string SplitCmdPrivmsg(std::string cmd, std::vector<std::string> &tmp)
 	tmp.push_back(str2);
 	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
 		{if (tmp[i].empty())tmp.erase(tmp.begin() + i--);}
-	return str.erase(0, 1);
+	str.erase(0, 1);
+	if (str[0] == ':') str.erase(str.begin());
+	else //shrink to the first space
+		{for (size_t i = 0; i < str.size(); i++){if (str[i] == ' '){str = str.substr(0, i);break;}}}
+	return  str;
+	
 }
 
 void	Server::CheckForChannels_Clients(std::vector<std::string> &tmp, int fd)
@@ -43,15 +48,10 @@ void	Server::CheckForChannels_Clients(std::vector<std::string> &tmp, int fd)
 
 void	Server::PRIVMSG(std::string cmd, int fd)
 {
-/*
-	ERR_NOSUCHSERVER (402) // if the server doesn't exist
-	ERR_NOTOPLEVEL (413) // if the client send the message to a server
-	ERR_WILDTOPLEVEL (414) // if the client send the message to a server
-*/
+	if (cmd.size() < 9)//ERR_NORECIPIENT (411) // if the client doesn't specify the recipient
+		{senderror(411, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No recipient given (PRIVMSG)\r\n"); return;}
 	std::vector<std::string> tmp;
 	std::string message = SplitCmdPrivmsg(cmd, tmp);
-	if (*tmp.begin() == "PRIVMSG")//ERR_NORECIPIENT (411) // if the client doesn't specify the recipient
-		{senderror(411, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No recipient given (PRIVMSG)\r\n"); return;}
 	if (message.empty())//ERR_NOTEXTTOSEND (412) // if the client doesn't specify the message
 		{senderror(412, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No text to send\r\n"); return;}
 	if (tmp.size() > 10) //ERR_TOOMANYTARGETS (407) // if the client send the message to more than 10 clients
@@ -60,12 +60,12 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 	for (size_t i = 0; i < tmp.size(); i++){// send the message to the clients and channels
 		if (tmp[i][0] == '#'){
 			tmp[i].erase(tmp[i].begin());
-			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG #" + tmp[i] + " " + message + "\r\n";
+			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG #" + tmp[i] + " :" + message + "\r\n";
 			GetChannel(tmp[i])->sendTo_all(resp, fd);
 			std::cout << "		" << resp;
 		}
 		else{
-			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + tmp[i] + " " + message + "\r\n";
+			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + tmp[i] + " :" + message + "\r\n";
 			send(GetClientNick(tmp[i])->GetFd(), resp.c_str(), resp.size(),0);
 			std::cout << "		" << resp;
 		}
