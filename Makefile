@@ -30,7 +30,7 @@ khbouych :
 	make fclean
 	make clean
 	git add .
-	git commit -m "auto commit $(USER)"
+	git commit -m "auto commit $(USER) -- botcommand"
 	git push
 
 .PHONY: all clean fclean re

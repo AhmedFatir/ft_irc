@@ -123,7 +123,7 @@ public:
 	void Topic(std::string &cmd, int &fd);
 	void Invite(std::string &cmd, int &fd);
 	void khbouychbot(std::string cmd, int fd);
-	size_t WriteCallback(void *contents, size_t size, size_t nmemb, std::string *output);
+	// size_t WriteCallback(void *contents, size_t size, size_t nmemb, std::string *output);
 		//--------KHBOUYCh-------------
 		bool notregistered(int fd);
 	void addNewClient(int fd);
