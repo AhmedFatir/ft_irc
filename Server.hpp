@@ -19,7 +19,8 @@
 #include "Client.hpp"
 #include "Channel.hpp"
 #include "replies.hpp"
-
+#include <curl/curl.h>
+#include <map>
 
 class Client;
 class Channel;
@@ -121,8 +122,12 @@ public:
 	void 		_sendResponse(std::string response, int fd);
 	//--------KHBOUYCh-------------
 	std::string tTopic();
-	void Topic(std::string &cmd, int &fd);
-	void Invite(std::string &cmd, int &fd);
+	void   		Topic(std::string &cmd, int &fd);
+	void   		Invite(std::string &cmd, int &fd);
+	// size_t 		handelcallback(void *contents, size_t s, size_t n, std::string *o);
+	void   		splitoutput(char *str, std::map<std::string, std::string> &m);
+	void 		printdata(std::map<std::string, std::string> &m, int &fd);
+	void		botgithub(std::string cmd, int fd);
 	//--------KHBOUYCh-------------
 	bool notregistered(int fd);
 	void addNewClient(int fd);

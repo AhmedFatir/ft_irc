@@ -1,5 +1,5 @@
-SERVER="localhost"  
-PORT=9009      
+SERVER="localhost"
+PORT=9009
 CHANNEL="#Room"
 CLIENT_COUNT=500
 PASS="123"
@@ -19,5 +19,5 @@ do
     ) | nc $SERVER $PORT &
     sleep 0.5
 done
-wait 
+wait
 echo "Disconnected all clients from the server."
