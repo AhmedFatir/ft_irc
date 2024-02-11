@@ -61,14 +61,19 @@ Client *Server::GetClientNick(std::string nickname){
 //######################################CLOSE
 void	Server::RmChannels(int fd)
 {
-	for (size_t i = 0; i < this->channels.size(); i++)
-	{
+	for (size_t i = 0; i < this->channels.size(); i++){
+		int flag = 0;
 		if (channels[i].get_client(fd))
-			channels[i].remove_client(fd);
+			{channels[i].remove_client(fd); flag = 1;}
 		else if (channels[i].get_admin(fd))
-			channels[i].remove_admin(fd);
+			{channels[i].remove_admin(fd); flag = 1;}
 		if (channels[i].GetClientsNumber() == 0)
-			channels.erase(channels.begin() + i);
+			{channels.erase(channels.begin() + i); i--; continue;}
+		if (flag){
+			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT Quit\r\n";
+			channels[i].sendTo_all(rpl);
+			std::cout << "QUIT: " << GetClient(fd)->GetNickName() << " has left the channel #" << channels[i].GetName() << std::endl;
+		}
 	}
 }
 
@@ -241,9 +246,6 @@ bool Server::notregistered(int fd)
 void Server::StartBot(std::string cmd, int fd)
 {
 	std::string botmsg;
-	// if (cmd == "BOT")
-	// 	botmsg = "PLAY\r\n";
-	// else botmsg = "AGE\r\n";
 	std::cout << " ===> Recived Msg For Bot :" << cmd;
 	if (!GetClientNick("bot"))
 		{senderror(401, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :bot not found\r\n"); return;}
@@ -281,7 +283,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 			PRIVMSG(cmd, fd);
 		else if (splited_cmd[0] == "INVITE" || splited_cmd[0] == "invite")
 			Invite(cmd,fd);
-		else if (splited_cmd[0] == "PLAY" || splited_cmd[0] == "AGE" || splited_cmd[0] == "NOKTA")
+		else if (splited_cmd[0] == "PLAY" || splited_cmd[0] == "AGE" || splited_cmd[0] == "NOKTA" \
+			|| splited_cmd[0] == "play" || splited_cmd[0] == "age" || splited_cmd[0] == "nokta")
 			StartBot(cmd, fd);
 		else
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
