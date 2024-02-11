@@ -30,9 +30,4 @@ fclean: clean
 
 re: fclean all
 
-khbouych :
-	make fclean
-	make clean
-	git add .
-
 .PHONY: all clean fclean re
