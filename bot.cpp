@@ -8,7 +8,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "Server.hpp"
+
 int ircsock;
 
 void _sendMessage(std::string message, int fd)
@@ -16,44 +16,45 @@ void _sendMessage(std::string message, int fd)
     if(send(fd, message.c_str(), message.size(), 0) == -1)
         std::cerr << "Send failed" << std::endl;
 }
-//----------
-std::string getpickline(const std::string pickuplines[], int size)
+
+int ParsAge(std::string age)
 {
-	std::srand(static_cast<unsigned int>(std::time(NULL)));
-	int index = std::rand() % size;
-	return pickuplines[index];
-}
-void Server::pickuplinesbot(std::string &cmd, int &fd)
-{
-	std::vector<std::string> scmd = split_cmd(cmd);
-	if (scmd.size() != 1)
-	{
-		senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n");
-		return;
+	std::string year, month, day, age1;
+	age1 = age;
+	std::stringstream ss(age);
+	int flag = 0;
+	while (std::getline(ss, age, '-')){
+		flag++;
+		for (size_t i = 0; i < age.size(); ++i)
+			{if (!isdigit(age[i]) && age[i] != '-') return 0;}
 	}
-	const std::string pickuplines[] = {
-		"When I look in your eyes, I see a very kind soul.",
-		"Do you happen to have a Band-Aid? ‘Cause I scraped my knees falling for you.",
-		"I never believed in love at first sight, but that was before I saw you.",
-		"f being sexy was a crime, you’d be guilty as charged.",
-		"Do you have a map? I just got lost in your eyes.",
-		"I would never play hide and seek with you because someone like you is impossible to find.",
-		"Want to go outside and get some fresh air with me? You just took my breath away.",
-		"Is your name Google? Because you have everything I’m searching for.",
-		"I must be a snowflake because I’ve fallen for you.",
-		"I’m not a photographer, but I can definitely picture us together.",
-		"I’m not a genie, but I can make your dreams come true.",
-		"You know, your smile has been lighting up the room all night and I just had to come and say hello.",
-		"I can’t tell if that was an earthquake, or if you just seriously rocked my world.",
-	};
-	std::string resp = "💓 " + getpickline(pickuplines, sizeof(pickuplines) / sizeof(pickuplines[0])) + " 💓";
-	std::string botmsg = "PRIVMSG " + GetClient(fd)->GetNickName() + " : " + resp + "\r\n";
-	_sendMessage(botmsg, fd);
+	if (flag != 3) return 0;
+	int found = age1.find("-");
+	year = age1.substr(0, found);
+	age1 = age1.substr(found+1);
+	found = age1.find("-");
+	month = age1.substr(0, found);
+	day = age1.substr(found+1);
+
+	if (std::atoi(year.c_str()) > 2024 || std::atoi(year.c_str()) < 1900)  return 0; // valid year
+	if (std::atoi(year.c_str()) == 2024 && std::atoi(month.c_str()) > 1) return 0; // valid month
+	if (std::atoi(month.c_str()) > 12 || std::atoi(month.c_str()) < 1 || std::atoi(day.c_str()) > 31 || std::atoi(day.c_str()) < 1 ) return 0; // valid month and day
+	if (std::atoi(month.c_str()) == 4 || std::atoi(month.c_str()) == 6 || std::atoi(month.c_str()) == 9 || std::atoi(month.c_str()) == 11) // valid day
+		{if (std::atoi(day.c_str()) > 30) return 0;}
+	if ((std::atoi(year.c_str()) % 4 == 0 && std::atoi(year.c_str()) % 100 != 0) || std::atoi(year.c_str()) % 400 == 0) // valid leap year
+		{if (std::atoi(month.c_str()) == 2 && std::atoi(day.c_str()) > 29) return 0;}
+	else
+		{if (std::atoi(month.c_str()) == 2 && std::atoi(day.c_str()) > 28) return 0;}
+	return 1;
 }
-//----------
 
 void ageCalculator(std::string age, std::string Nickname)
 {
+	if (!ParsAge(age)){	
+    	std::string str = "PRIVMSG " + Nickname + " : Invalid date format\r\n";
+		_sendMessage(str, ircsock); return;
+	}
+		
     int year, month, day;
     year = std::atoi(age.substr(0, 4).c_str());
     month = std::atoi(age.substr(5, 2).c_str());
@@ -76,7 +77,7 @@ void ageCalculator(std::string age, std::string Nickname)
     str = "PRIVMSG " + Nickname + " : Your age is : " + str + " year(s) old\r\n";
 	_sendMessage(str, ircsock); 
 }
-
+//-----------------------------------------------------------------------------------//
 void send_privmsg(std::string message, int srvsock, std::string UserNick)
 {
 	std::cout << message << std::endl;
@@ -223,21 +224,31 @@ void signalHandler(int signum)
 {
 	(void)signum;
 	std::string quit = "QUIT\r\n";
-	if(send(ircsock, quit.c_str(), quit.size(), 0))
+	if(send(ircsock, quit.c_str(), quit.size(), 0) == -1)
 		std::cerr << "send() faild" << std::endl;
+}
+
+std::vector<std::string> getnokat(char *filename)
+{
+}
+
+void nokta(std::string nick, std::vector<std::string> &vnokat)
+{
+
 }
 
 int main(int ac, char **av)
 {
-	if (ac != 3)
+	if (ac != 4)
 	{std::cerr << "Usage: " << av[0] << " <port> <password>" << std::endl; return 1;}
 	if (!isPortValid(av[1]))
 		{std::cerr << "Invalid port!" << std::endl; return 1;}
 	// int ircsock;
-    struct sockaddr_in ircHints;
-	signal(SIGINT, signalHandler);
-    ircsock = socket(AF_INET, SOCK_STREAM, 0);
-    if(ircsock == -1)
+		std::vector<std::string> vnokat = getnokat(av[3]);
+		struct sockaddr_in ircHints;
+		signal(SIGINT, signalHandler);
+		ircsock = socket(AF_INET, SOCK_STREAM, 0);
+		if (ircsock == -1)
     	{std::cerr << "failed to create socket (ircsock)" << std::endl; return 1;}
 
     ircHints.sin_family = AF_INET;
@@ -264,6 +275,8 @@ int main(int ac, char **av)
 			playTicTacToe(ircsock, UserNick);
         else if(recived == "AGE")
 			ageCalculator(date, UserNick);
-    }
+		else if (recived == "NOKTA")
+			nokta(UserNick,vnokat);
+	}
 	return 0;
 }
