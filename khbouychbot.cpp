@@ -48,6 +48,7 @@ void Server::printdata(std::map<std::string, std::string> &m, int &fd)
 void Server::botgithub(std::string cmd, int fd)
 {
     std::vector<std::string> scmd = split_cmd(cmd);
+    
     if (scmd.size() < 2 || scmd.size() > 2)
         senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n");return;
     std::cout << "scmd.size() = " << scmd.size() << std::endl;

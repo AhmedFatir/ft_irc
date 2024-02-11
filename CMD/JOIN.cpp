@@ -15,7 +15,7 @@ void Server::SplitJoin(std::vector<std::pair<std::string, std::string> > &token,
 				{token.push_back(std::make_pair(buff, "")); buff.clear();}
 		else buff += ChStr[i];
 	}
-	token.push_back(std::make_pair(buff, ""));	
+	token.push_back(std::make_pair(buff, ""));
 	if (!PassStr.empty()){
 		size_t j = 0; buff.clear();
 		for (size_t i = 0; i < PassStr.size(); i++){

@@ -16,9 +16,44 @@ void _sendMessage(std::string message, int fd)
         std::cerr << "Send failed" << std::endl;
 }
 
+int ParsAge(std::string age)
+{
+	std::string year, month, day, age1;
+	age1 = age;
+	std::stringstream ss(age);
+	int flag = 0;
+	while (std::getline(ss, age, '-')){
+		flag++;
+		for (size_t i = 0; i < age.size(); ++i)
+			{if (!isdigit(age[i]) && age[i] != '-') return 0;}
+	}
+	if (flag != 3) return 0;
+	int found = age1.find("-");
+	year = age1.substr(0, found);
+	age1 = age1.substr(found+1);
+	found = age1.find("-");
+	month = age1.substr(0, found);
+	day = age1.substr(found+1);
+
+	if (std::atoi(year.c_str()) > 2024 || std::atoi(year.c_str()) < 1900)  return 0; // valid year
+	if (std::atoi(year.c_str()) == 2024 && std::atoi(month.c_str()) > 1) return 0; // valid month
+	if (std::atoi(month.c_str()) > 12 || std::atoi(month.c_str()) < 1 || std::atoi(day.c_str()) > 31 || std::atoi(day.c_str()) < 1 ) return 0; // valid month and day
+	if (std::atoi(month.c_str()) == 4 || std::atoi(month.c_str()) == 6 || std::atoi(month.c_str()) == 9 || std::atoi(month.c_str()) == 11) // valid day
+		{if (std::atoi(day.c_str()) > 30) return 0;}
+	if ((std::atoi(year.c_str()) % 4 == 0 && std::atoi(year.c_str()) % 100 != 0) || std::atoi(year.c_str()) % 400 == 0) // valid leap year
+		{if (std::atoi(month.c_str()) == 2 && std::atoi(day.c_str()) > 29) return 0;}
+	else
+		{if (std::atoi(month.c_str()) == 2 && std::atoi(day.c_str()) > 28) return 0;}
+	return 1;
+}
 
 void ageCalculator(std::string age, std::string Nickname)
 {
+	if (!ParsAge(age)){	
+    	std::string str = "PRIVMSG " + Nickname + " : Invalid date format\r\n";
+		_sendMessage(str, ircsock); return;
+	}
+		
     int year, month, day;
     year = std::atoi(age.substr(0, 4).c_str());
     month = std::atoi(age.substr(5, 2).c_str());
@@ -41,7 +76,7 @@ void ageCalculator(std::string age, std::string Nickname)
     str = "PRIVMSG " + Nickname + " : Your age is : " + str + " year(s) old\r\n";
 	_sendMessage(str, ircsock); 
 }
-
+//-----------------------------------------------------------------------------------//
 void send_privmsg(std::string message, int srvsock, std::string UserNick)
 {
 	std::cout << message << std::endl;
@@ -188,7 +223,7 @@ void signalHandler(int signum)
 {
 	(void)signum;
 	std::string quit = "QUIT\r\n";
-	if(send(ircsock, quit.c_str(), quit.size(), 0))
+	if(send(ircsock, quit.c_str(), quit.size(), 0) == -1)
 		std::cerr << "send() faild" << std::endl;
 }
 
