@@ -124,10 +124,10 @@ public:
 	std::string tTopic();
 	void   		Topic(std::string &cmd, int &fd);
 	void   		Invite(std::string &cmd, int &fd);
-	size_t 		handelcallback(void *contents, size_t s, size_t n, std::string *o);
+	// size_t 		handelcallback(void *contents, size_t s, size_t n, std::string *o);
 	void   		splitoutput(char *str, std::map<std::string, std::string> &m);
-	void 		printdata(std::map<std::string, std::string> &m);
-	void 		bot3(std::string cmd, int fd);
+	void 		printdata(std::map<std::string, std::string> &m, int &fd);
+	void		botgithub(std::string cmd, int fd);
 	//--------KHBOUYCh-------------
 	bool notregistered(int fd);
 	void addNewClient(int fd);

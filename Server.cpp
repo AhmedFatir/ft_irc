@@ -267,8 +267,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 			PRIVMSG(cmd, fd);
 		else if (splited_cmd[0] == "INVITE")
 			Invite(cmd,fd);
-		// else if (splited_cmd[0] == "BOT3")
-		// 	bot3(split_cmd[0], fd);
+		else if (splited_cmd[0] == "GITHUB")
+			botgithub(cmd, fd);
 		else if (splited_cmd[0] == "BOT" || splited_cmd[0] == "BOT2")
 			StartBot(splited_cmd[0], fd);
 		else
