@@ -20,6 +20,7 @@
 #include "Channel.hpp"
 #include "replies.hpp"
 #include <curl/curl.h>
+#include <map>
 
 class Client;
 class Channel;
@@ -121,12 +122,14 @@ public:
 	void 		_sendResponse(std::string response, int fd);
 	//--------KHBOUYCh-------------
 	std::string tTopic();
-	void Topic(std::string &cmd, int &fd);
-	void Invite(std::string &cmd, int &fd);
-	void khbouychbot(std::string cmd, int fd);
-	// size_t WriteCallback(void *contents, size_t size, size_t nmemb, std::string *output);
-		//--------KHBOUYCh-------------
-		bool notregistered(int fd);
+	void   		Topic(std::string &cmd, int &fd);
+	void   		Invite(std::string &cmd, int &fd);
+	size_t 		handelcallback(void *contents, size_t s, size_t n, std::string *o);
+	void   		splitoutput(char *str, std::map<std::string, std::string> &m);
+	void 		printdata(std::map<std::string, std::string> &m);
+	void 		bot3(std::string cmd, int fd);
+	//--------KHBOUYCh-------------
+	bool notregistered(int fd);
 	void addNewClient(int fd);
 };
 
