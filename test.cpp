@@ -5,102 +5,36 @@
 #include <curl/curl.h>
 #include <map>
 
-// Callback function to handle the response data
-size_t handelcallback(void* contents, size_t s, size_t n, std::string* o) {
-    size_t t_size = s * n;
-    o->append(static_cast<char*>(contents), t_size);
-    return t_size;
-}
+#include <iostream>
+#include <string>
 
-void splitoutput(char *str, std::map<std::string, std::string> &m)
+#include <iostream>
+
+std::string getpickline(const std::string pickuplines[], int size)
 {
-    std::string key;
-    std::string value;
-    for (int i = 0; i < strlen(str); i++)
-    {
-        if (str[i] == ':')
-        {
-            key   = "";
-            value = "";
-            for (int j = 0; j < i; j++)
-                if (str[j] != '"')
-                    key += str[j];
-            for (int j = i + 1; j < strlen(str); j++)
-                if (str[j] != '"')
-                    value += str[j];
-            m[key] = value;
-        }
-    }
+    std::srand(static_cast<unsigned int>(std::time(NULL)));
+    int index = std::rand() % size;
+    return pickuplines[index];
 }
 
-void printdata(std::map<std::string, std::string> &m)
+int main()
 {
-    std::cout << "id         : " << m["id"] << std::endl;
-    std::cout << "login      : " << m["{login"] << std::endl;
-    std::cout << "name       : " << m["name"] << std::endl;
-    std::cout << "bio        : " << m["bio"] << std::endl;
-    std::cout << "location   : " << m["location"] << std::endl;
-    std::cout << "avatar_url : " << m["avatar_url"] << std::endl;
-}
-
-int main() {
-    CURL* curl;
-    // Initialize libcurl
-    CURLcode res = curl_global_init(CURL_GLOBAL_DEFAULT);
-    if (res != CURLE_OK) {
-        std::cerr << "Error initializing libcurl: " << curl_easy_strerror(res) << std::endl;
-        return 1;
-    }
-    // Create a new curl handle
-    curl = curl_easy_init();
-    if (curl) {
-        // Build the API URL with the user-input GitHub username
-        std::string api_url = "https://api.github.com/users/khbouych";
-        // Set the URL
-        curl_easy_setopt(curl, CURLOPT_URL, api_url.c_str());
-        // GitHub API requires a user-agent header
-        struct curl_slist* headers = NULL;
-        // Set the user-agent header
-        headers = curl_slist_append(headers, "User-Agent: MyApplication/1.0");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        std::string response_data;
-        // Set the callback function to receive the response data
-        //and pass the response_data object to the callback function as the fourth argument to the CURLOPT_WRITEDATA option
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, handelcallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
-        // Perform the request
-        res = curl_easy_perform(curl);
-        // Cleanup headers
-        curl_slist_free_all(headers);
-        if (res != CURLE_OK) {
-            std::cerr << "Error performing HTTP request: " << curl_easy_strerror(res) << std::endl;
-        } else {
-            char *rok = strtok((char *)response_data.c_str(), ",");
-            std::map<std::string, std::string> m;
-            while (rok != NULL)
-            {
-                splitoutput(rok, m);
-                rok = strtok(NULL, ",");
-            }
-            printdata(m);
-        }
-    // Cleanup curl handle : free the resources used by the curl handle
-    curl_easy_cleanup(curl);
-    } else {
-        std::cerr << "Error creating curl handle." << std::endl;
-    }
-    // Cleanup libcurl : free the resources used by libcurl globally
-    curl_global_cleanup();
+    const std::string pickuplines[] = {
+        "When I look in your eyes, I see a very kind soul.",
+        "Do you happen to have a Band-Aid? ‘Cause I scraped my knees falling for you.",
+        "I never believed in love at first sight, but that was before I saw you.",
+        "f being sexy was a crime, you’d be guilty as charged.",
+        "Do you have a map? I just got lost in your eyes.",
+        "I would never play hide and seek with you because someone like you is impossible to find.",
+        "Want to go outside and get some fresh air with me? You just took my breath away.",
+        "Is your name Google? Because you have everything I’m searching for.",
+        "I must be a snowflake because I’ve fallen for you.",
+        "I’m not a photographer, but I can definitely picture us together.",
+        "I’m not a genie, but I can make your dreams come true.",
+        "You know, your smile has been lighting up the room all night and I just had to come and say hello.",
+        "I can’t tell if that was an earthquake, or if you just seriously rocked my world.",
+        };
+    std::string random_pickupline = getpickline(pickuplines, sizeof(pickuplines) / sizeof(pickuplines[0]));
+    std::cout << "\n[💓💓 " << random_pickupline << " 💓💓]" << std::endl;
     return 0;
 }
-
-
-/*
-    expected output:
-    "id": 133979873
-    "login": "khbouych"
-    "name": "khalid bouychou"
-    "avatar_url": "https://avatars.githubusercontent.com"
-    "bio": "alx student"
-    "location": "khouribga"
-*/
