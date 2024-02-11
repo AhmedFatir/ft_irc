@@ -63,6 +63,7 @@ public:
 	void RemoveChannel(std::string name);
 	void RemoveFds(int fd);
 	//######################
+	void	StartBot(std::string &cmd, int fd);
 	void	senderror(int code, std::string clientname, int fd, std::string msg);
 	void	senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg);
 	static void					SignalHandler(int signum);
@@ -70,7 +71,7 @@ public:
 	void                        init(int port, std::string pass);
 	void                        set_sever_socket();
 	void                        accept_new_client();
-	void                        accept_new_message(int fd, std::string& recived);
+	void                        accept_new_message(int fd);
 	std::vector<std::string>    split_cmd(std::string &str);
 	//-----------------afatir----------------
 	// ########################### JOIN CMD

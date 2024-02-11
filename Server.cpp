@@ -89,7 +89,6 @@ void Server::addNewClient(int fd)
 
 void Server::init(int port, std::string pass)
 {
-	std::string recived;
 	this->password = pass;
 	this->port = port;
 	this->set_sever_socket();
@@ -106,11 +105,8 @@ void Server::init(int port, std::string pass)
 				if (fds[i].fd == server_fdsocket){
 					this->accept_new_client();
 				}
-				else 
-				{
-					if(!GetClient(fds[i].fd))
-						addNewClient(fds[i].fd);
-					this->accept_new_message(fds[i].fd, recived);
+				else {
+					this->accept_new_message(fds[i].fd);
 				}
 			}
 		}
@@ -129,6 +125,7 @@ void Server::set_sever_socket()
 		throw(std::runtime_error("faild to create socket"));
 	if(setsockopt(server_fdsocket, SOL_SOCKET, SO_REUSEADDR, &en, sizeof(en)) == -1)
 		throw(std::runtime_error("faild to set option (SO_REUSEADDR) on socket"));
+	fcntl(server_fdsocket, F_SETFL, O_NONBLOCK);
 	if (bind(server_fdsocket, (struct sockaddr *)&add, sizeof(add)) == -1)
 		throw(std::runtime_error("faild to bind socket"));
 	if (listen(server_fdsocket, SOMAXCONN) == -1)
@@ -142,12 +139,13 @@ void Server::set_sever_socket()
 void Server::accept_new_client()
 {
 	Client cli;
-	// socklen_t len = sizeof(*cli.getCliAdd());
 	memset(&cliadd, 0, sizeof(cliadd));
 	socklen_t len = sizeof(cliadd);
 	int incofd = accept(server_fdsocket, (sockaddr *)&(cliadd), &len);
 	if (incofd == -1)
 		throw(std::runtime_error("faccept() failed"));
+	fcntl(incofd, F_SETFL, O_NONBLOCK);
+
 	std::cout << "----------------->" << inet_ntoa((cliadd.sin_addr)) << std::endl;
 	new_cli.fd = incofd;
 	new_cli.events = POLLIN;
@@ -174,9 +172,8 @@ std::vector<std::string> Server::split_recivedBuffer(std::string str)
 	return vec;
 }
 
-void Server::accept_new_message(int fd, std::string &recived)
+void Server::accept_new_message(int fd)
 {
-	(void)recived;
 	char buff[1024];
 	Client *cli = GetClient(fd);
 	ssize_t bytes = recv(fd, buff, sizeof(buff), 0);
@@ -193,9 +190,6 @@ void Server::accept_new_message(int fd, std::string &recived)
 	{
 		buff[bytes] = '\0';
 		cli->setBuffer(buff);
-		// recived += buff;
-		// if(recived.find_first_of("\r\n") == std::string::npos)
-		// 	return;
 		if(cli->getBuffer().find_first_of("\r\n") == std::string::npos)
 			return;
 		if(cli->getBuffer() != "PONG localhost\r\n")
@@ -204,7 +198,6 @@ void Server::accept_new_message(int fd, std::string &recived)
 			cmd = split_recivedBuffer(cli->getBuffer());
 			for(size_t i = 0; i < cmd.size(); i++)
 				this->parse_exec_cmd(cmd[i], fd);
-			// recived.clear();
 			if(GetClient(fd))
 				GetClient(fd)->clearBuffer();
 		}
@@ -232,9 +225,22 @@ bool Server::notregistered(int fd)
 	return true;
 }
 
+void Server::StartBot(std::string &cmd, int fd)
+{
+	std::string botmsg;
+	if (cmd == "BOT")
+		botmsg = "PLAY\r\n";
+	else botmsg = "AGE\r\n";
+	if (!GetClientNick("bot"))
+		{senderror(401, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :bot not found\r\n"); return;}
+	botmsg = GetClient(fd)->GetNickName() + " " + botmsg;
+	if (send(GetClientNick("bot")->GetFd(), botmsg.c_str(), botmsg.size(), 0) == -1)
+		std::cerr << "send() faild" << std::endl;
+}
+
 void Server::parse_exec_cmd(std::string &cmd, int fd)
 {
-	if(cmd.empty() || cmd == "\r")
+	if(cmd.empty())
 		return ;
 	std::vector<std::string> splited_cmd = split_cmd(cmd);
     if(splited_cmd[0] == "PASS")
@@ -261,17 +267,10 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 			PRIVMSG(cmd, fd);
 		else if (splited_cmd[0] == "INVITE")
 			Invite(cmd,fd);
-		// else if (splited_cmd[0] == "BOTKH")
-		// 	khbouychbot(cmd,fd);
-		else if (splited_cmd[0] == "BOT")
-		{
-			std::string botmsg = cmd.substr(4);
-			botmsg += " ";
-			botmsg += GetClient(fd)->GetNickName();
-			botmsg += "\r\n";
-			std::cout << "Bott: " << botmsg;
-			send(GetClientNick("bot")->GetFd(), botmsg.c_str(), botmsg.size(), 0);
-		}
+		// else if (splited_cmd[0] == "BOT3")
+		// 	khbouychbot(split_cmd[0], fd);
+		else if (splited_cmd[0] == "BOT" || splited_cmd[0] == "BOT2")
+			StartBot(splited_cmd[0], fd);
 		else
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
 

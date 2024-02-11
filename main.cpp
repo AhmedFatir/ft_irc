@@ -1,5 +1,10 @@
 #include "Server.hpp"
 
+bool isPortValid(std::string port)
+{
+	return (port.find_first_not_of("0123456789") == std::string::npos && std::atoi(port.c_str()) >= 1024 && std::atoi(port.c_str()) < 65535);
+}
+
 int main(int ac, char **av)
 {
 	Server ser;
@@ -9,7 +14,8 @@ int main(int ac, char **av)
 	try
 	{
 		// signal(SIGINT, Server::SignalHandler);
-		// ser.KICK("KICK #aa,bb,#cc,dd kk ", 1);
+		if(!isPortValid(av[1]) || !*av[2])
+			throw(std::logic_error("invalid Port number / Password"));
 		ser.init(std::atoi(av[1]), av[2]);
 	}
 	catch(const std::exception& e)
