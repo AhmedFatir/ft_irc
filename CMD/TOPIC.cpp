@@ -20,7 +20,17 @@ void Server::Topic(std::string &cmd, int &fd)
 	if (!(GetChannel(nmch)->get_client(fd)) && !(GetChannel(nmch)->get_admin(fd)))
 	    {senderror(442, "#"+nmch, fd, " :You're not on that channel\r\n"); return;}
 	if (scmd.size() == 2)
-	{_sendResponse(": 332 " + GetClient(fd)->GetUserName() + " " + "#"+nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);return;}
+	{
+		if (GetChannel(nmch)->GetTopicName() != "")
+		{
+			_sendResponse(": 332 " + GetClient(fd)->GetUserName() + " " + "#"+nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);
+			std::string rpl2 = ":localhost 333 " + GetClient(fd)->GetUserName() + " " + "#"+nmch + " " + GetClient(fd)->GetNickName() + " " + tTopic() + "\r\n";
+			_sendResponse(rpl2, fd);
+			return;
+		}
+		else
+			_sendResponse(": 332 " + GetClient(fd)->GetUserName() + " " + "#"+nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);return;
+	}
 	if (scmd.size() >= 3)
 	{
 		std::string restopic ;
@@ -32,6 +42,7 @@ void Server::Topic(std::string &cmd, int &fd)
 		{
 			GetChannel(nmch)->SetTopicName(restopic);
 			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
+
 			GetChannel(nmch)->sendTo_all(rpl);
 		}
 		else

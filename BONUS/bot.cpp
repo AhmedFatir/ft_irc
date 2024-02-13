@@ -287,12 +287,11 @@ std::vector<std::string> getnokat(std::string filename)
 	std::vector<std::string> vnokat;
 	std::string line;
 	std::ifstream file(filename);
-	if (file.is_open())
-	{
-		while (std::getline(file, line))
-			vnokat.push_back(line);
-		file.close();
-	}
+	if (!file.is_open())
+		{std::cerr << "Failed to open file" << std::endl; return vnokat;}
+	while (std::getline(file, line))
+		vnokat.push_back(line);
+	file.close();
 	return vnokat;
 }
 
@@ -305,7 +304,7 @@ void nokta(std::string nick, std::vector<std::string> &vnokat ,int &ircsock)
 
 int main(int ac, char **av)
 {
-	if (ac != 3)
+	if (ac != 4)
 	{std::cerr << "Usage: " << av[0] << " <port> <password>" << std::endl; return 1;}
 	if (!isPortValid(av[1]) || !*av[2])
 		{std::cerr << "Invalid port! / password!" << std::endl; return 1;}
@@ -328,9 +327,13 @@ int main(int ac, char **av)
     ssize_t recivedBytes;
 
     char buff[1024];
+	if (av[3] == NULL)
+		{std::cerr << "Failed to get filename" << std::endl; return 1;}
+	std::string filename = av[3];
 	memset(buff, 0, sizeof(buff));
-	std::string filename = "qoutes";
 	std::vector<std::string> vnokat = getnokat(filename);
+	if (vnokat.empty())
+		{std::cerr << "Failed to get nokat" << std::endl; return 1;}
 	while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)
     {
         buff[recivedBytes] = '\0';
