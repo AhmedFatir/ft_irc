@@ -1,4 +1,4 @@
-#include "../Server.hpp"
+#include "../INC/Server.hpp"
 
 void Server::Invite(std::string &cmd, int &fd)
 {

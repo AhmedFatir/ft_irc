@@ -28,13 +28,13 @@ class Channel;
 class Server
 {
 private:
+	int port;
+	int server_fdsocket;
 	static bool Signal;
+	std::string password;
 	std::vector<Client> clients;
 	std::vector<Channel> channels;
 	std::vector<struct pollfd> fds;
-	int port;
-	std::string password;
-	int server_fdsocket;
 	struct sockaddr_in add;
 	struct sockaddr_in cliadd;
 	struct pollfd new_cli;
@@ -44,68 +44,68 @@ public:
 	~Server();
 	Server(Server const &src);
 	Server &operator=(Server const &src);
-
+	//---------------//Getters
 	int GetFd();
 	int GetPort();
 	std::string GetPassword();
 	Client *GetClient(int fd);
 	Client *GetClientNick(std::string nickname);
 	Channel *GetChannel(std::string name);
-	
+	//---------------//Setters
 	void SetFd(int server_fdsocket);
 	void SetPort(int port);
 	void SetPassword(std::string password);
-	
 	void AddClient(Client newClient);
 	void AddChannel(Channel newChannel);
 	void AddFds(pollfd newFd);
-
+	void set_username(std::string& username, int fd);
+	void set_nickname(std::string cmd, int fd);
+	//---------------//Remove Methods
 	void RemoveClient(int fd);
 	void RemoveChannel(std::string name);
 	void RemoveFds(int fd);
-	//######################
-	void	RmChannels(int fd);
-	void	StartBot(std::string cmd, int fd);
-	void	senderror(int code, std::string clientname, int fd, std::string msg);
-	void	senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg);
-	static void					SignalHandler(int signum);
-	void						close_fds();
-	void                        init(int port, std::string pass);
-	void                        set_sever_socket();
-	void                        accept_new_client();
-	void                        reciveNewData(int fd);
-	std::vector<std::string>    split_cmd(std::string &str);
-	//-----------------afatir----------------
-	// ########################### JOIN CMD
+	void RmChannels(int fd);
+	//---------------//Send Methods
+	void senderror(int code, std::string clientname, int fd, std::string msg);
+	void senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg);
+	void 		_sendResponse(std::string response, int fd);
+	//---------------//Close and Signal Methods
+	static void SignalHandler(int signum);
+	void close_fds();
+	//---------------//Server Methods
+	void init(int port, std::string pass);
+	void accept_new_client();
+	void set_sever_socket();
+	void reciveNewData(int fd);
+	//---------------//BOTs Methods
+	void StartBot(std::string cmd, int fd);
+	//---------------//Parsing Methods
+	std::vector<std::string> split_recivedBuffer(std::string str);
+	std::vector<std::string> split_cmd(std::string &str);
+	void parse_exec_cmd(std::string &cmd, int fd);
+	//---------------//Authentification Methods
+	bool notregistered(int fd);
+	bool nickNameInUse(std::string& nickname);
+	bool is_validNickname(std::string& nickname);
+	void client_authen(int fd, std::string pass);
+	//---------------------------//JOIN CMD
 	void	JOIN(std::string cmd, int fd);
 	void	SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::string cmd, int fd);
 	void	ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd);
 	void	NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd);
 	int		SearchForClients(std::string nickname);
-	// ########################### PART CMD
+	//---------------------------//PART CMD
 	void	PART(std::string cmd, int fd);
 	std::string	SplitCmdPart(std::string cmd, std::vector<std::string> &tmp, int fd);
-	// ########################### CKIK CMD
+	//---------------------------//CKIK CMD
 	void	KICK(std::string cmd, int fd);
 	std::string SplitCmdKick(std::string cmd, std::vector<std::string> &tmp, std::string &user, int fd);
-	// ########################### PRIVMSG CMD
+	//---------------------------//PRIVMSG CMD
 	void	PRIVMSG(std::string cmd, int fd);
-	// ########################### QUITE CMD
+	//---------------------------//QUITE CMD
 	void	QUIT(std::string cmd, int fd);
 	void	CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
-	//-----------------afatir----------------
-	// ########### CMDS RECIVED
-	std::vector<std::string>    split_recivedBuffer(std::string str);
-	void                        client_authen(int fd, std::string pass);
-	void                        parse_exec_cmd(std::string &cmd, int fd);
-	// ########################### BOOL METHODS 
-	bool	nickNameInUse(std::string& nickname);
-	bool	is_validNickname(std::string& nickname);
-	// ########################### GETTERS & SETTERS 
-	void						set_username(std::string& username, int fd);
-	void						set_nickname(std::string cmd, int fd);
-
-	// ########################### MODE CMD
+	//---------------------------//MODE CMD
 	void 		mode_command(std::string& cmd, int fd);
 	std::string invite_only(Channel *channel, char opera, std::string chain);
 	std::string topic_restriction(Channel *channel ,char opera, std::string chain);
@@ -114,13 +114,10 @@ public:
 	std::string channel_limit(std::vector<std::string> splited, Channel *channel, size_t &pos, char opera, int fd, std::string chain, std::string& arguments);
 	bool		isvalid_limit(std::string& limit);
 	std::string mode_toAppend(std::string chain, char opera, char mode);
-	void 		_sendResponse(std::string response, int fd);
-	//--------KHBOUYCh-------------
+	//---------------------------//TOPIC CMD
 	std::string tTopic();
-	void   		Topic(std::string &cmd, int &fd);
-	void   		Invite(std::string &cmd, int &fd);
-	//--------KHBOUYCh-------------
-	bool notregistered(int fd);
+	void Topic(std::string &cmd, int &fd);
+	void Invite(std::string &cmd, int &fd);
 };
 
 #endif

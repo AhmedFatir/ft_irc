@@ -1,4 +1,4 @@
-#include "../Server.hpp"
+#include "../INC/Server.hpp"
 
 void	SplitQuit(std::vector<std::string> &tmp, std::string cmd)
 {

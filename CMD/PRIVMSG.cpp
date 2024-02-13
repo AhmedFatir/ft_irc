@@ -1,4 +1,4 @@
-#include "../Server.hpp"
+#include "../INC/Server.hpp"
 
 std::string SplitCmdPrivmsg(std::string cmd, std::vector<std::string> &tmp)
 {

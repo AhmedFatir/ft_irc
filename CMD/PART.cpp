@@ -1,4 +1,4 @@
-#include "../Server.hpp"
+#include "../INC/Server.hpp"
 
 std::string Server::SplitCmdPart(std::string cmd, std::vector<std::string> &tmp, int fd)
 {

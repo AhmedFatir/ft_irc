@@ -1,4 +1,4 @@
-#include "Channel.hpp"
+#include "../INC/Channel.hpp"
 
 Channel::Channel(){
 	this->invit_only = 0;
@@ -48,6 +48,7 @@ void Channel::set_createiontime(){
 	oss << _time;
 	this->created_at = std::string(oss.str());
 }
+//---------------//Setters
 //---------------//Getters
 int Channel::GetInvitOnly(){return this->invit_only;}
 int Channel::GetTopic(){return this->topic;}
@@ -123,6 +124,7 @@ Client* Channel::GetClientInChannel(std::string name)
 	}
 	return NULL;
 }
+//---------------//Getters
 //---------------//Methods
 void Channel::add_client(Client newClient){clients.push_back(newClient);}
 void Channel::add_admin(Client newClient){admins.push_back(newClient);}
@@ -166,6 +168,7 @@ bool Channel::change_adminToClient(std::string& nick){
 	return false;
 
 }
+//---------------//Methods
 //---------------//SendToAll
 void Channel::sendTo_all(std::string rpl1)
 {
@@ -189,3 +192,4 @@ void Channel::sendTo_all(std::string rpl1, int fd)
 				std::cerr << "send() faild" << std::endl;
 	}
 }
+//---------------//SendToAll

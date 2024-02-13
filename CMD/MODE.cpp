@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "../INC/Server.hpp"
 
 std::string Server::mode_toAppend(std::string chain, char opera, char mode)
 {

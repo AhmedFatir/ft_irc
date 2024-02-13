@@ -1,4 +1,4 @@
-#include "Client.hpp"
+#include "../INC/Client.hpp"
 
 Client::Client()
 {
@@ -43,6 +43,7 @@ std::string Client::getHostname(){
 	std::string hostname = this->GetNickName() + "!" + this->GetUserName();
 	return hostname;
 }
+//---------------//Getters
 //---------------//Setters
 void Client::SetFd(int fd){this->fd = fd;}
 void Client::SetNickname(std::string& nickName){this->nickname = nickName;}
@@ -50,6 +51,7 @@ void Client::SetUsername(std::string& username){this->username = username;}
 void Client::setBuffer(std::string recived){buffer +=recived;}
 void Client::setRegistered(bool value){registered = value;}
 void Client::setIpAdd(std::string ipadd){this->ipadd = ipadd;}
+//---------------//Setters
 //---------------//Methods
 void Client::clearBuffer(){buffer.clear();}
 void Client::AddChannelInvite(std::string &chname){
@@ -61,3 +63,4 @@ void Client::RmChannelInvite(std::string &chname){
 			{this->ChannelsInvite.erase(this->ChannelsInvite.begin() + i); return;}
 	}
 }
+//---------------//Methods

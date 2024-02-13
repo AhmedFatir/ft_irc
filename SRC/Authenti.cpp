@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "../INC/Server.hpp"
 
 /* 
 *   PASS COMMAND
