@@ -20,7 +20,7 @@ void Server::Topic(std::string &cmd, int &fd)
 	if (!(GetChannel(nmch)->get_client(fd)) && !(GetChannel(nmch)->get_admin(fd)))
 	    {senderror(442, "#"+nmch, fd, " :You're not on that channel\r\n"); return;}
 	if (scmd.size() == 2)
-	{_sendResponse(": 332 " + GetClient(fd)->GetUserName() + " " + "#"+nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);_sendResponse(": 333 " + GetClient(fd)->GetNickName() + " " + "#"+nmch + " " + GetClient(fd)->GetNickName() + " " + tTopic() + "\r\n", fd);return;}
+	{_sendResponse(": 332 " + GetClient(fd)->GetUserName() + " " + "#"+nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);return;}
 	if (scmd.size() >= 3)
 	{
 		std::string restopic ;
