@@ -1,10 +1,4 @@
-/*
-    aagouzou
-*/
 #include "Server.hpp"
-
-//################################ MODE #####################################################
-
 
 std::string Server::mode_toAppend(std::string chain, char opera, char mode)
 {
@@ -89,7 +83,6 @@ void Server::mode_command(std::string& cmd, int fd)
 			}
 		}
 	}
-	// std::cout << "		mode: " << mode_chain.str() << std::endl;
 	std::string chain = mode_chain.str();
 	if(chain.empty())
 		return ;
@@ -218,7 +211,6 @@ std::string Server::operator_privilege(std::vector<std::string> splited, Channel
 
 bool Server::isvalid_limit(std::string& limit)
 {
-	// std::cout << std::atoi(limit.c_str()) << std::endl;
 	return (!(limit.find_first_not_of("0123456789")!= std::string::npos) && std::atoi(limit.c_str()) > 0);
 }
 

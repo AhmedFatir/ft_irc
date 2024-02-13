@@ -8,6 +8,7 @@ std::string Server::tTopic()
 	res << current;
 	return res.str();
 }
+
 void Server::Topic(std::string &cmd, int &fd)
 {
 	std::vector<std::string> scmd = split_cmd(cmd);
