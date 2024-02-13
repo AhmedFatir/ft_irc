@@ -327,14 +327,10 @@ int main(int ac, char **av)
     ssize_t recivedBytes;
 
     char buff[1024];
-<<<<<<< HEAD:bot.cpp
 	if (av[3] == NULL)
 		{std::cerr << "Failed to get filename" << std::endl; return 1;}
 	std::string filename = av[3];
-=======
 	memset(buff, 0, sizeof(buff));
-	std::string filename = "qoutes";
->>>>>>> 4e5472670ecf3e73cb843840263e996b6ad16bfa:BONUS/bot.cpp
 	std::vector<std::string> vnokat = getnokat(filename);
 	if (vnokat.empty())
 		{std::cerr << "Failed to get nokat" << std::endl; return 1;}
