@@ -8,16 +8,23 @@ void Server::client_authen(int fd, std::string cmd)
 {
 	Client *cli = GetClient(fd);
 	cmd = cmd.substr(4);
-	cmd.erase(cmd.begin());
 	if(cmd.empty())
-        _sendResponse(ERR_NOTENOUGHPARAM(std::string("nickname")), fd);
-	else if(!cli->getRegistered())
+	{
+        _sendResponse(ERR_NOTENOUGHPARAM(std::string("*")), fd);
+		return;
+	}
+	size_t pos = cmd.find_first_not_of("\t ");
+	if(cmd[pos] == ':')
+		cmd = cmd.substr(pos + 1);
+	else
+		cmd = cmd.substr(pos);
+	if(!cli->getRegistered())
 	{
 		std::string pass = cmd;
 		if(pass == password)
 			cli->setRegistered(true);
 		else
-            _sendResponse(ERR_INCORPASS(std::string("nickname")), fd);
+            _sendResponse(ERR_INCORPASS(std::string("*")), fd);
 	}
 	else
         _sendResponse(ERR_ALREADYREGISTERED(GetClient(fd)->GetNickName()), fd);
@@ -55,13 +62,20 @@ bool Server::nickNameInUse(std::string& nickname)
 void Server::set_nickname(std::string cmd, int fd)
 {
 	cmd = cmd.substr(4);
-	cmd.erase(cmd.begin());
 	if(cmd.empty()|| cmd == ":")
-        _sendResponse(ERR_NONICKNAME(std::string("nickname")), fd);
-	else if (nickNameInUse(cmd))
-        _sendResponse(ERR_NICKINUSE(std::string("nickname")), fd);
+	{
+        _sendResponse(ERR_NONICKNAME(std::string("*")), fd);
+		return ;
+	}
+	size_t pos = cmd.find_first_not_of("\t ");
+	if(cmd[pos] == ':')
+		cmd = cmd.substr(pos + 1);
+	else
+		cmd = cmd.substr(pos);
+	if (nickNameInUse(cmd))
+        _sendResponse(ERR_NICKINUSE(std::string(cmd)), fd);
 	else if(!is_validNickname(cmd))
-        _sendResponse(ERR_ERRONEUSNICK(std::string("nickname")), fd);
+        _sendResponse(ERR_ERRONEUSNICK(std::string(cmd)), fd);
 	else
 	{
 		Client *cli = GetClient(fd);
@@ -92,7 +106,7 @@ void	Server::set_username(std::string& cmd, int fd)
 		_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd);
 	else if(!cli || (cli && cli->GetNickName().empty()) || !cli->getRegistered())
 	{
-		_sendResponse(ERR_NOTREGISTERED(std::string("nickname")), fd);
+		_sendResponse(ERR_NOTREGISTERED(std::string("*")), fd);
 	}
 	else if (cli && !cli->GetUserName().empty())
 		_sendResponse(ERR_ALREADYREGISTERED(cli->GetNickName()), fd);
