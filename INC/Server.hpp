@@ -40,7 +40,6 @@ private:
 	struct pollfd new_cli;
 public:
 	Server();
-	Server(int port, std::string password);
 	~Server();
 	Server(Server const &src);
 	Server &operator=(Server const &src);

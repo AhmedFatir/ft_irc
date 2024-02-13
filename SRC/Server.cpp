@@ -1,7 +1,6 @@
 #include "../INC/Server.hpp"
 
-Server::Server(){}
-Server::Server(int port, std::string password){this->port = port; this->password = password;}
+Server::Server(){this->server_fdsocket = -1;}
 Server::~Server(){}
 Server::Server(Server const &src){*this = src;}
 Server &Server::operator=(Server const &src){
@@ -88,7 +87,6 @@ void	Server::RmChannels(int fd){
 		if (flag){
 			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT Quit\r\n";
 			channels[i].sendTo_all(rpl);
-			std::cout << "QUIT: " << GetClient(fd)->GetNickName() << " has left the channel #" << channels[i].GetName() << std::endl;
 		}
 	}
 }
@@ -130,7 +128,8 @@ void Server::SignalHandler(int signum)
 void	Server::close_fds(){
 	for(size_t i = 0; i < clients.size(); i++)
 		close(clients[i].GetFd());
-	close(server_fdsocket);
+	if (server_fdsocket != -1)
+		close(server_fdsocket);
 }
 //---------------//Close and Signal Methods
 //---------------//Server Methods
@@ -143,7 +142,7 @@ void Server::init(int port, std::string pass)
 	std::cout << "Waiting to accept a connection...\n";
 	while (Server::Signal == false)
 	{
-		if(poll(&fds[0],fds.size(),-1) == -1)
+		if((poll(&fds[0],fds.size(),-1) == -1) && Server::Signal == false)
 			std::cout << "poll() faild or signal recived" << std::endl;
 		for (size_t i = 0; i < fds.size(); i++)
 		{
@@ -156,6 +155,7 @@ void Server::init(int port, std::string pass)
 			}
 		}
 	}
+	close_fds();
 }
 
 void Server::set_sever_socket()
@@ -187,7 +187,7 @@ void Server::accept_new_client()
 	socklen_t len = sizeof(cliadd);
 	int incofd = accept(server_fdsocket, (sockaddr *)&(cliadd), &len);
 	if (incofd == -1)
-		throw(std::runtime_error("faccept() failed"));
+		{std::cout << "accept() failed" << std::endl; return;}
 	fcntl(incofd, F_SETFL, O_NONBLOCK);
 	new_cli.fd = incofd;
 	new_cli.events = POLLIN;
@@ -220,7 +220,6 @@ void Server::reciveNewData(int fd)
 			return;
 		if(cli->getBuffer() != "PONG localhost\r\n")
 		{
-			std::cout << "Recived: " << buff;
 			cmd = split_recivedBuffer(cli->getBuffer());
 			for(size_t i = 0; i < cmd.size(); i++)
 				this->parse_exec_cmd(cmd[i], fd);
