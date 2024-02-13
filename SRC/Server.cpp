@@ -200,11 +200,11 @@ void Server::accept_new_client()
 
 void Server::reciveNewData(int fd)
 {
+	std::vector<std::string> cmd;
 	char buff[1024];
 	memset(buff, 0, sizeof(buff));
 	Client *cli = GetClient(fd);
 	ssize_t bytes = recv(fd, buff, sizeof(buff), 0);
-	std::vector<std::string> cmd;
 	if(bytes <= 0)
 	{
 		std::cout << "clinet: " << fd << " disconnected" << std::endl;
@@ -220,6 +220,7 @@ void Server::reciveNewData(int fd)
 			return;
 		if(cli->getBuffer() != "PONG localhost\r\n")
 		{
+			std::cout << "Recived: " << buff;
 			cmd = split_recivedBuffer(cli->getBuffer());
 			for(size_t i = 0; i < cmd.size(); i++)
 				this->parse_exec_cmd(cmd[i], fd);
@@ -312,6 +313,6 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
 	}
 	else if (!notregistered(fd))
-		_sendResponse(ERR_NOTREGISTERED(std::string("nickname")),fd);
+		_sendResponse(ERR_NOTREGISTERED(std::string("*")),fd);
 }
 //---------------//Parsing Methods

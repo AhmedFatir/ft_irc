@@ -33,7 +33,11 @@ void Server::mode_command(std::string& cmd, int fd)
 		_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd); 
 		return ;
 	}
-	std::string channelName = splited[1].substr(1);
+	std::string channelName;
+	if(splited[1][0] == '#')
+		channelName = splited[1].substr(1);
+	else
+		channelName = splited[1];
 	Channel *channel = GetChannel(channelName);
 	if(!channel) // No such channel
 	{
