@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fstream>
+#include <cstring>
 
 int ircsock;
 
@@ -306,14 +307,13 @@ int main(int ac, char **av)
 {
 	if (ac != 3)
 	{std::cerr << "Usage: " << av[0] << " <port> <password>" << std::endl; return 1;}
-	if (!isPortValid(av[1]))
-		{std::cerr << "Invalid port!" << std::endl; return 1;}
-	// int ircsock;
-		struct sockaddr_in ircHints;
-		signal(SIGINT, signalHandler);
-		ircsock = socket(AF_INET, SOCK_STREAM, 0);
-		if (ircsock == -1)
-    	{std::cerr << "failed to create socket (ircsock)" << std::endl; return 1;}
+	if (!isPortValid(av[1]) || !*av[2])
+		{std::cerr << "Invalid port! / password!" << std::endl; return 1;}
+	signal(SIGINT, signalHandler);
+	struct sockaddr_in ircHints;
+	ircsock = socket(AF_INET, SOCK_STREAM, 0);
+	if (ircsock == -1)
+		{std::cerr << "failed to create socket (ircsock)" << std::endl; return 1;}
     ircHints.sin_family = AF_INET;
     ircHints.sin_port = htons(std::atoi(av[1]));
     inet_pton(AF_INET, "127.0.0.1", &(ircHints.sin_addr));
@@ -328,6 +328,7 @@ int main(int ac, char **av)
     ssize_t recivedBytes;
 
     char buff[1024];
+	memset(buff, 0, sizeof(buff));
 	std::string filename = "qoutes";
 	std::vector<std::string> vnokat = getnokat(filename);
 	while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)

@@ -73,7 +73,7 @@ public:
 	void                        init(int port, std::string pass);
 	void                        set_sever_socket();
 	void                        accept_new_client();
-	void                        accept_new_message(int fd);
+	void                        reciveNewData(int fd);
 	std::vector<std::string>    split_cmd(std::string &str);
 	//-----------------afatir----------------
 	// ########################### JOIN CMD
@@ -99,17 +99,11 @@ public:
 	void                        client_authen(int fd, std::string pass);
 	void                        parse_exec_cmd(std::string &cmd, int fd);
 	// ########################### BOOL METHODS 
-	bool	is_clientExist(int fd);
 	bool	nickNameInUse(std::string& nickname);
 	bool	is_validNickname(std::string& nickname);
 	// ########################### GETTERS & SETTERS 
 	void						set_username(std::string& username, int fd);
 	void						set_nickname(std::string cmd, int fd);
-
-	bool checkifchannelexist(std::string &namechannel);
-	bool checkifadmin(int &fd);
-	std::string getnamechannel(std::string &cmd);
-	// Channel *GetChannelByName(const std::string &name);
 
 	// ########################### MODE CMD
 	void 		mode_command(std::string& cmd, int fd);
@@ -125,10 +119,8 @@ public:
 	std::string tTopic();
 	void   		Topic(std::string &cmd, int &fd);
 	void   		Invite(std::string &cmd, int &fd);
-	void		pickuplinesbot(std::string &cmd, int &fd);
 	//--------KHBOUYCh-------------
 	bool notregistered(int fd);
-	void addNewClient(int fd);
 };
 
 #endif

@@ -58,52 +58,19 @@ Client *Server::GetClientNick(std::string nickname){
 	}
 	return NULL;
 }
-//######################################CLOSE
-void	Server::RmChannels(int fd)
+
+Channel *Server::GetChannel(std::string name)
 {
 	for (size_t i = 0; i < this->channels.size(); i++){
-		int flag = 0;
-		if (channels[i].get_client(fd))
-			{channels[i].remove_client(fd); flag = 1;}
-		else if (channels[i].get_admin(fd))
-			{channels[i].remove_admin(fd); flag = 1;}
-		if (channels[i].GetClientsNumber() == 0)
-			{channels.erase(channels.begin() + i); i--; continue;}
-		if (flag){
-			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT Quit\r\n";
-			channels[i].sendTo_all(rpl);
-			std::cout << "QUIT: " << GetClient(fd)->GetNickName() << " has left the channel #" << channels[i].GetName() << std::endl;
-		}
+		if (this->channels[i].GetName() == name)
+			return &channels[i];
 	}
+	return NULL;
 }
 
-void	Server::close_fds()
-{
-	for(size_t i = 0; i < clients.size(); i++)
-	{
-		// std::cout << "close index: " << i << " /NumFd: "<< clients[i].GetFd() << std::endl;
-		close(clients[i].GetFd());
-	}
-	// std::cout << "close the server's Fd: " << server_fdsocket << std::endl;
-	close(server_fdsocket);
-}
-
-bool Server::Signal = false;
-
-void Server::SignalHandler(int signum)
-{
-	(void)signum;
-	std::cout << std::endl << "SignalHandler" << std::endl;
-	Server::Signal = true;
-}
-
-void Server::addNewClient(int fd)
-{
-	Client client;
-
-	client.SetFd(fd);
-	clients.push_back(client);
-}
+/*
+*  INIT
+*/
 
 void Server::init(int port, std::string pass)
 {
@@ -114,28 +81,25 @@ void Server::init(int port, std::string pass)
 	std::cout << "Waiting to accept a connection...\n";
 	while (Server::Signal == false)
 	{
-		// if(poll(&fds[0],fds.size(),-1) == -1)
-		if(poll(fds.data(),fds.size(),-1) == -1)
+		if(poll(&fds[0],fds.size(),-1) == -1)
 			std::cout << "poll() faild or signal recived" << std::endl;
 		for (size_t i = 0; i < fds.size(); i++)
 		{
 			if (fds[i].revents & POLLIN)
 			{
-				if (fds[i].fd == server_fdsocket){
+				if (fds[i].fd == server_fdsocket)
 					this->accept_new_client();
-				}
-				else {
-					this->accept_new_message(fds[i].fd);
-				}
+				else
+					this->reciveNewData(fds[i].fd);
 			}
 		}
 	}
 }
 
+
 void Server::set_sever_socket()
 {
 	int en = 1;
-
 	add.sin_family = AF_INET;
 	add.sin_addr.s_addr = INADDR_ANY;
 	add.sin_port = htons(port);
@@ -155,6 +119,7 @@ void Server::set_sever_socket()
 	fds.push_back(new_cli);
 }
 
+
 void Server::accept_new_client()
 {
 	Client cli;
@@ -173,25 +138,10 @@ void Server::accept_new_client()
 	fds.push_back(new_cli);
 }
 
-std::vector<std::string> Server::split_recivedBuffer(std::string str)
-{
-
-	std::vector<std::string> vec;
-	std::istringstream stm(str);
-	std::string line;
-	while(std::getline(stm, line))
-	{
-		size_t pos = line.find_first_of("\r\n");
-		if(pos != std::string::npos)
-			line = line.substr(0, pos);
-		vec.push_back(line);
-	}
-	return vec;
-}
-
-void Server::accept_new_message(int fd)
+void Server::reciveNewData(int fd)
 {
 	char buff[1024];
+	memset(buff, 0, sizeof(buff));
 	Client *cli = GetClient(fd);
 	ssize_t bytes = recv(fd, buff, sizeof(buff), 0);
 	std::vector<std::string> cmd;
@@ -205,14 +155,12 @@ void Server::accept_new_message(int fd)
 	}
 	else
 	{
-		if (bytes < 1024) buff[bytes] = '\0';
-		else buff[1023] = '\0';
 		cli->setBuffer(buff);
 		if(cli->getBuffer().find_first_of("\r\n") == std::string::npos)
 			return;
 		if(cli->getBuffer() != "PONG localhost\r\n")
 		{
-			std::cout << "recived" <<" [" << cli->GetFd() << "]: " << cli->getBuffer();
+			// std::cout << "recived" <<" [" << cli->GetFd() << "]: " << cli->getBuffer();
 			cmd = split_recivedBuffer(cli->getBuffer());
 			for(size_t i = 0; i < cmd.size(); i++)
 				this->parse_exec_cmd(cmd[i], fd);
@@ -221,37 +169,6 @@ void Server::accept_new_message(int fd)
 		}
 
 	}
-}
-
-std::vector<std::string> Server::split_cmd(std::string& cmd)
-{
-	std::vector<std::string> vec;
-	std::istringstream stm(cmd);
-	std::string token;
-	while(stm >> token)
-	{
-		vec.push_back(token);
-		token.clear();
-	}
-	return vec;
-}
-
-bool Server::notregistered(int fd)
-{
-	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty())
-		return false;
-	return true;
-}
-
-void Server::StartBot(std::string cmd, int fd)
-{
-	std::string botmsg;
-	std::cout << " ===> Recived Msg For Bot :" << cmd;
-	if (!GetClientNick("bot"))
-		{senderror(401, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :bot not found\r\n"); return;}
-	botmsg = GetClient(fd)->GetNickName() + " " + cmd + "\r\n";
-	if (send(GetClientNick("bot")->GetFd(), botmsg.c_str(), botmsg.size(), 0) == -1)
-		std::cerr << "send() faild" << std::endl;
 }
 
 void Server::parse_exec_cmd(std::string &cmd, int fd)
@@ -295,6 +212,90 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 
 }
 
+bool Server::notregistered(int fd)
+{
+	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty())
+		return false;
+	return true;
+}
+
+void Server::StartBot(std::string cmd, int fd)
+{
+	std::string botmsg;
+	if (!GetClientNick("bot"))
+		{senderror(401, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :bot not found\r\n"); return;}
+	botmsg = GetClient(fd)->GetNickName() + " " + cmd + "\r\n";
+	if (send(GetClientNick("bot")->GetFd(), botmsg.c_str(), botmsg.size(), 0) == -1)
+		std::cerr << "send() faild" << std::endl;
+}
+
+//######################################CLOSE
+
+
+void	Server::RmChannels(int fd)
+{
+	for (size_t i = 0; i < this->channels.size(); i++){
+		int flag = 0;
+		if (channels[i].get_client(fd))
+			{channels[i].remove_client(fd); flag = 1;}
+		else if (channels[i].get_admin(fd))
+			{channels[i].remove_admin(fd); flag = 1;}
+		if (channels[i].GetClientsNumber() == 0)
+			{channels.erase(channels.begin() + i); i--; continue;}
+		if (flag){
+			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT Quit\r\n";
+			channels[i].sendTo_all(rpl);
+			std::cout << "QUIT: " << GetClient(fd)->GetNickName() << " has left the channel #" << channels[i].GetName() << std::endl;
+		}
+	}
+}
+
+void	Server::close_fds()
+{
+	for(size_t i = 0; i < clients.size(); i++)
+		close(clients[i].GetFd());
+	close(server_fdsocket);
+}
+
+bool Server::Signal = false;
+
+void Server::SignalHandler(int signum)
+{
+	(void)signum;
+	std::cout << std::endl << "SignalHandler" << std::endl;
+	Server::Signal = true;
+}
+
+std::vector<std::string> Server::split_recivedBuffer(std::string str)
+{
+
+	std::vector<std::string> vec;
+	std::istringstream stm(str);
+	std::string line;
+	while(std::getline(stm, line))
+	{
+		size_t pos = line.find_first_of("\r\n");
+		if(pos != std::string::npos)
+			line = line.substr(0, pos);
+		vec.push_back(line);
+	}
+	return vec;
+}
+
+std::vector<std::string> Server::split_cmd(std::string& cmd)
+{
+	std::vector<std::string> vec;
+	std::istringstream stm(cmd);
+	std::string token;
+	while(stm >> token)
+	{
+		vec.push_back(token);
+		token.clear();
+	}
+	return vec;
+}
+
+
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
@@ -313,24 +314,8 @@ void Server::senderror(int code, std::string clientname, std::string channelname
 		std::cerr << "send() faild" << std::endl;
 }
 
-std::string Server::getnamechannel(std::string &name)
-{
-	if (!name.empty() && name[0] == '#')
-		return (name.substr(1));
-	return name;
-}
-Channel *Server::GetChannel(std::string name)
-{
-	for (size_t i = 0; i < this->channels.size(); i++){
-		if (this->channels[i].GetName() == name)
-			return &channels[i];
-	}
-	return NULL;
-}
-
 void Server::_sendResponse(std::string response, int fd)
 {
-	// std::cout << "Response:\n" << response;
 	if(send(fd, response.c_str(), response.size(), 0) == -1)
 		std::cerr << "Response send() faild" << std::endl;
 }
