@@ -1,4 +1,4 @@
-#include "../Server.hpp"
+#include "../INC/Server.hpp"
 
 void	SplitQuit(std::vector<std::string> &tmp, std::string cmd)
 {
@@ -39,7 +39,6 @@ void Server::QUIT(std::string cmd, int fd)
 			else{
 				std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + tmp[0] + "\r\n";
 				channels[i].sendTo_all(rpl);
-				std::cout << "QUIT: " << GetClient(fd)->GetNickName() << " has left the channel #" << channels[i].GetName() << std::endl;
 			}
 		}
 		else if (channels[i].get_admin(fd)){
@@ -49,11 +48,9 @@ void Server::QUIT(std::string cmd, int fd)
 			else{
 				std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + tmp[0] + "\r\n";
 				channels[i].sendTo_all(rpl);
-				std::cout << "QUIT: " << GetClient(fd)->GetNickName() << " has left the channel #" << channels[i].GetName() << std::endl;
 			}
 		}
 	}
-	std::cout << GetClient(fd)->GetNickName() << " has left the server QUIT " << tmp[0] << std::endl;
 	RmChannels(fd);
 	RemoveClient(fd);
 	RemoveFds(fd);

@@ -1,4 +1,4 @@
-#include "../Server.hpp"
+#include "../INC/Server.hpp"
 
 std::string Server::SplitCmdPart(std::string cmd, std::vector<std::string> &tmp, int fd)
 {
@@ -51,9 +51,7 @@ void Server::PART(std::string cmd, int fd)
 					if (!reason.empty())
 						ss << " :" << reason << "\r\n";
 					else ss << "\r\n";
-					// send(fd, ss.str().c_str(), ss.str().size(),0);
 					channels[j].sendTo_all(ss.str());
-					// std::cout << "		" << ss.str();
 					if (channels[j].get_admin(channels[j].GetClientInChannel(GetClient(fd)->GetNickName())->GetFd()))
 						channels[j].remove_admin(channels[j].GetClientInChannel(GetClient(fd)->GetNickName())->GetFd());
 					else

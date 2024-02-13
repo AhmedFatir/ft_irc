@@ -1,4 +1,4 @@
-#include "../Server.hpp"
+#include "../INC/Server.hpp"
 
 void Server::Invite(std::string &cmd, int &fd)
 {
@@ -21,8 +21,9 @@ void Server::Invite(std::string &cmd, int &fd)
 		{senderror(473,GetChannel(channelname)->get_client(fd)->GetNickName(),channelname,fd," :Cannot invit to channel (+i)\r\n"); return;}
 	// RPL_INVITING (341) if the invite was successfully sent
 	clt->AddChannelInvite(channelname);
-	std::string rep1 = ": 341 "+ GetClient(fd)->GetNickName()+" "+ clt->GetNickName()+" "+scmd[2]+"\r\n";
-	send(fd, rep1.c_str(), rep1.size(), 0);
+	std::string rep1 = ": 341 "+ GetClient(fd)->GetNickName()+" "+ clt->GetNickName()+" "+ scmd[2]+"\r\n";
+	_sendResponse(rep1, fd);
 	std::string rep2 = ":"+ clt->getHostname() + " INVITE " + clt->GetNickName() + " " + scmd[2]+"\r\n";
-	send(clt->GetFd(), rep2.c_str(), rep2.size(),0);
+	_sendResponse(rep2, clt->GetFd());
+	
 }
