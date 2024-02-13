@@ -170,6 +170,57 @@ int GetNumber(std::string prompt, int ircsock, std::string UserNick)
 	}
 	return (std::atoi(command.c_str()));
 }
+int PotentialAction(const std::vector<char>& board, char player)
+{
+	// Check rows
+	for (int i = 0; i <= 6; i += 3){
+		if (board[i] == '-' && board[i+1] == player && board[i+2] == player) return i;
+		if (board[i] == player && board[i+1] == '-' && board[i+2] == player) return i+1;
+		if (board[i] == player && board[i+1] == player && board[i+2] == '-') return i+2;
+	}
+	// Check columns
+	for (int i = 0; i < 3; i++){
+		if (board[i] == '-' && board[i+3] == player && board[i+6] == player) return i;
+		if (board[i] == player && board[i+3] == '-' && board[i+6] == player) return i+3;
+		if (board[i] == player && board[i+3] == player && board[i+6] == '-') return i+6;
+	}
+	// Check diagonals
+	if (board[0] == '-' && board[4] == player && board[8] == player) return 0;
+	if (board[0] == player && board[4] == '-' && board[8] == player) return 4;
+	if (board[0] == player && board[4] == player && board[8] == '-') return 8;
+
+	if (board[2] == '-' && board[4] == player && board[6] == player) return 2;
+	if (board[2] == player && board[4] == '-' && board[6] == player) return 4;
+	if (board[2] == player && board[4] == player && board[6] == '-') return 6;
+
+	return -1;
+}
+
+void	SetMove(std::vector<char>& board, char Player, int move)
+{
+	std::srand((std::time(NULL)));
+	int PMove = -1;
+	if (move == 6){ // always block
+		PMove = PotentialAction(board, 'X');
+		if (PMove != -1) board[PMove] = Player;
+	}
+	if (move == 2 || move == 4){ //try to win
+		PMove = PotentialAction(board, 'O');
+		if (PMove != -1) board[PMove] = Player;
+	}
+	if ((move == 2 || move == 4) && PMove == -1){ //if can't win, try to block
+		int rand = std::rand() % 2; // randomize the move
+		if (rand == 0) PMove = PotentialAction(board, 'X'); // block 50% of the time
+		if (PMove != -1) board[PMove] = Player;
+	}
+	if (PMove == -1){ // if can't win or block, make a random move
+		while (1){
+			PMove = std::rand() % 9;
+			if (board[PMove] == '-')
+				{board[PMove] = Player; break;}
+		}
+	}
+}
 
 void playTicTacToe(int ircsock, std::string UserNick)
 {
@@ -181,7 +232,6 @@ void playTicTacToe(int ircsock, std::string UserNick)
 	char Player = 'X';
 	int movesLeft = 9;
 	while (movesLeft > 0){
-		std::srand((std::time(NULL)));
 		drawBoard(board, ircsock, UserNick);
 
 		if (Player == 'X'){ // Player's turn
@@ -196,19 +246,14 @@ void playTicTacToe(int ircsock, std::string UserNick)
 		else{ // Computer's turn
 			send_privmsg("Computer's turn...", ircsock, UserNick);
 			sleep(1);
-			int Move;
-			while (1){
-				Move = std::rand() % 9;
-				if (board[Move] == '-')
-					{board[Move] = Player; break;}
-			}
+			SetMove(board, Player, movesLeft);
 		}
 		if (checkWin(board, Player)){ // Check who wins
 			drawBoard(board, ircsock, UserNick);
 			if (Player == 'X')
-				send_privmsg("YOU win!", ircsock, UserNick);
+				send_privmsg("YOU win!😁", ircsock, UserNick);
 			else
-				send_privmsg("Computer wins!", ircsock, UserNick);
+				send_privmsg("Computer wins!🤖", ircsock, UserNick);
 			return;
 		}
 		// Switch players
@@ -217,7 +262,7 @@ void playTicTacToe(int ircsock, std::string UserNick)
 		movesLeft--;
 	}
 	drawBoard(board, ircsock, UserNick);
-	send_privmsg("It's a draw!", ircsock, UserNick);
+	send_privmsg("It's a draw!🙂", ircsock, UserNick);
 }
 bool isPortValid(std::string port)
 {
