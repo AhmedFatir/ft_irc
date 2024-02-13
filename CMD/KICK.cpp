@@ -57,7 +57,6 @@ void	Server::KICK(std::string cmd, int fd)
 						ss << " :" << reason << "\r\n";
 					else ss << "\r\n";
 					ch->sendTo_all(ss.str());
-					// std::cout << "		" << ss.str();
 					if (ch->get_admin(ch->GetClientInChannel(user)->GetFd()))
 						ch->remove_admin(ch->GetClientInChannel(user)->GetFd());
 					else

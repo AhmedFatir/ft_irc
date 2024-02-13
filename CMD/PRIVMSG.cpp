@@ -62,12 +62,10 @@ void	Server::PRIVMSG(std::string cmd, int fd)
 			tmp[i].erase(tmp[i].begin());
 			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG #" + tmp[i] + " :" + message + "\r\n";
 			GetChannel(tmp[i])->sendTo_all(resp, fd);
-			// std::cout << "		" << resp;
 		}
 		else{
 			std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + tmp[i] + " :" + message + "\r\n";
-			send(GetClientNick(tmp[i])->GetFd(), resp.c_str(), resp.size(),0);
-			// std::cout << "		" << resp;
+			_sendResponse(resp, GetClientNick(tmp[i])->GetFd());
 		}
 	}
 }

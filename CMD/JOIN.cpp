@@ -69,10 +69,6 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >&token, in
 	// add the client to the channel
 	Client *cli = GetClient(fd);
 	this->channels[j].add_client(*cli);
- 	// std::string response = RPL_JOINMSG(cli->getHostname(),GetClient(fd)->getIpAdd(),token[i].first) + \
-    //     RPL_NAMREPLY(GetClient(fd)->GetNickName(),token[i].first,channels[j].clientChannel_list()) + \
-    //     RPL_ENDOFNAMES(GetClient(fd)->GetNickName(),token[i].first);
-    // channels[j].sendTo_all(response);
 	_sendResponse(RPL_JOINMSG(GetClient(fd)->getHostname(),GetClient(fd)->getIpAdd(),token[i].first) + \
         RPL_NAMREPLY(GetClient(fd)->GetNickName(),channels[j].GetName(),channels[j].clientChannel_list()) + \
 	RPL_ENDOFNAMES(GetClient(fd)->GetNickName(),channels[j].GetName()),fd);
@@ -95,11 +91,6 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
     _sendResponse(RPL_JOINMSG(GetClient(fd)->getHostname(),GetClient(fd)->getIpAdd(),newChannel.GetName()) + \
         RPL_NAMREPLY(GetClient(fd)->GetNickName(),newChannel.GetName(),newChannel.clientChannel_list()) + \
         RPL_ENDOFNAMES(GetClient(fd)->GetNickName(),newChannel.GetName()),fd);
-	// if(GetClient(fd))
-	// {
-	// 	std::string weclome = "create " + newChannel.GetName() + GetClient(fd)->GetNickName() + "\r\n";
-	// 	_sendResponse(weclome, GetClientNick("bot")->GetFd());
-	// }
 }
 
 void Server::JOIN(std::string cmd, int fd)

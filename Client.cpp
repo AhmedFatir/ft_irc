@@ -8,10 +8,9 @@ Client::Client()
 	this->isOperator= false;
 	this->registered = false;
 	this->buffer = "";
-	// memset(&cliadd, 0, sizeof(cliadd));
 	this->ipadd = "";
 }
-Client::Client(std::string nickname, std::string username, int fd) : nickname(nickname), username(username), fd(fd){}
+Client::Client(std::string nickname, std::string username, int fd) :fd(fd), nickname(nickname), username(username){}
 Client::~Client(){}
 Client::Client(Client const &src){*this = src;}
 Client &Client::operator=(Client const &src){
@@ -26,19 +25,33 @@ Client &Client::operator=(Client const &src){
 	}
 	return *this;
 }
-
+//---------------//Getters
+int Client::GetFd(){return this->fd;}
+bool Client::getRegistered(){return registered;}
+bool Client::GetInviteChannel(std::string &ChName){
+	for (size_t i = 0; i < this->ChannelsInvite.size(); i++){
+		if (this->ChannelsInvite[i] == ChName)
+			return true;
+	}
+	return false;
+}
 std::string Client::GetNickName(){return this->nickname;}
 std::string Client::GetUserName(){return this->username;}
-int Client::GetFd(){return this->fd;}
-void Client::SetFd(int fd){this->fd = fd;}
-void Client::SetNickname(std::string& nickName){this->nickname = nickName;}
-
-std::string Client::getHostname()
-{
+std::string Client::getBuffer(){return buffer;}
+std::string Client::getIpAdd(){return ipadd;}
+std::string Client::getHostname(){
 	std::string hostname = this->GetNickName() + "!" + this->GetUserName();
 	return hostname;
 }
-
+//---------------//Setters
+void Client::SetFd(int fd){this->fd = fd;}
+void Client::SetNickname(std::string& nickName){this->nickname = nickName;}
+void Client::SetUsername(std::string& username){this->username = username;}
+void Client::setBuffer(std::string recived){buffer +=recived;}
+void Client::setRegistered(bool value){registered = value;}
+void Client::setIpAdd(std::string ipadd){this->ipadd = ipadd;}
+//---------------//Methods
+void Client::clearBuffer(){buffer.clear();}
 void Client::AddChannelInvite(std::string &chname){
 	ChannelsInvite.push_back(chname);
 }
@@ -48,11 +61,3 @@ void Client::RmChannelInvite(std::string &chname){
 			{this->ChannelsInvite.erase(this->ChannelsInvite.begin() + i); return;}
 	}
 }
-bool Client::GetInviteChannel(std::string &ChName){
-	for (size_t i = 0; i < this->ChannelsInvite.size(); i++){
-		if (this->ChannelsInvite[i] == ChName)
-			return true;
-	}
-	return false;
-}
-
