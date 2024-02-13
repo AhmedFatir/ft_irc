@@ -61,7 +61,7 @@ void ageCalculator(std::string age, std::string Nickname)
     month = std::atoi(age.substr(5, 2).c_str());
     day = std::atoi(age.substr(8, 2).c_str());
 
-    std::cout << "year: " << year << "month: " << month << "day: " << day << std::endl;
+    // std::cout << "year: " << year << "month: " << month << "day: " << day << std::endl;
     std::tm date;
     memset(&date, 0, sizeof(date));
     date.tm_year = year - 1900;
@@ -81,7 +81,7 @@ void ageCalculator(std::string age, std::string Nickname)
 //-----------------------------------------------------------------------------------//
 void send_privmsg(std::string message, int srvsock, std::string UserNick)
 {
-	std::cout << message << std::endl;
+	// std::cout << message << std::endl;
     std::string msg = "PRIVMSG " + UserNick + " :" + message + "\r\n";
     if (send(srvsock, msg.c_str(), msg.size(),0) == -1)
 		std::cerr << "Send failed" << std::endl;
@@ -290,9 +290,9 @@ int main(int ac, char **av)
 	while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)
     {
         buff[recivedBytes] = '\0';
-        std::cout << "recived: " <<  buff;
+        // std::cout << "recived: " <<  buff;
         recived = SplitBuff(buff, UserNick, date);
-		std::cout << "splited: " << recived << std::endl;
+		// std::cout << "splited: " << recived << std::endl;
         if(recived == "PLAY" || recived == "play")
 			playTicTacToe(ircsock, UserNick);
         else if(recived == "AGE" || recived == "age")

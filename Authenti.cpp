@@ -1,18 +1,19 @@
 #include "Server.hpp"
 
 /* 
-    PASS COMMAND
+*   PASS COMMAND
 */
 
-void Server::client_authen(int fd, std::string& cmd)
+void Server::client_authen(int fd, std::string cmd)
 {
 	Client *cli = GetClient(fd);
-	std::vector<std::string> splited_cmd = split_cmd(cmd);
-	if(splited_cmd.size() < 2)
+	cmd = cmd.substr(4);
+	cmd.erase(cmd.begin());
+	if(cmd.empty())
         _sendResponse(ERR_NOTENOUGHPARAM(std::string("nickname")), fd);
 	else if(!cli->getRegistered())
 	{
-		std::string pass = splited_cmd[1];
+		std::string pass = cmd;
 		if(pass == password)
 			cli->setRegistered(true);
 		else
@@ -24,7 +25,7 @@ void Server::client_authen(int fd, std::string& cmd)
 
 
 /* 
-    NICK COMMAND
+*    NICK COMMAND
 */
 
 bool Server::is_validNickname(std::string& nickname)
