@@ -130,7 +130,7 @@ void Channel::sendTo_all(std::string rpl1)
 		if(send(clients[i].GetFd(), rpl1.c_str(), rpl1.size(),0) == -1)
 			std::cerr << "send() faild" << std::endl;
 }
-void Channel::sendTo_all(std::string &rpl1, int fd)
+void Channel::sendTo_all(std::string rpl1, int fd)
 {
 	// std::string cli_list = this->clientChannel_list();
 	for(size_t i = 0; i < admins.size(); i++)

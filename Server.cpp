@@ -81,10 +81,10 @@ void	Server::close_fds()
 {
 	for(size_t i = 0; i < clients.size(); i++)
 	{
-		std::cout << "close index: " << i << " /NumFd: "<< clients[i].GetFd() << std::endl;
+		// std::cout << "close index: " << i << " /NumFd: "<< clients[i].GetFd() << std::endl;
 		close(clients[i].GetFd());
 	}
-	std::cout << "close the server's Fd: " << server_fdsocket << std::endl;
+	// std::cout << "close the server's Fd: " << server_fdsocket << std::endl;
 	close(server_fdsocket);
 }
 
@@ -259,34 +259,34 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 	if(cmd.empty())
 		return ;
 	std::vector<std::string> splited_cmd = split_cmd(cmd);
-    if(splited_cmd[0] == "PASS" || splited_cmd[0] == "pass")
+    if(splited_cmd.size() && (splited_cmd[0] == "PASS" || splited_cmd[0] == "pass"))
         client_authen(fd, cmd);
-	else if (splited_cmd[0] == "NICK" || splited_cmd[0] == "nick")
+	else if (splited_cmd.size() && (splited_cmd[0] == "NICK" || splited_cmd[0] == "nick"))
 		set_nickname(cmd,fd);
-	else if(splited_cmd[0] == "USER" || splited_cmd[0] == "user")
+	else if(splited_cmd.size() && (splited_cmd[0] == "USER" || splited_cmd[0] == "user"))
 		set_username(cmd, fd);
-	else if (splited_cmd[0] == "QUIT" || splited_cmd[0] == "quit")
+	else if (splited_cmd.size() && (splited_cmd[0] == "QUIT" || splited_cmd[0] == "quit"))
 		QUIT(cmd,fd);
 	else if(notregistered(fd))
 	{
-		if (splited_cmd[0] == "KICK" || splited_cmd[0] == "kick")
+		if (splited_cmd.size() && (splited_cmd[0] == "KICK" || splited_cmd[0] == "kick"))
 			KICK(cmd, fd);
-		else if (splited_cmd[0] == "JOIN" || splited_cmd[0] == "join")
+		else if (splited_cmd.size() && (splited_cmd[0] == "JOIN" || splited_cmd[0] == "join"))
 			JOIN(cmd, fd);
-		else if (splited_cmd[0] == "TOPIC" || splited_cmd[0] == "topic")
+		else if (splited_cmd.size() && (splited_cmd[0] == "TOPIC" || splited_cmd[0] == "topic"))
 			Topic(cmd, fd);
-		else if (splited_cmd[0] == "MODE" || splited_cmd[0] == "mode")
+		else if (splited_cmd.size() && (splited_cmd[0] == "MODE" || splited_cmd[0] == "mode"))
 			mode_command(cmd, fd);
-		else if (splited_cmd[0] == "PART" || splited_cmd[0] == "part")
+		else if (splited_cmd.size() && (splited_cmd[0] == "PART" || splited_cmd[0] == "part"))
 			PART(cmd, fd);
-		else if (splited_cmd[0] == "PRIVMSG" || splited_cmd[0] == "privmsg")
+		else if (splited_cmd.size() && (splited_cmd[0] == "PRIVMSG" || splited_cmd[0] == "privmsg"))
 			PRIVMSG(cmd, fd);
-		else if (splited_cmd[0] == "INVITE" || splited_cmd[0] == "invite")
+		else if (splited_cmd.size() && (splited_cmd[0] == "INVITE" || splited_cmd[0] == "invite"))
 			Invite(cmd,fd);
-		else if (splited_cmd[0] == "PLAY" || splited_cmd[0] == "AGE" || splited_cmd[0] == "NOKTA" \
-			|| splited_cmd[0] == "play" || splited_cmd[0] == "age" || splited_cmd[0] == "nokta")
+		else if (splited_cmd.size() && (splited_cmd[0] == "PLAY" || splited_cmd[0] == "AGE" || splited_cmd[0] == "NOKTA" \
+			|| splited_cmd[0] == "play" || splited_cmd[0] == "age" || splited_cmd[0] == "nokta"))
 			StartBot(cmd, fd);
-		else
+		else if (splited_cmd.size())
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
 
 	}
@@ -330,7 +330,7 @@ Channel *Server::GetChannel(std::string name)
 
 void Server::_sendResponse(std::string response, int fd)
 {
-	std::cout << "Response:\n" << response;
+	// std::cout << "Response:\n" << response;
 	if(send(fd, response.c_str(), response.size(), 0) == -1)
-		std::cerr << "send() faild" << std::endl;
+		std::cerr << "Response send() faild" << std::endl;
 }

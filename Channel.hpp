@@ -44,7 +44,7 @@ public:
 	//abdellah
 	std::string clientChannel_list();
 	void sendTo_all(std::string rpl1);
-	void sendTo_all(std::string &rpl1, int fd);
+	void sendTo_all(std::string rpl1, int fd);
 	bool clientInChannel(std::string &nick);
 	bool change_clientToAdmin(std::string& nick);
 	bool change_adminToClient(std::string& nick);

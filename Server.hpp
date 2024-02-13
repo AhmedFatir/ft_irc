@@ -96,7 +96,7 @@ public:
 	//-----------------afatir----------------
 	// ########### CMDS RECIVED
 	std::vector<std::string>    split_recivedBuffer(std::string str);
-	void                        client_authen(int fd, std::string& pass);
+	void                        client_authen(int fd, std::string pass);
 	void                        parse_exec_cmd(std::string &cmd, int fd);
 	// ########################### BOOL METHODS 
 	bool	is_clientExist(int fd);
