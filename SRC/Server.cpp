@@ -112,8 +112,6 @@ void Server::senderror(int code, std::string clientname, std::string channelname
 
 void Server::_sendResponse(std::string response, int fd)
 {
-	std::cout << "response: \n";
-	std::cout << response ; 
 	if(send(fd, response.c_str(), response.size(), 0) == -1)
 		std::cerr << "Response send() faild" << std::endl;
 }
@@ -198,6 +196,7 @@ void Server::accept_new_client()
 	cli.setIpAdd(inet_ntoa((cliadd.sin_addr)));
 	clients.push_back(cli);
 	fds.push_back(new_cli);
+	std::cout << "client <" << incofd << "> connected" << std::endl; 
 }
 
 void Server::reciveNewData(int fd)
@@ -216,8 +215,7 @@ void Server::reciveNewData(int fd)
 		close(fd);
 	}
 	else
-	{	
-		std::cout << buff;
+	{ 
 		cli->setBuffer(buff);
 		if(cli->getBuffer().find_first_of("\r\n") == std::string::npos)
 			return;

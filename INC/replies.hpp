@@ -19,7 +19,7 @@
 #define ERR_KEYSET(channelname) ": 467 #" + channelname + " Channel key already set. " + CRLF
 #define ERR_UNKNOWNMODE(nickname, channelname, mode) ": 472 " + nickname + " #" + channelname + " " + mode + " :is not a recognised channel mode" + CRLF
 #define ERR_NOTENOUGHPARAM(nickname) (": 461 " + nickname + " :Not enough parameters." + CRLF)
-#define ERR_CHANNELNOTFOUND(nickname, channelname) (": 403 " + nickname + " #" + channelname + " :No such channel" + CRLF)
+#define ERR_CHANNELNOTFOUND(nickname, channelname) (": 403 " + nickname + " " + channelname + " :No such channel" + CRLF)
 #define ERR_NOTOPERATOR(channelname) (": 482 #" + channelname + " :You're not a channel operator" + CRLF)
 #define ERR_NOSUCHNICK(channelname, name) (": 401 #" + channelname + " " + name + " :No such nick/channel" + CRLF )
 #define ERR_INCORPASS(nickname) (": 464 " + nickname + " :Password incorrect !" + CRLF )
