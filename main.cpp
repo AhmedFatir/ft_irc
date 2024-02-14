@@ -10,7 +10,7 @@ void v()
 }
 int main(int ac, char **av)
 {
-	atexit(v);
+	// atexit(v);
 	Server ser;
 	if (ac != 3)
 		{std::cout << "Usage: " << av[0] << " <port number> <password>" << std::endl; return 1;}

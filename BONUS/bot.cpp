@@ -305,9 +305,13 @@ void nokta(std::string nick, std::vector<std::string> &vnokat ,int &ircsock)
 int main(int ac, char **av)
 {
 	if (ac != 4)
-	{std::cerr << "Usage: " << av[0] << " <port> <password>" << std::endl; return 1;}
+	{std::cerr << "Usage: " << av[0] << " <port> <password> <file>" << std::endl; return 1;}
 	if (!isPortValid(av[1]) || !*av[2])
 		{std::cerr << "Invalid port! / password!" << std::endl; return 1;}
+	std::string filename = av[3];
+	std::vector<std::string> vnokat = getnokat(filename);
+	if (vnokat.empty())
+		{std::cerr << "Failed to get nokat" << std::endl; return 1;}
 	signal(SIGINT, signalHandler);
 	struct sockaddr_in ircHints;
 	ircsock = socket(AF_INET, SOCK_STREAM, 0);
@@ -329,11 +333,7 @@ int main(int ac, char **av)
     char buff[1024];
 	if (av[3] == NULL)
 		{std::cerr << "Failed to get filename" << std::endl; return 1;}
-	std::string filename = av[3];
 	memset(buff, 0, sizeof(buff));
-	std::vector<std::string> vnokat = getnokat(filename);
-	if (vnokat.empty())
-		{std::cerr << "Failed to get nokat" << std::endl; return 1;}
 	while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)
     {
         buff[recivedBytes] = '\0';
