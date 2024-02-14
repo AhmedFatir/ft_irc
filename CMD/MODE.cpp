@@ -39,7 +39,7 @@ void Server::mode_command(std::string& cmd, int fd)
 	else
 		channelName = splited[1];
 	Channel *channel = GetChannel(channelName);
-	if(!channel) // No such channel
+	if(!channel || splited[1][0] != '#') // No such channel
 	{
 		_sendResponse(ERR_CHANNELNOTFOUND(cli->GetUserName(),channelName), fd);
 		return ;
@@ -78,10 +78,6 @@ void Server::mode_command(std::string& cmd, int fd)
 						mode_chain << operator_privilege(splited, channel, pos, fd, opera, mode_chain.str(), arguments);
 				else if (splited[2][i] == 'l') //set/remove channel limits
 					mode_chain << channel_limit(splited, channel, pos, opera, fd, mode_chain.str(), arguments);
-				else if (splited[2][i] == 's')
-					mode_chain << mode_toAppend(mode_chain.str(),opera, 's');
-				else if (splited[2][i] == 'n')
-					mode_chain << mode_toAppend(mode_chain.str(),opera, 'n');
 				else
 					_sendResponse(ERR_UNKNOWNMODE(cli->GetNickName(), channel->GetName(),splited[2][i]),fd);
 			}

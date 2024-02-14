@@ -8,17 +8,16 @@ void Server::client_authen(int fd, std::string cmd)
 {
 	Client *cli = GetClient(fd);
 	cmd = cmd.substr(4);
-	if(cmd.empty())
+	size_t pos = cmd.find_first_not_of("\t\v ");
+	if(pos < cmd.size())
 	{
-        _sendResponse(ERR_NOTENOUGHPARAM(std::string("*")), fd);
-		return;
-	}
-	size_t pos = cmd.find_first_not_of("\t ");
-	if(cmd[pos] == ':')
-		cmd = cmd.substr(pos + 1);
-	else
 		cmd = cmd.substr(pos);
-	if(!cli->getRegistered())
+		if(cmd[0] == ':')
+			cmd.erase(cmd.begin());
+	}
+	if(pos == std::string::npos || cmd.empty()) 
+		_sendResponse(ERR_NOTENOUGHPARAM(std::string("*")), fd);
+	else if(!cli->getRegistered())
 	{
 		std::string pass = cmd;
 		if(pass == password)
@@ -62,17 +61,16 @@ bool Server::nickNameInUse(std::string& nickname)
 void Server::set_nickname(std::string cmd, int fd)
 {
 	cmd = cmd.substr(4);
-	if(cmd.empty()|| cmd == ":")
+	size_t pos = cmd.find_first_not_of("\t\v ");
+	if(pos < cmd.size())
 	{
-        _sendResponse(ERR_NONICKNAME(std::string("*")), fd);
-		return ;
-	}
-	size_t pos = cmd.find_first_not_of("\t ");
-	if(cmd[pos] == ':')
-		cmd = cmd.substr(pos + 1);
-	else
 		cmd = cmd.substr(pos);
-	if (nickNameInUse(cmd))
+		if(cmd[0] == ':')
+			cmd.erase(cmd.begin());
+	}
+	if(pos == std::string::npos || cmd.empty()) 
+		_sendResponse(ERR_NOTENOUGHPARAM(std::string("*")), fd);
+	else if (nickNameInUse(cmd))
         _sendResponse(ERR_NICKINUSE(std::string(cmd)), fd);
 	else if(!is_validNickname(cmd))
         _sendResponse(ERR_ERRONEUSNICK(std::string(cmd)), fd);

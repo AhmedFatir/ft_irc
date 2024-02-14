@@ -112,6 +112,8 @@ void Server::senderror(int code, std::string clientname, std::string channelname
 
 void Server::_sendResponse(std::string response, int fd)
 {
+	std::cout << "response: \n";
+	std::cout << response ; 
 	if(send(fd, response.c_str(), response.size(), 0) == -1)
 		std::cerr << "Response send() faild" << std::endl;
 }
@@ -214,7 +216,8 @@ void Server::reciveNewData(int fd)
 		close(fd);
 	}
 	else
-	{
+	{	
+		std::cout << buff;
 		cli->setBuffer(buff);
 		if(cli->getBuffer().find_first_of("\r\n") == std::string::npos)
 			return;
@@ -281,6 +284,9 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 	if(cmd.empty())
 		return ;
 	std::vector<std::string> splited_cmd = split_cmd(cmd);
+	size_t found = cmd.find_first_not_of(" \t\v");
+	if(found != std::string::npos)
+		cmd = cmd.substr(found);
     if(splited_cmd.size() && (splited_cmd[0] == "PASS" || splited_cmd[0] == "pass"))
         client_authen(fd, cmd);
 	else if (splited_cmd.size() && (splited_cmd[0] == "NICK" || splited_cmd[0] == "nick"))
