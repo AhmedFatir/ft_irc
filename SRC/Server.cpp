@@ -121,7 +121,7 @@ bool Server::Signal = false;
 void Server::SignalHandler(int signum)
 {
 	(void)signum;
-	std::cout << std::endl << "SignalHandler" << std::endl;
+	std::cout << std::endl << "Signal Received!" << std::endl;
 	Server::Signal = true;
 }
 
@@ -204,7 +204,7 @@ void Server::reciveNewData(int fd)
 	char buff[1024];
 	memset(buff, 0, sizeof(buff));
 	Client *cli = GetClient(fd);
-	ssize_t bytes = recv(fd, buff, sizeof(buff), 0);
+	ssize_t bytes = recv(fd, buff, sizeof(buff) - 1 , 0);
 	if(bytes <= 0)
 	{
 		std::cout << "clinet: " << fd << " disconnected" << std::endl;

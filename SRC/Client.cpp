@@ -48,7 +48,7 @@ std::string Client::getHostname(){
 void Client::SetFd(int fd){this->fd = fd;}
 void Client::SetNickname(std::string& nickName){this->nickname = nickName;}
 void Client::SetUsername(std::string& username){this->username = username;}
-void Client::setBuffer(std::string recived){buffer +=recived;}
+void Client::setBuffer(std::string recived){buffer += recived;}
 void Client::setRegistered(bool value){registered = value;}
 void Client::setIpAdd(std::string ipadd){this->ipadd = ipadd;}
 //---------------//Setters
