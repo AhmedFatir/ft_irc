@@ -9,9 +9,35 @@ std::string Server::tTopic()
 	return res.str();
 }
 
+std::vector<std::string> Server::parse_topic(std::string &cmd)
+{
+	std::vector<std::string> res;
+	std::string tmp;
+	for (size_t i = 0; i < cmd.size(); i++)
+	{
+		if (cmd[i] == ' ')
+		{
+			res.push_back(tmp);
+			tmp.clear();
+		}
+		else
+			tmp += cmd[i];
+	}
+	res.push_back(tmp);
+	return res;
+}
+
 void Server::Topic(std::string &cmd, int &fd)
 {
 	std::vector<std::string> scmd = split_cmd(cmd);
+	for (size_t i = 0; i < scmd.size(); i++)
+	{
+		if (scmd[i][0] == ':')
+		{
+			scmd[i] = scmd[i].substr(1);
+			break;
+		}
+	}
 	if (scmd.size() == 1)
 		{senderror(403, "", fd, " :No such channel\r\n"); return;}
 	std::string nmch = scmd[1].substr(1);
@@ -23,13 +49,13 @@ void Server::Topic(std::string &cmd, int &fd)
 	{
 		if (GetChannel(nmch)->GetTopicName() != "")
 		{
-			_sendResponse(": 332 " + GetClient(fd)->GetUserName() + " " + "#"+nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);
-			std::string rpl2 = ":localhost 333 " + GetClient(fd)->GetUserName() + " " + "#"+nmch + " " + GetClient(fd)->GetNickName() + " " + tTopic() + "\r\n";
+			_sendResponse(": 332 " + GetClient(fd)->GetNickName() + " " + "#"+nmch  + GetChannel(nmch)->GetTopicName() + "\r\n", fd);
+			std::string rpl2 = ": 333 " + GetClient(fd)->GetNickName() + " " + "#"+nmch + " " + GetClient(fd)->GetNickName() + " " + tTopic() + "\r\n";
 			_sendResponse(rpl2, fd);
 			return;
 		}
 		else
-			_sendResponse(": 332 " + GetClient(fd)->GetUserName() + " " + "#"+nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);return;
+			_sendResponse(": 332 " + GetClient(fd)->GetNickName() + " " + "#"+nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);return;
 	}
 	if (scmd.size() >= 3)
 	{
@@ -41,14 +67,14 @@ void Server::Topic(std::string &cmd, int &fd)
 		else if (GetChannel(nmch)->Gettopic_restriction() && GetChannel(nmch)->get_admin(fd))
 		{
 			GetChannel(nmch)->SetTopicName(restopic);
-			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
+			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " : " + GetChannel(nmch)->GetTopicName() + "\r\n";
 
 			GetChannel(nmch)->sendTo_all(rpl);
 		}
 		else
 		{
 			GetChannel(nmch)->SetTopicName(restopic);
-			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
+			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " : " + GetChannel(nmch)->GetTopicName() + "\r\n";
 			GetChannel(nmch)->sendTo_all(rpl);
 		}
 	}
