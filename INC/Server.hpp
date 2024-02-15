@@ -89,21 +89,21 @@ public:
 	void client_authen(int fd, std::string pass);
 	//---------------------------//JOIN CMD
 	void	JOIN(std::string cmd, int fd);
-	void	SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::string cmd, int fd);
+	int		SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::string cmd, int fd);
 	void	ExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd);
 	void	NotExistCh(std::vector<std::pair<std::string, std::string> >&token, int i, int fd);
 	int		SearchForClients(std::string nickname);
 	//---------------------------//PART CMD
 	void	PART(std::string cmd, int fd);
-	std::string	SplitCmdPart(std::string cmd, std::vector<std::string> &tmp, int fd);
+	int		SplitCmdPart(std::string cmd, std::vector<std::string> &tmp, std::string &reason, int fd);
 	//---------------------------//CKIK CMD
 	void	KICK(std::string cmd, int fd);
 	std::string SplitCmdKick(std::string cmd, std::vector<std::string> &tmp, std::string &user, int fd);
 	//---------------------------//PRIVMSG CMD
 	void	PRIVMSG(std::string cmd, int fd);
+	void	CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
 	//---------------------------//QUITE CMD
 	void	QUIT(std::string cmd, int fd);
-	void	CheckForChannels_Clients(std::vector<std::string> &tmp, int fd);
 	//---------------------------//MODE CMD
 	void 		mode_command(std::string& cmd, int fd);
 	std::string invite_only(Channel *channel, char opera, std::string chain);

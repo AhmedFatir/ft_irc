@@ -1,35 +1,47 @@
 #include "../INC/Server.hpp"
 
-void	SplitQuit(std::vector<std::string> &tmp, std::string cmd)
+void FindQ(std::string cmd, std::string tofind, std::string &str)
+{
+	size_t i = 0;
+	for (; i < cmd.size(); i++){
+		if (cmd[i] != ' '){
+			std::string tmp;
+			for (; i < cmd.size() && cmd[i] != ' '; i++)
+				tmp += cmd[i];
+			if (tmp == tofind)
+				break;
+			else tmp.clear();
+		}
+	}
+	if (i < cmd.size())
+		str = cmd.substr(i);
+	i = 0;
+	for (; i < str.size() && str[i] == ' '; i++);
+	str = str.substr(i);
+}
+
+std::string	SplitQuit(std::string cmd)
 {
 	std::istringstream stm(cmd);
-	std::string str;
-	while(stm >> cmd)
-		tmp.push_back(cmd);
-	tmp.erase(tmp.begin());
-	if (tmp.empty())
-		{tmp.push_back("Quit"); return;}
-	for (size_t i = 0; i < tmp.size(); i++){//start from the first string and take the rest of the strings as the message
-			for (size_t j = i; j < tmp.size(); j++)
-				{str += " " + tmp[j];tmp.erase(tmp.begin() + j);j--;}
-	}
-	str.erase(str.begin());
-	if (str[0] != ':'){ //if the message does not start with ':'
-		for (size_t i = 0; i < str.size(); i++){
-			if (str[i] == ' ')
-				{str.erase(str.begin() + i, str.end());break;}
+	std::string reason,str;
+	stm >> str;
+	FindQ(cmd, str, reason);
+	if (reason.empty())
+		return std::string("Quit");
+	if (reason[0] != ':'){ //if the message does not start with ':'
+		for (size_t i = 0; i < reason.size(); i++){
+			if (reason[i] == ' ')
+				{reason.erase(reason.begin() + i, reason.end());break;}
 		}
-		str.insert(str.begin(), ':');
+		reason.insert(reason.begin(), ':');
 	}
-	tmp.push_back(str);
-	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
-		{if (tmp[i].empty())tmp.erase(tmp.begin() + i--);}
+	return reason;
 }
 
 void Server::QUIT(std::string cmd, int fd)
 {
-	std::vector<std::string> tmp;
-	SplitQuit(tmp, cmd);
+	std::string reason;
+	reason = SplitQuit(cmd);
 	for (size_t i = 0; i < channels.size(); i++)
 	{
 		if (channels[i].get_client(fd)){
@@ -37,7 +49,7 @@ void Server::QUIT(std::string cmd, int fd)
 			if (channels[i].GetClientsNumber() == 0)
 				channels.erase(channels.begin() + i);
 			else{
-				std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + tmp[0] + "\r\n";
+				std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + reason + "\r\n";
 				channels[i].sendTo_all(rpl);
 			}
 		}
@@ -46,7 +58,7 @@ void Server::QUIT(std::string cmd, int fd)
 			if (channels[i].GetClientsNumber() == 0)
 				channels.erase(channels.begin() + i);
 			else{
-				std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + tmp[0] + "\r\n";
+				std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + reason + "\r\n";
 				channels[i].sendTo_all(rpl);
 			}
 		}

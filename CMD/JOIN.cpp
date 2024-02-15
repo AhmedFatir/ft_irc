@@ -1,12 +1,13 @@
 #include "../INC/Server.hpp"
 
-void Server::SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::string cmd, int fd)
+int Server::SplitJoin(std::vector<std::pair<std::string, std::string> > &token, std::string cmd, int fd)
 {
 	std::vector<std::string> tmp;
 	std::string ChStr, PassStr, buff;
 	std::istringstream iss(cmd);
 	while(iss >> cmd)
 		tmp.push_back(cmd);
+	if (tmp.size() < 2) {token.clear(); return 0;}
 	tmp.erase(tmp.begin());
 	ChStr = tmp[0]; tmp.erase(tmp.begin());
 	if (!tmp.empty()) {PassStr = tmp[0]; tmp.clear();}
@@ -33,8 +34,8 @@ void Server::SplitJoin(std::vector<std::pair<std::string, std::string> > &token,
 		else
 			token[i].first.erase(token[i].first.begin());
 	}
+	return 1;
 }
-
 
 int Server::SearchForClients(std::string nickname)
 {
@@ -104,10 +105,10 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >&token,
 
 void Server::JOIN(std::string cmd, int fd)
 {
-	if (cmd.size() < 6)// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
-		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	std::vector<std::pair<std::string, std::string> > token;
-	SplitJoin(token, cmd, fd);
+	// SplitJoin(token, cmd, fd);
+	if (!SplitJoin(token, cmd, fd))// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
+		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	for (size_t i = 0; i < token.size(); i++){
 		bool flag = false;
 		for (size_t j = 0; j < this->channels.size(); j++){
