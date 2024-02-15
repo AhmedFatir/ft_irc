@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <fstream>
 #include <cstring>
+#include "../INC/Server.hpp"
 
 int ircsock;
 
@@ -138,7 +139,8 @@ std::string SplitBuff(std::string buff)
 	found = command.find("\r\n");
 	if (found != std::string::npos)
 		command = command.substr(0, found);
-	command.erase(command.begin());
+	if (command[0] == ':')
+		command.erase(command.begin());
 	return command;
 }
 std::string SplitBuff(std::string buff, std::string &UserNick, std::string &date)
@@ -159,13 +161,18 @@ int GetNumber(std::string prompt, int ircsock, std::string UserNick)
   	std::string	command;
 	while (1){
 		send_privmsg(prompt, ircsock, UserNick);
-		if ((recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0){
+		memset(buff, 0, sizeof(buff));
+		if ((recivedBytes = recv(ircsock, buff, sizeof(buff) - 1, 0)) > 0){
+			std::cout << "Recived :" << buff << "\n";
 			command = SplitBuff(buff);
+			std::cout << command << std::endl;
 			if (command == "exit") return -2;
 			if(command.empty() || command.size() > 1 || !isdigit(command[0]))
 				return -1;
 			else break;
 		}
+		else
+			return -2;
 	}
 	return (std::atoi(command.c_str()));
 }
@@ -243,7 +250,7 @@ void playTicTacToe(int ircsock, std::string UserNick)
 			board[move - 1] = Player;
 		}
 		else{ // Computer's turn
-			send_privmsg("Computer's turn...", ircsock, UserNick);
+			send_privmsg("Computer's turn ...", ircsock, UserNick);
 			sleep(1);
 			SetMove(board, Player, movesLeft);
 		}
@@ -304,26 +311,30 @@ void nokta(std::string nick, std::vector<std::string> &vnokat ,int &ircsock)
 
 int main(int ac, char **av)
 {
-	if (ac != 4)
-	{std::cerr << "Usage: " << av[0] << " <port> <password> <file>" << std::endl; return 1;}
-	if (!isPortValid(av[1]) || !*av[2])
+	if (ac != 5)
+	{std::cerr << "Usage: " << av[0] << " <address> <port> <password> <file>" << std::endl; return 1;}
+	if (!isPortValid(av[2]) || !*av[3] || std::strlen(av[3]) > 20)
 		{std::cerr << "Invalid port! / password!" << std::endl; return 1;}
-	std::string filename = av[3];
+	signal(SIGINT, signalHandler);
+	std::string address = av[1];
+	if(address == "localhost" || address == "LOCALHOST")
+		address = "127.0.0.1";
+	std::string filename = av[4];
 	std::vector<std::string> vnokat = getnokat(filename);
 	if (vnokat.empty())
 		{std::cerr << "Failed to get nokat" << std::endl; return 1;}
-	signal(SIGINT, signalHandler);
 	struct sockaddr_in ircHints;
 	ircsock = socket(AF_INET, SOCK_STREAM, 0);
 	if (ircsock == -1)
 		{std::cerr << "failed to create socket (ircsock)" << std::endl; return 1;}
     ircHints.sin_family = AF_INET;
-    ircHints.sin_port = htons(std::atoi(av[1]));
-    inet_pton(AF_INET, "127.0.0.1", &(ircHints.sin_addr));
+    ircHints.sin_port = htons(std::atoi(av[2]));
+    if(!inet_pton(AF_INET, address.c_str(), &(ircHints.sin_addr)))
+		return 0;
     if(connect(ircsock, (struct sockaddr*)&ircHints, sizeof(ircHints)) == -1)
-		{std::cerr << "connect failed\n" << std::endl; return 1;}
+		{std::cerr << "connect failed" << std::endl; return 1;}
     // connection to irc server
-    _sendMessage("PASS " + std::string(av[2]) + "\r\n", ircsock);
+    _sendMessage("PASS " + std::string(av[3]) + "\r\n", ircsock);
     _sendMessage("NICK bot\r\n", ircsock);
     _sendMessage("USER bot 0 * bot\r\n", ircsock);
 
@@ -331,15 +342,16 @@ int main(int ac, char **av)
     ssize_t recivedBytes;
 
     char buff[1024];
-	if (av[3] == NULL)
-		{std::cerr << "Failed to get filename" << std::endl; return 1;}
 	memset(buff, 0, sizeof(buff));
-	while( (recivedBytes = recv(ircsock, buff, sizeof(buff), 0)) > 0)
+	while( (recivedBytes = recv(ircsock, buff, (sizeof(buff) - 1), 0)) > 0)
     {
         buff[recivedBytes] = '\0';
         recived = SplitBuff(buff, UserNick, date);
         if(recived == "PLAY" || recived == "play")
+		{
 			playTicTacToe(ircsock, UserNick);
+			_sendMessage("exit\r\n", ircsock);
+		}
         else if(recived == "AGE" || recived == "age")
 			ageCalculator(date, UserNick);
 		else if (recived == "NOKTA" || recived == "nokta")
