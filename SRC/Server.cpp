@@ -197,7 +197,7 @@ void Server::accept_new_client()
 	cli.setIpAdd(inet_ntoa((cliadd.sin_addr)));
 	clients.push_back(cli);
 	fds.push_back(new_cli);
-	std::cout << "client <" << incofd << "> connected" << "\r\n";
+	std::cout << GRE << "Client <" << incofd << "> Connected" << WHI << std::endl;
 }
 
 void Server::reciveNewData(int fd)
@@ -209,12 +209,11 @@ void Server::reciveNewData(int fd)
 	ssize_t bytes = recv(fd, buff, sizeof(buff) - 1 , 0);
 	if(bytes <= 0)
 	{
-
+		std::cout << RED << "Client <" << fd << "> Disconnected" << WHI << std::endl;
 		if(GetClient(fd)->getIsPlaying() && GetClientNick("bot"))
 		{
 			std::string prvmsg = "PRIVMSG bot exit\r\n";
-			std::cout << prvmsg;
-			send(GetClientNick("bot")->GetFd(),prvmsg.c_str(), prvmsg.size(), 0);
+			_sendResponse(prvmsg, GetClientNick("bot")->GetFd());
 			Server::isBotfull = false;
 		}
 		RmChannels(fd);
@@ -246,7 +245,11 @@ void Server::StartBot(std::string cmd, int fd)
 	if (!GetClientNick("bot"))
 		{senderror(401, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :bot not found\r\n"); return;}
 	if(Server::isBotfull){
-		std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + GetClient(fd)->GetNickName() + " :Bot is bussy now try again!\r\n";
+		std::string resp;
+		if (GetClient(fd)->getIsPlaying())
+			resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + GetClient(fd)->GetNickName() + " :You are already in game with Bot!\r\n";
+		else
+			resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + GetClient(fd)->GetNickName() + " :Bot is bussy now try again!\r\n";
 		_sendResponse(resp, GetClient(fd)->GetFd());
 		return;
 	}
@@ -254,7 +257,6 @@ void Server::StartBot(std::string cmd, int fd)
 	{
 		Server::isBotfull = true;
 		GetClient(fd)->setIsPlaying(true);
-		std::cout << "is play\n";
 	}
 	botmsg = GetClient(fd)->GetNickName() + " " + cmd + "\r\n";
 	if (send(GetClientNick("bot")->GetFd(), botmsg.c_str(), botmsg.size(), 0) == -1)

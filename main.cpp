@@ -1,8 +1,8 @@
 #include "INC/Server.hpp"
 
-bool isPortValid(std::string port)
-{
-	return (port.find_first_not_of("0123456789") == std::string::npos && std::atoi(port.c_str()) >= 1024 && std::atoi(port.c_str()) < 65535);
+bool isPortValid(std::string port){
+	return (port.find_first_not_of("0123456789") == std::string::npos && \
+	std::atoi(port.c_str()) >= 1024 && std::atoi(port.c_str()) < 65535);
 }
 
 int main(int ac, char **av)
@@ -14,8 +14,9 @@ int main(int ac, char **av)
 	try
 	{
 		signal(SIGINT, Server::SignalHandler);
+		signal(SIGQUIT, Server::SignalHandler);
 		if(!isPortValid(av[1]) || !*av[2] || std::strlen(av[2]) > 20)
-			throw(std::logic_error("invalid Port number / Password"));
+			{std::cout << "invalid Port number / Password!" << std::endl; return 1;}
 		ser.init(std::atoi(av[1]), av[2]);
 	}
 	catch(const std::exception& e)

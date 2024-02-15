@@ -163,9 +163,7 @@ int GetNumber(std::string prompt, int ircsock, std::string UserNick)
 		send_privmsg(prompt, ircsock, UserNick);
 		memset(buff, 0, sizeof(buff));
 		if ((recivedBytes = recv(ircsock, buff, sizeof(buff) - 1, 0)) > 0){
-			std::cout << "Recived :" << buff << "\n";
 			command = SplitBuff(buff);
-			std::cout << command << std::endl;
 			if (command == "exit") return -2;
 			if(command.empty() || command.size() > 1 || !isdigit(command[0]))
 				return -1;
@@ -316,6 +314,7 @@ int main(int ac, char **av)
 	if (!isPortValid(av[2]) || !*av[3] || std::strlen(av[3]) > 20)
 		{std::cerr << "Invalid port! / password!" << std::endl; return 1;}
 	signal(SIGINT, signalHandler);
+	signal(SIGQUIT, signalHandler);
 	std::string address = av[1];
 	if(address == "localhost" || address == "LOCALHOST")
 		address = "127.0.0.1";
