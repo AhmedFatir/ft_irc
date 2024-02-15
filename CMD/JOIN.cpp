@@ -109,6 +109,8 @@ void Server::JOIN(std::string cmd, int fd)
 	// SplitJoin(token, cmd, fd);
 	if (!SplitJoin(token, cmd, fd))// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
 		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
+	if (token.size() > 10) //ERR_TOOMANYTARGETS (407) // if more than 10 Channels
+		{senderror(407, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Too many channels\r\n"); return;}
 	for (size_t i = 0; i < token.size(); i++){
 		bool flag = false;
 		for (size_t j = 0; j < this->channels.size(); j++){
