@@ -1,18 +1,40 @@
 #include "../INC/Server.hpp"
+void FindK(std::string cmd, std::string tofind, std::string &str)
+{
+	size_t i = 0;
+	for (; i < cmd.size(); i++){
+		if (cmd[i] != ' '){
+			std::string tmp;
+			for (; i < cmd.size() && cmd[i] != ' '; i++)
+				tmp += cmd[i];
+			if (tmp == tofind) break;
+			else tmp.clear();
+		}
+	}
+	if (i < cmd.size()) str = cmd.substr(i);
+	i = 0;
+	for (; i < str.size() && str[i] == ' '; i++);
+	str = str.substr(i);
+}
+
+std::string SplitCmdK(std::string &cmd, std::vector<std::string> &tmp)
+{
+	std::stringstream ss(cmd);
+	std::string str, reason;
+	int count = 3;
+	while (ss >> str && count--)
+		tmp.push_back(str);
+	if(tmp.size() != 3) return std::string("");
+	FindK(cmd, tmp[2], reason);
+	return reason;
+}
 
 std::string Server::SplitCmdKick(std::string cmd, std::vector<std::string> &tmp, std::string &user, int fd)
 {
-	std::istringstream stm(cmd);
-	std::string reason;
-	while(stm >> cmd)
-		tmp.push_back(cmd);
-	tmp.erase(tmp.begin());
-	for (size_t i = 2; i < tmp.size(); i++){//start from the second string and take the rest of the strings as the reason
-			for (size_t j = i; j < tmp.size(); j++)
-				{reason += " " + tmp[j];tmp.erase(tmp.begin() + j);j--;}
-	}
-	if (tmp.size() < 2) // check if the client send the channel name and the client to kick
+	std::string reason = SplitCmdK(cmd, tmp);
+	if (tmp.size() < 3) // check if the client send the channel name and the client to kick
 		return std::string("");
+	tmp.erase(tmp.begin());
 	std::string str = tmp[0]; std::string str1;
 	user = tmp[1]; tmp.clear();
 	for (size_t i = 0; i < str.size(); i++){//split the first string by ',' to get the channels names
@@ -23,7 +45,6 @@ std::string Server::SplitCmdKick(std::string cmd, std::vector<std::string> &tmp,
 	tmp.push_back(str1);
 	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
 		{if (tmp[i].empty())tmp.erase(tmp.begin() + i--);}
-	reason.erase(reason.begin());
 	if (reason[0] == ':') reason.erase(reason.begin());
 	else //shrink to the first space
 		{for (size_t i = 0; i < reason.size(); i++){if (reason[i] == ' '){reason = reason.substr(0, i);break;}}}

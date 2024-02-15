@@ -1,16 +1,40 @@
 #include "../INC/Server.hpp"
 
-std::string Server::SplitCmdPart(std::string cmd, std::vector<std::string> &tmp, int fd)
+void FindPR(std::string cmd, std::string tofind, std::string &str)
 {
-	std::istringstream stm(cmd);
-	std::string reason;
-	while(stm >> cmd)
-		tmp.push_back(cmd);
-	tmp.erase(tmp.begin());
-	for (size_t i = 1; i < tmp.size(); i++){//start from the second string and take the rest of the strings as the reason
-			for (size_t j = i; j < tmp.size(); j++)
-				{reason += " " + tmp[j];tmp.erase(tmp.begin() + j);j--;}
+	size_t i = 0;
+	for (; i < cmd.size(); i++){
+		if (cmd[i] != ' '){
+			std::string tmp;
+			for (; i < cmd.size() && cmd[i] != ' '; i++)
+				tmp += cmd[i];
+			if (tmp == tofind) break;
+			else tmp.clear();
+		}
 	}
+	if (i < cmd.size()) str = cmd.substr(i);
+	i = 0;
+	for (; i < str.size() && str[i] == ' '; i++);
+	str = str.substr(i);
+}
+
+std::string SplitCmdPR(std::string &cmd, std::vector<std::string> &tmp)
+{
+	std::stringstream ss(cmd);
+	std::string str, reason;
+	int count = 2;
+	while (ss >> str && count--)
+		tmp.push_back(str);
+	if(tmp.size() != 2) return std::string("");
+	FindPR(cmd, tmp[1], reason);
+	return reason;
+}
+
+int Server::SplitCmdPart(std::string cmd, std::vector<std::string> &tmp, std::string &reason, int fd)
+{
+	reason = SplitCmdPR(cmd, tmp);
+	if(tmp.size() < 2) {tmp.clear(); return 0;}
+	tmp.erase(tmp.begin());
 	std::string str = tmp[0]; std::string str1; tmp.clear();
 	for (size_t i = 0; i < str.size(); i++){//split the first string by ',' to get the channels names
 		if (str[i] == ',')
@@ -20,7 +44,6 @@ std::string Server::SplitCmdPart(std::string cmd, std::vector<std::string> &tmp,
 	tmp.push_back(str1);
 	for (size_t i = 0; i < tmp.size(); i++)//erase the empty strings
 		{if (tmp[i].empty())tmp.erase(tmp.begin() + i--);}
-	reason.erase(reason.begin());
 	if (reason[0] == ':') reason.erase(reason.begin());
 	else //shrink to the first space
 		{for (size_t i = 0; i < reason.size(); i++){if (reason[i] == ' '){reason = reason.substr(0, i);break;}}}
@@ -30,15 +53,15 @@ std::string Server::SplitCmdPart(std::string cmd, std::vector<std::string> &tmp,
 			else
 				{senderror(403, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :No such channel\r\n"); tmp.erase(tmp.begin() + i--);}
 		}
-	return reason;
+	return 1;
 }
 
 void Server::PART(std::string cmd, int fd)
 {
-	if (cmd.size() < 6)// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
-		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	std::vector<std::string> tmp;
-	std::string reason = SplitCmdPart(cmd, tmp, fd);
+	std::string reason;
+	if (!SplitCmdPart(cmd, tmp, reason, fd))// ERR_NEEDMOREPARAMS (461) // if the channel name is empty
+		{senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n"); return;}
 	for (size_t i = 0; i < tmp.size(); i++){
 		bool flag = false;
 		for (size_t j = 0; j < this->channels.size(); j++){ // search for the channel

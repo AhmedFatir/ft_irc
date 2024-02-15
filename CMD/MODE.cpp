@@ -18,28 +18,57 @@ std::string Server::mode_toAppend(std::string chain, char opera, char mode)
 	return ss.str();
 }
 
+void getCmdArgs(std::string cmd,std::string& name, std::string& modeset ,std::string &params)
+{
+	std::istringstream stm(cmd);
+	stm >> name;
+	stm >> modeset;
+	size_t found = cmd.find_first_not_of(name + modeset + " \t\v");
+	if(found != std::string::npos)
+		params = cmd.substr(found);
+}
+
+
+std::vector<std::string> splitParams(std::string params)
+{
+	if(!params.empty() && params[0] == ':')
+		params.erase(params.begin());
+	std::vector<std::string> tokens;
+	std::string param;
+	std::istringstream stm(params);
+	while (std::getline(stm, param, ':'))
+	{
+		if(!param.empty())
+			tokens.push_back(param);
+		param.clear();
+	}
+	return tokens;
+}
+
 void Server::mode_command(std::string& cmd, int fd)
 {
+	std::string channelName;
+	std::string params;
+	std::string modeset;
 	std::stringstream mode_chain;
-	std::string arguments;
+	std::string arguments = ":";
+	Channel *channel;
 	char opera = '\0';
 
 	arguments.clear();
 	mode_chain.clear();
-	std::vector<std::string> splited = split_cmd(cmd);
 	Client *cli = GetClient(fd);
-	if(splited.size() < 2) // Not enough parameters
+	size_t found = cmd.find_first_not_of("MODEmode \t\v");
+	if(found != std::string::npos)
+		cmd = cmd.substr(found);
+	else
 	{
 		_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd); 
 		return ;
 	}
-	std::string channelName;
-	if(splited[1][0] == '#')
-		channelName = splited[1].substr(1);
-	else
-		channelName = splited[1];
-	Channel *channel = GetChannel(channelName);
-	if(!channel || splited[1][0] != '#') // No such channel
+	getCmdArgs(cmd ,channelName, modeset ,params);
+	std::vector<std::string> tokens = splitParams(params);
+	if(channelName[0] != '#' || !(channel = GetChannel(channelName.substr(1))))
 	{
 		_sendResponse(ERR_CHANNELNOTFOUND(cli->GetUserName(),channelName), fd);
 		return ;
@@ -48,7 +77,7 @@ void Server::mode_command(std::string& cmd, int fd)
 	{
 		senderror(442, GetClient(fd)->GetNickName(), channelName, GetClient(fd)->GetFd(), " :You're not on that channel\r\n"); return;
 	}
-	else if (splited.size() == 2) // response with the channel modes (MODE #channel)
+	else if (modeset.empty()) // response with the channel modes (MODE #channel)
 	{
 		_sendResponse(RPL_CHANNELMODES(cli->GetNickName(), channel->GetName(), channel->getModes()) + \
 		RPL_CREATIONTIME(cli->GetNickName(), channel->GetName(),channel->get_creationtime()),fd);
@@ -61,32 +90,32 @@ void Server::mode_command(std::string& cmd, int fd)
 	}
 	else if(channel)
 	{
-		size_t pos = 3;
-		for(size_t i = 0; i < splited[2].size(); i++)
+		size_t pos = 0;
+		for(size_t i = 0; i < modeset.size(); i++)
 		{
-			if(splited[2][i] == '+' || splited[2][i] == '-')
-				opera = splited[2][i];
+			if(modeset[i] == '+' || modeset[i] == '-')
+				opera = modeset[i];
 			else
 			{
-				if(splited[2][i] == 'i')//invite mode
+				if(modeset[i] == 'i')//invite mode
 					mode_chain << invite_only(channel , opera, mode_chain.str());
-				else if (splited[2][i] == 't') //topic restriction mode
+				else if (modeset[i] == 't') //topic restriction mode
 					mode_chain << topic_restriction(channel, opera, mode_chain.str());
-				else if (splited[2][i] == 'k') //password set/remove
-					mode_chain <<  password_mode(splited, channel, pos, opera, fd, mode_chain.str(), arguments);
-				else if (splited[2][i] == 'o') //set/remove user operator privilege
-						mode_chain << operator_privilege(splited, channel, pos, fd, opera, mode_chain.str(), arguments);
-				else if (splited[2][i] == 'l') //set/remove channel limits
-					mode_chain << channel_limit(splited, channel, pos, opera, fd, mode_chain.str(), arguments);
+				else if (modeset[i] == 'k') //password set/remove
+					mode_chain <<  password_mode(tokens, channel, pos, opera, fd, mode_chain.str(), arguments);
+				else if (modeset[i] == 'o') //set/remove user operator privilege
+						mode_chain << operator_privilege(tokens, channel, pos, fd, opera, mode_chain.str(), arguments);
+				else if (modeset[i] == 'l') //set/remove channel limits
+					mode_chain << channel_limit(tokens, channel, pos, opera, fd, mode_chain.str(), arguments);
 				else
-					_sendResponse(ERR_UNKNOWNMODE(cli->GetNickName(), channel->GetName(),splited[2][i]),fd);
+					_sendResponse(ERR_UNKNOWNMODE(cli->GetNickName(), channel->GetName(),modeset[i]),fd);
 			}
 		}
 	}
 	std::string chain = mode_chain.str();
 	if(chain.empty())
 		return ;
-	channel->sendTo_all(RPL_CHANGEMODE(cli->getHostname(), channel->GetName(), mode_chain.str(), arguments));
+ 	channel->sendTo_all(RPL_CHANGEMODE(cli->getHostname(), channel->GetName(), mode_chain.str(), arguments));
 }
 
 std::string Server::invite_only(Channel *channel, char opera, std::string chain)
@@ -127,18 +156,34 @@ std::string Server::topic_restriction(Channel *channel ,char opera, std::string 
 	return param;
 }
 
-std::string Server::password_mode(std::vector<std::string> splited, Channel *channel, size_t &pos, char opera, int fd, std::string chain, std::string &arguments)
+bool validPassword(std::string password)
+{
+	if(password.empty())
+		return false;
+	for(size_t i = 0; i < password.size(); i++)
+	{
+		if(!std::isalnum(password[i]) && password[i] != '_')
+			return false;
+	}
+	return true;
+}
+std::string Server::password_mode(std::vector<std::string> tokens, Channel *channel, size_t &pos, char opera, int fd, std::string chain, std::string &arguments)
 {
 	std::string param;
 	std::string pass;
 
 	param.clear();
 	pass.clear();
-	if(splited.size() > pos)
-		pass = splited[pos++];
+	if(tokens.size() > pos)
+		pass = tokens[pos++];
 	else
 	{
 		_sendResponse(ERR_NEEDMODEPARM(channel->GetName(),std::string("(k)")),fd);
+		return param;
+	}
+	if(!validPassword(pass))
+	{
+		_sendResponse(ERR_INVALIDMODEPARM(channel->GetName(),std::string("(k)")),fd);
 		return param;
 	}
 	if(opera == '+')
@@ -164,15 +209,15 @@ std::string Server::password_mode(std::vector<std::string> splited, Channel *cha
 	return param;
 }
 
-std::string Server::operator_privilege(std::vector<std::string> splited, Channel *channel, size_t& pos, int fd, char opera, std::string chain, std::string& arguments)
+std::string Server::operator_privilege(std::vector<std::string> tokens, Channel *channel, size_t& pos, int fd, char opera, std::string chain, std::string& arguments)
 {
 	std::string user;
 	std::string param;
 
 	param.clear();
 	user.clear();
-	if(splited.size() > pos)
-		user = splited[pos++];
+	if(tokens.size() > pos)
+		user = tokens[pos++];
 	else
 	{
 		_sendResponse(ERR_NEEDMODEPARM(channel->GetName(),"(o)"),fd);
@@ -201,7 +246,7 @@ std::string Server::operator_privilege(std::vector<std::string> splited, Channel
 		{
 			param = mode_toAppend(chain, opera, 'o');
 				if(!arguments.empty())
-				arguments += " ";
+					arguments += " ";
 			arguments += user;
 
 		}
@@ -214,7 +259,7 @@ bool Server::isvalid_limit(std::string& limit)
 	return (!(limit.find_first_not_of("0123456789")!= std::string::npos) && std::atoi(limit.c_str()) > 0);
 }
 
-std::string Server::channel_limit(std::vector<std::string> splited,  Channel *channel, size_t &pos, char opera, int fd, std::string chain, std::string& arguments)
+std::string Server::channel_limit(std::vector<std::string> tokens,  Channel *channel, size_t &pos, char opera, int fd, std::string chain, std::string& arguments)
 {
 	std::string limit;
 	std::string param;
@@ -223,9 +268,9 @@ std::string Server::channel_limit(std::vector<std::string> splited,  Channel *ch
 	limit.clear();
 	if(opera == '+')
 	{
-		if(splited.size() > pos )
+		if(tokens.size() > pos )
 		{
-			limit = splited[pos++];
+			limit = tokens[pos++];
 			if(!isvalid_limit(limit))
 			{
 				_sendResponse(ERR_INVALIDMODEPARM(channel->GetName(),"(l)"), fd);

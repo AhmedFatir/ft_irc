@@ -14,6 +14,7 @@ private:
 	std::string username;
 	std::string buffer;
 	std::string ipadd;
+	bool isPlaying;
 	std::vector<std::string> ChannelsInvite;
 public:
 	Client();
@@ -30,6 +31,7 @@ public:
 	std::string getIpAdd();
 	std::string getBuffer();
 	std::string getHostname();
+	bool 		getIsPlaying();
 	//---------------//Setters
 	void SetFd(int fd);
 	void SetNickname(std::string& nickName);
@@ -37,6 +39,7 @@ public:
 	void setBuffer(std::string recived);
 	void setRegistered(bool value);
 	void setIpAdd(std::string ipadd);
+	void setIsPlaying(bool value);
 	//---------------//Methods
 	void clearBuffer();
 	void AddChannelInvite(std::string &chname);
