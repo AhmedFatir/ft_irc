@@ -19,7 +19,7 @@ $(NAME): $(OBJS)
 bonus: $(OBJS_BONUS)
 	@$(CC) $(CFLAGS) -o $(NAME_BOUNUS) $(OBJS_BONUS)
 
-%.o: %.cpp INC/Server.hpp INC/Client.hpp INC/Channel.hpp INC/replies.hpp
+%.o: %.cpp INC/Server.hpp INC/Client.hpp INC/Channel.hpp INC/replies.hpp BONUS/Bot.hpp BONUS/Player.hpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
