@@ -123,7 +123,8 @@ public:
 	std::string tTopic();
 	void Topic(std::string &cmd, int &fd);
 	void Invite(std::string &cmd, int &fd);
-	std::vector<std::string> parse_topic(std::string &cmd);
+	std::string gettopic(std::string& input);
+	// std::vector<std::string> parse_topic(std::string &cmd);
 };
 
 #endif
