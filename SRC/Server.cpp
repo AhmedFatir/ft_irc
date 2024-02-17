@@ -144,7 +144,8 @@ void Server::init(int port, std::string pass)
 	while (Server::Signal == false)
 	{
 		if((poll(&fds[0],fds.size(),-1) == -1) && Server::Signal == false)
-			std::cout << "poll() faild or signal recived" << std::endl;
+			throw(std::runtime_error("poll() faild"));
+		// std::cout << "poll() faild or signal recived" << std::endl;
 		for (size_t i = 0; i < fds.size(); i++)
 		{
 			if (fds[i].revents & POLLIN)

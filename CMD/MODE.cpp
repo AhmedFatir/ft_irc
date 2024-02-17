@@ -18,7 +18,7 @@ std::string Server::mode_toAppend(std::string chain, char opera, char mode)
 	return ss.str();
 }
 
-void getCmdArgs(std::string cmd,std::string& name, std::string& modeset ,std::string &params)
+void Server::getCmdArgs(std::string cmd,std::string& name, std::string& modeset ,std::string &params)
 {
 	std::istringstream stm(cmd);
 	stm >> name;
@@ -29,17 +29,16 @@ void getCmdArgs(std::string cmd,std::string& name, std::string& modeset ,std::st
 }
 
 
-std::vector<std::string> splitParams(std::string params)
+std::vector<std::string> Server::splitParams(std::string params)
 {
 	if(!params.empty() && params[0] == ':')
 		params.erase(params.begin());
 	std::vector<std::string> tokens;
 	std::string param;
 	std::istringstream stm(params);
-	while (std::getline(stm, param, ':'))
+	while (std::getline(stm, param, ','))
 	{
-		if(!param.empty())
-			tokens.push_back(param);
+		tokens.push_back(param);
 		param.clear();
 	}
 	return tokens;

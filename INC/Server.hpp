@@ -119,6 +119,8 @@ public:
 	std::string channel_limit(std::vector<std::string> splited, Channel *channel, size_t &pos, char opera, int fd, std::string chain, std::string& arguments);
 	bool		isvalid_limit(std::string& limit);
 	std::string mode_toAppend(std::string chain, char opera, char mode);
+	std::vector<std::string> splitParams(std::string params);
+	void getCmdArgs(std::string cmd,std::string& name, std::string& modeset ,std::string &params);
 	//---------------------------//TOPIC CMD
 	std::string tTopic();
 	void Topic(std::string &cmd, int &fd);

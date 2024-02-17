@@ -27,7 +27,7 @@ class Bot
         ~Bot();
 };
 
-Bot::Bot(/* args */)
+Bot::Bot()
 {
 }
 
@@ -114,51 +114,6 @@ bool checkWin(const std::vector<char>& board, char player)
 	return false;
 }
 
-// std::string SplitBuff(std::string buff)
-// {
-// 	std::string command;
-// 	size_t found = buff.find("bot");
-// 	if (found != std::string::npos)
-// 		command = buff.substr(found+4);
-// 	else return "";
-// 	found = command.find("\r\n");
-// 	if (found != std::string::npos)
-// 		command = command.substr(0, found);
-// 	if (command[0] == ':')
-// 		command.erase(command.begin());
-// 	return command;
-// }
-// std::string SplitBuff(std::string buff, std::string &UserNick, std::string &date)
-// {
-// 	std::istringstream stm(buff);
-// 	std::string token;
-// 	stm >> UserNick;
-// 	stm >> token;
-// 	stm >> date;
-// 	return token;
-// }
-// // Function to play the Tic-Tac-Toe game against the computer
-// int GetNumber(std::string prompt, int ircsock, std::string UserNick)
-// {
-// 	ssize_t recivedBytes;
-//     char buff[1024];
-
-//   	std::string	command;
-// 	while (1){
-// 		send_privmsg(prompt, ircsock, UserNick);
-// 		memset(buff, 0, sizeof(buff));
-// 		if ((recivedBytes = recv(ircsock, buff, sizeof(buff) - 1, 0)) > 0){
-// 			command = SplitBuff(buff);
-// 			if (command == "exit") return -2;
-// 			if(command.empty() || command.size() > 1 || !isdigit(command[0]))
-// 				return -1;
-// 			else break;
-// 		}
-// 		else
-// 			return -2;
-// 	}
-// 	return (std::atoi(command.c_str()));
-// }
 int PotentialAction(const std::vector<char>& board, char player)
 {
 	// Check rows
@@ -184,50 +139,6 @@ int PotentialAction(const std::vector<char>& board, char player)
 
 	return -1;
 }
-
-// void playTicTacToe(int ircsock, std::string UserNick)
-// {
-// 	std::vector<char> board(9, '-');
-// 	send_privmsg("Welcome to (X | O) Game!", ircsock, UserNick);
-// 	send_privmsg("YOU : X | Computer: O", ircsock, UserNick);
-	
-	
-// 	char Player = 'X';
-// 	int movesLeft = 9;
-// 	while (movesLeft > 0)
-// 	{
-// 		drawBoard(board, ircsock, UserNick);
-
-// 		if (Player == 'X'){ // Player's turn
-// 			int move = GetNumber("To Quit Send (exit)/ YOU, enter your move (1-9):", ircsock, UserNick);
-// 			if (move == -2) return;
-// 			if (move == -1 || board[move - 1] != '-'){// Validate the move
-// 				send_privmsg("Invalid move. Try again!", ircsock, UserNick);
-// 				continue;
-// 			}
-// 			board[move - 1] = Player;
-// 		}
-// 		else{ // Computer's turn
-// 			send_privmsg("Computer's turn ...", ircsock, UserNick);
-// 			sleep(1);
-// 			SetMove(board, Player, movesLeft);
-// 		}
-// 		if (checkWin(board, Player)){ // Check who wins
-// 			drawBoard(board, ircsock, UserNick);
-// 			if (Player == 'X')
-// 				send_privmsg("YOU win!😁", ircsock, UserNick);
-// 			else
-// 				send_privmsg("Computer wins!🤖", ircsock, UserNick);
-// 			return;
-// 		}
-// 		// Switch players
-// 		if (Player == 'X') Player = 'O';
-// 		else Player = 'X';
-// 		movesLeft--;
-// 	}
-// 	drawBoard(board, ircsock, UserNick);
-// 	send_privmsg("It's a draw!🙂", ircsock, UserNick);
-// }
 
 void	SetMove(std::vector<char>& board, char Player, int move)
 {
@@ -325,7 +236,7 @@ void Bot::init()
 			    sleep(1);
 			    SetMove(plyr->board, 'O', plyr->getMoves());
                 drawBoard(plyr->board, nickname);
-				if (checkWin(plyr->board, 'O') || !plyr->getMoves()){// Check who wins
+				if (checkWin(plyr->board, 'O') || !plyr->getMoves()){ // Check who wins
 					if(!plyr->getMoves())
 						send_privmsg("It's a draw!🙂", nickname);
 					else
@@ -339,17 +250,7 @@ void Bot::init()
             }
 			else
 				send_privmsg("Invalid command. Try again!", nickname);
-			// std::cout << "nickname:" << nickname << std::endl;
-			// std::cout << "command:" << command << std::endl;
 		}
-		// if(std::strncmp(recived.c_str(), "PRIVMSG " , std::strlen("PRIVMSG ")))
-		// {
-
-		// }
-        // buff[recivedBytes] = '\0';
-        // recived = SplitBuff(buff, UserNick, date);
-		// playTicTacToe(ircsock, UserNick);
-		// _sendMessage("exit\r\n", ircsock);
 	}
 }
 
