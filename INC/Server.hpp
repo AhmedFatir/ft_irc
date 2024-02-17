@@ -82,13 +82,12 @@ public:
 	void accept_new_client();
 	void set_sever_socket();
 	void reciveNewData(int fd);
-	//---------------//BOTs Methods
-	void StartBot(std::string cmd, int fd);
 	//---------------//Parsing Methods
 	std::vector<std::string> split_recivedBuffer(std::string str);
 	std::vector<std::string> split_cmd(std::string &str);
 	void parse_exec_cmd(std::string &cmd, int fd);
 	//---------------//Authentification Methods
+	bool BypassForBot(std::string cmd, int fd);
 	bool notregistered(int fd);
 	bool nickNameInUse(std::string& nickname);
 	bool is_validNickname(std::string& nickname);

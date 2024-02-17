@@ -127,10 +127,14 @@ void Server::SignalHandler(int signum)
 }
 
 void	Server::close_fds(){
-	for(size_t i = 0; i < clients.size(); i++)
+	for(size_t i = 0; i < clients.size(); i++){
+		std::cout << RED << "Client <" << clients[i].GetFd() << "> Disconnected" << WHI << std::endl;
 		close(clients[i].GetFd());
-	if (server_fdsocket != -1)
+	}
+	if (server_fdsocket != -1){	
+		std::cout << RED << "Server <" << server_fdsocket << "> Disconnected" << WHI << std::endl;
 		close(server_fdsocket);
+	}
 }
 //---------------//Close and Signal Methods
 //---------------//Server Methods
@@ -145,7 +149,6 @@ void Server::init(int port, std::string pass)
 	{
 		if((poll(&fds[0],fds.size(),-1) == -1) && Server::Signal == false)
 			throw(std::runtime_error("poll() faild"));
-		// std::cout << "poll() faild or signal recived" << std::endl;
 		for (size_t i = 0; i < fds.size(); i++)
 		{
 			if (fds[i].revents & POLLIN)
@@ -238,32 +241,6 @@ void Server::reciveNewData(int fd)
 	}
 }
 //---------------//Server Methods
-//---------------//BOTs Methods
-void Server::StartBot(std::string cmd, int fd)
-{
-	std::string botmsg;
-	std::string error;
-	if (!GetClientNick("bot"))
-		{senderror(401, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :bot not found\r\n"); return;}
-	if(Server::isBotfull){
-		std::string resp;
-		if (GetClient(fd)->getIsPlaying())
-			resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + GetClient(fd)->GetNickName() + " :You are already in game with Bot!\r\n";
-		else
-			resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + GetClient(fd)->GetNickName() + " :Bot is bussy now try again!\r\n";
-		_sendResponse(resp, GetClient(fd)->GetFd());
-		return;
-	}
-	if(cmd.substr(0, 4) == "PLAY" || cmd.substr(0, 4) == "play")
-	{
-		Server::isBotfull = true;
-		GetClient(fd)->setIsPlaying(true);
-	}
-	botmsg = GetClient(fd)->GetNickName() + " " + cmd + "\r\n";
-	if (send(GetClientNick("bot")->GetFd(), botmsg.c_str(), botmsg.size(), 0) == -1)
-		std::cerr << "send() faild" << std::endl;
-}
-//---------------//BOTs Methods
 //---------------//Parsing Methods
 std::vector<std::string> Server::split_recivedBuffer(std::string str)
 {
@@ -332,16 +309,6 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 			PRIVMSG(cmd, fd);
 		else if (splited_cmd.size() && (splited_cmd[0] == "INVITE" || splited_cmd[0] == "invite"))
 			Invite(cmd,fd);
-		else if (splited_cmd.size() && (splited_cmd[0] == "PLAY" || splited_cmd[0] == "AGE" || splited_cmd[0] == "NOKTA" \
-			|| splited_cmd[0] == "play" || splited_cmd[0] == "age" || splited_cmd[0] == "nokta"))
-			StartBot(cmd, fd);
-		else if (splited_cmd.size() && (splited_cmd[0] == "exit"))
-		{
-			if(GetClient(fd)->GetNickName() == "bot")
-				Server::isBotfull = false;
-			else
-				_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
-		}
 		else if (splited_cmd.size())
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(),splited_cmd[0]),fd);
 	}

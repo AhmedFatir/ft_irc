@@ -36,6 +36,7 @@ void Server::client_authen(int fd, std::string cmd)
 
 bool Server::is_validNickname(std::string& nickname)
 {
+		
 	if(!nickname.empty() && (nickname[0] == '&' || nickname[0] == '#' || nickname[0] == ':' || std::isdigit(nickname[0])))
 		return false;
 	for(size_t i = 1; i < nickname.size(); i++)
@@ -50,6 +51,7 @@ bool Server::is_validNickname(std::string& nickname)
 
 bool Server::nickNameInUse(std::string& nickname)
 {
+	if (nickname == "bot") return true;
 	for (size_t i = 0; i < this->clients.size(); i++)
 	{
 		if (this->clients[i].GetNickName() == nickname)
@@ -58,8 +60,20 @@ bool Server::nickNameInUse(std::string& nickname)
 	return false;
 }
 
+bool	Server::BypassForBot(std::string cmd, int fd)
+{	
+	if (cmd == "NICK bot\177"){
+		std::string nick = "bot";
+		if(GetClient(fd) && GetClient(fd)->getRegistered())
+			{GetClient(fd)->SetNickname(nick); return true;}
+	}
+	return false;
+}
+
 void Server::set_nickname(std::string cmd, int fd)
 {
+	if (BypassForBot(cmd, fd))
+		return ;
 	cmd = cmd.substr(4);
 	size_t pos = cmd.find_first_not_of("\t\v ");
 	if(pos < cmd.size())
