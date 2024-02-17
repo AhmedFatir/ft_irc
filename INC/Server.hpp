@@ -82,13 +82,12 @@ public:
 	void accept_new_client();
 	void set_sever_socket();
 	void reciveNewData(int fd);
-	//---------------//BOTs Methods
-	void StartBot(std::string cmd, int fd);
 	//---------------//Parsing Methods
 	std::vector<std::string> split_recivedBuffer(std::string str);
 	std::vector<std::string> split_cmd(std::string &str);
 	void parse_exec_cmd(std::string &cmd, int fd);
 	//---------------//Authentification Methods
+	bool BypassForBot(std::string cmd, int fd);
 	bool notregistered(int fd);
 	bool nickNameInUse(std::string& nickname);
 	bool is_validNickname(std::string& nickname);
@@ -119,6 +118,8 @@ public:
 	std::string channel_limit(std::vector<std::string> splited, Channel *channel, size_t &pos, char opera, int fd, std::string chain, std::string& arguments);
 	bool		isvalid_limit(std::string& limit);
 	std::string mode_toAppend(std::string chain, char opera, char mode);
+	std::vector<std::string> splitParams(std::string params);
+	void getCmdArgs(std::string cmd,std::string& name, std::string& modeset ,std::string &params);
 	//---------------------------//TOPIC CMD
 	std::string tTopic();
 	void Topic(std::string &cmd, int &fd);

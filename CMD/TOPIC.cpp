@@ -1,5 +1,12 @@
 #include "../INC/Server.hpp"
-
+/*
+ERR_NEEDMOREPARAMS (461)
+ERR_NOSUCHCHANNEL (403)
+ERR_NOTONCHANNEL (442)
+ERR_CHANOPRIVSNEEDED (482)
+:localhost 442 #jj :You're not on that channel
+:localhost 442 jj :You're Not a channel operator
+*/
 std::string Server::tTopic()
 {
 	std::time_t current = std::time(NULL);

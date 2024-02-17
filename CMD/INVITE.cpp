@@ -1,5 +1,11 @@
 #include "../INC/Server.hpp"
-
+/*
+RPL_INVITING (341)
+ERR_NEEDMOREPARAMS (461)
+ERR_NOSUCHCHANNEL (403)
+ERR_NOTONCHANNEL (442)
+ERR_CHANOPRIVSNEEDED (482)
+ERR_USERONCHANNEL (443)*/
 void Server::Invite(std::string &cmd, int &fd)
 {
 	std::vector<std::string> scmd = split_cmd(cmd);
