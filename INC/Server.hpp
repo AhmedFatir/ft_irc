@@ -125,7 +125,7 @@ public:
 	void Topic(std::string &cmd, int &fd);
 	void Invite(std::string &cmd, int &fd);
 	std::string gettopic(std::string& input);
-	// std::vector<std::string> parse_topic(std::string &cmd);
+	int getpos(std::string &cmd);
 };
 
 #endif
