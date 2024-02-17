@@ -214,12 +214,6 @@ void Server::reciveNewData(int fd)
 	if(bytes <= 0)
 	{
 		std::cout << RED << "Client <" << fd << "> Disconnected" << WHI << std::endl;
-		if(GetClient(fd)->getIsPlaying() && GetClientNick("bot"))
-		{
-			std::string prvmsg = "PRIVMSG bot exit\r\n";
-			_sendResponse(prvmsg, GetClientNick("bot")->GetFd());
-			Server::isBotfull = false;
-		}
 		RmChannels(fd);
 		RemoveClient(fd);
 		RemoveFds(fd);

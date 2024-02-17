@@ -9,7 +9,6 @@ Client::Client()
 	this->registered = false;
 	this->buffer = "";
 	this->ipadd = "";
-	this->isPlaying = false;
 }
 Client::Client(std::string nickname, std::string username, int fd) :fd(fd), nickname(nickname), username(username){}
 Client::~Client(){}
@@ -23,14 +22,12 @@ Client &Client::operator=(Client const &src){
 		this->buffer = src.buffer;
 		this->registered = src.registered;
 		this->ipadd = src.ipadd;
-		this->isPlaying = src.isPlaying;
 	}
 	return *this;
 }
 //---------------//Getters
 int Client::GetFd(){return this->fd;}
 bool Client::getRegistered(){return registered;}
-bool Client::getIsPlaying(){return isPlaying;}
 bool Client::GetInviteChannel(std::string &ChName){
 	for (size_t i = 0; i < this->ChannelsInvite.size(); i++){
 		if (this->ChannelsInvite[i] == ChName)
@@ -54,7 +51,6 @@ void Client::SetUsername(std::string& username){this->username = username;}
 void Client::setBuffer(std::string recived){buffer += recived;}
 void Client::setRegistered(bool value){registered = value;}
 void Client::setIpAdd(std::string ipadd){this->ipadd = ipadd;}
-void Client::setIsPlaying(bool value){this->isPlaying = value;}
 //---------------//Setters
 //---------------//Methods
 void Client::clearBuffer(){buffer.clear();}

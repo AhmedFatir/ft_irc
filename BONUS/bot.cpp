@@ -305,6 +305,8 @@ void Bot::init(int ircsock)
 		size_t pos = recived.find_first_of("\n\r");
 		if(pos != std::string::npos)
 			recived = recived.substr(0, pos);
+		if(recived == ": 464 * :Password incorrect !")
+		{std::cout << recived << std::endl;return;}
 		if(recived.find("PRIVMSG") != std::string::npos)
 		{
 			getCommand(recived, nickname, command);
