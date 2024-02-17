@@ -89,6 +89,7 @@ public:
 	std::vector<std::string> split_cmd(std::string &str);
 	void parse_exec_cmd(std::string &cmd, int fd);
 	//---------------//Authentification Methods
+	bool BypassForBot(std::string cmd, int fd);
 	bool notregistered(int fd);
 	bool nickNameInUse(std::string& nickname);
 	bool is_validNickname(std::string& nickname);

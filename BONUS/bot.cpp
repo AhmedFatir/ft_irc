@@ -1,26 +1,48 @@
-#include <iostream>
-#include <vector>
-#include <cstdlib>
-#include <netdb.h>
-#include <sstream>
-#include <ctime>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fstream>
-#include <cstring>
-#include "../INC/Server.hpp"
+#include "../INC/Bot.hpp"
 
-int ircsock;
-
-void _sendMessage(std::string message, int fd)
+Bot::Bot(){}
+Bot::~Bot(){}
+Bot::Bot(const Bot& other){*this = other;}
+Bot& Bot::operator=(const Bot& other){
+	if (this != &other){
+		this->players = other.players;
+		this->vnokat = other.vnokat;
+	}
+	return *this;
+}
+//---------------------------------------------------send methods
+void Bot::_sendMessage(std::string message, int fd)
 {
     if(send(fd, message.c_str(), message.size(), 0) == -1)
         std::cerr << "Send failed" << std::endl;
 }
 
-int ParsAge(std::string age)
+void Bot::send_privmsg(std::string message, std::string UserNick, int ircsock)
+{
+    std::string msg = "PRIVMSG " + UserNick + " :" + message + "\r\n";
+    if (send(ircsock, msg.c_str(), msg.size(),0) == -1)
+		std::cerr << "Send failed" << std::endl;
+}
+//---------------------------------------------------nokat methods
+int Bot::getnokat(std::string filename)
+{
+	std::string line;
+	std::ifstream file(filename);
+	if (!file.is_open())
+		{std::cerr << "Failed to open file" << std::endl; return 0;}
+	while (std::getline(file, line))
+		vnokat.push_back(line);
+	file.close();
+	return 1;
+}
+
+std::string Bot::getnokta(std::vector<std::string> &vnokat, int size)
+{
+	std::srand(static_cast<unsigned int>(std::time(NULL)));
+	return vnokat[std::rand() % size];
+}
+//---------------------------------------------------age methods
+int Bot::ParsAge(std::string age)
 {
 	std::string year, month, day, age1;
 	age1 = age;
@@ -51,13 +73,10 @@ int ParsAge(std::string age)
 	return 1;
 }
 
-void ageCalculator(std::string age, std::string Nickname)
+void Bot::ageCalculator(std::string age, std::string Nickname,int ircsock)
 {
-	if (!ParsAge(age)){	
-    	std::string str = "PRIVMSG " + Nickname + " : Invalid date format\r\n";
-		_sendMessage(str, ircsock); return;
-	}
-		
+	if (!ParsAge(age))
+		{send_privmsg("Invalid date format(<age> <year-month-day>)", Nickname, ircsock);return;}
     int year, month, day;
     year = std::atoi(age.substr(0, 4).c_str());
     month = std::atoi(age.substr(5, 2).c_str());
@@ -75,19 +94,31 @@ void ageCalculator(std::string age, std::string Nickname)
     int age_int = (current_time - age_in_sec) / (365.25 * 24 * 60 * 60);
     std::stringstream ss;
     ss << age_int;
-    std::string str = ss.str();
-    str = "PRIVMSG " + Nickname + " : Your age is : " + str + " year(s) old\r\n";
-	_sendMessage(str, ircsock); 
+	send_privmsg("Your age is : " + ss.str() + " year(s) old", Nickname, ircsock);
 }
-//-----------------------------------------------------------------------------------//
-void send_privmsg(std::string message, int srvsock, std::string UserNick)
+//---------------------------------------------------parse methods
+void Bot::getCommand(std::string recived, std::string& nick , std::string &command)
 {
-    std::string msg = "PRIVMSG " + UserNick + " :" + message + "\r\n";
-    if (send(srvsock, msg.c_str(), msg.size(),0) == -1)
-		std::cerr << "Send failed" << std::endl;
+	if(recived[0] == ':')
+		recived.erase(recived.begin());
+	size_t pos = recived.find('!');
+	nick = recived.substr(0, pos);
+	pos = std::string::npos;
+	pos = recived.find(':');
+	command = recived.substr(pos);
+	if(!command.empty() && command[0] == ':')
+		command.erase(command.begin());
 }
-
-void drawBoard(const std::vector<char>& board, int ircsock, std::string UserNick)
+std::string Bot::SplitBuff(std::string buff, std::string &date)
+{
+	std::istringstream stm(buff);
+	std::string token;
+	stm >> token;
+	stm >> date;
+	return token;
+}
+//---------------------------------------------------game methods
+void Bot::drawBoard(const std::vector<char>& board, std::string UserNick, int ircsock)
 {
 	std::stringstream stm;
 	stm << "-----------" << "\n";
@@ -109,11 +140,10 @@ void drawBoard(const std::vector<char>& board, int ircsock, std::string UserNick
 	stm << "-----------" << "\n";
 	std::string line;
 	while(std::getline(stm, line))
-		{send_privmsg(line, ircsock, UserNick); line.clear();}
+		{send_privmsg(line, UserNick, ircsock); line.clear();}
 }
 
-// Function to check if a player has won
-bool checkWin(const std::vector<char>& board, char player)
+bool Bot::checkWin(const std::vector<char>& board, char player)
 {
 	// Check rows
 	for (int i = 0; i <= 6; i += 3)
@@ -129,52 +159,7 @@ bool checkWin(const std::vector<char>& board, char player)
 	return false;
 }
 
-std::string SplitBuff(std::string buff)
-{
-	std::string command;
-	size_t found = buff.find("bot");
-	if (found != std::string::npos)
-		command = buff.substr(found+4);
-	else return "";
-	found = command.find("\r\n");
-	if (found != std::string::npos)
-		command = command.substr(0, found);
-	if (command[0] == ':')
-		command.erase(command.begin());
-	return command;
-}
-std::string SplitBuff(std::string buff, std::string &UserNick, std::string &date)
-{
-	std::istringstream stm(buff);
-	std::string token;
-	stm >> UserNick;
-	stm >> token;
-	stm >> date;
-	return token;
-}
-// Function to play the Tic-Tac-Toe game against the computer
-int GetNumber(std::string prompt, int ircsock, std::string UserNick)
-{
-	ssize_t recivedBytes;
-    char buff[1024];
-
-  	std::string	command;
-	while (1){
-		send_privmsg(prompt, ircsock, UserNick);
-		memset(buff, 0, sizeof(buff));
-		if ((recivedBytes = recv(ircsock, buff, sizeof(buff) - 1, 0)) > 0){
-			command = SplitBuff(buff);
-			if (command == "exit") return -2;
-			if(command.empty() || command.size() > 1 || !isdigit(command[0]))
-				return -1;
-			else break;
-		}
-		else
-			return -2;
-	}
-	return (std::atoi(command.c_str()));
-}
-int PotentialAction(const std::vector<char>& board, char player)
+int Bot::PotentialAction(const std::vector<char>& board, char player)
 {
 	// Check rows
 	for (int i = 0; i <= 6; i += 3){
@@ -200,7 +185,7 @@ int PotentialAction(const std::vector<char>& board, char player)
 	return -1;
 }
 
-void	SetMove(std::vector<char>& board, char Player, int move)
+void Bot::SetMove(std::vector<char>& board, char Player, int move)
 {
 	std::srand((std::time(NULL)));
 	int PMove = -1;
@@ -226,135 +211,117 @@ void	SetMove(std::vector<char>& board, char Player, int move)
 	}
 }
 
-void playTicTacToe(int ircsock, std::string UserNick)
+void Bot::PlayGame(std::string command, std::string nickname, int ircsock)
 {
-	std::vector<char> board(9, '-');
-	send_privmsg("Welcome to (X | O) Game!", ircsock, UserNick);
-	send_privmsg("YOU : X | Computer: O", ircsock, UserNick);
-	
-	
-	char Player = 'X';
-	int movesLeft = 9;
-	while (movesLeft > 0){
-		drawBoard(board, ircsock, UserNick);
-
-		if (Player == 'X'){ // Player's turn
-			int move = GetNumber("To Quit Send (exit)/ YOU, enter your move (1-9):", ircsock, UserNick);
-			if (move == -2) return;
-			if (move == -1 || board[move - 1] != '-'){// Validate the move
-				send_privmsg("Invalid move. Try again!", ircsock, UserNick);
-				continue;
-			}
-			board[move - 1] = Player;
+	Player *plyr = GetPlayer(nickname);
+	if(command == "play" && !plyr){// if the player is not in the list (first time)
+        Player player;
+    	std::vector<char> board(9, '-');
+        player.board = board;
+        player.setIsPlaying(true);
+        player.setNickname(nickname);
+        players.push_back(player);
+        send_privmsg("Welcome to (X | O) Game!",  nickname, ircsock);
+	    send_privmsg("YOU : X | Computer: O", nickname, ircsock);
+        drawBoard(player.board, nickname, ircsock);
+    }
+	else if (command == "play" && plyr && !plyr->getIsPlaying()){ // if the player is in the list but not playing
+        send_privmsg("Welcome to (X | O) Game!",  nickname, ircsock);
+	    send_privmsg("YOU : X | Computer: O", nickname, ircsock);
+		std::vector<char> board(9, '-');
+		plyr->restMoves();
+        plyr->board = board;
+		drawBoard(plyr->board, nickname, ircsock);
+		plyr->setIsPlaying(true);
+	}
+	else if (plyr && plyr->getIsPlaying())// if the player is in the list and playing
+	{
+		if(command.empty() || command.size() > 1 || !isdigit(command[0]) || plyr->getChatAtPos(std::atoi(command.c_str()) - 1) != '-' ){
+		    send_privmsg("Invalid move. Try again!", nickname, ircsock);
+			drawBoard(plyr->board, nickname, ircsock);
+		    return;
 		}
-		else{ // Computer's turn
-			send_privmsg("Computer's turn ...", ircsock, UserNick);
-			sleep(1);
-			SetMove(board, Player, movesLeft);
-		}
-		if (checkWin(board, Player)){ // Check who wins
-			drawBoard(board, ircsock, UserNick);
-			if (Player == 'X')
-				send_privmsg("YOU win!😁", ircsock, UserNick);
+		int move = std::atoi(command.c_str());
+		plyr->setChatAtPos(move - 1, 'X');
+		drawBoard(plyr->board, nickname, ircsock);
+		plyr->dicMoves();
+		if (checkWin(plyr->board, 'X') || !plyr->getMoves()){
+			if(!plyr->getMoves())
+				send_privmsg("It's a draw!🙂", nickname, ircsock);
 			else
-				send_privmsg("Computer wins!🤖", ircsock, UserNick);
+				send_privmsg("YOU win!😁", nickname, ircsock);
+			plyr->setIsPlaying(false);
+			plyr->board.clear();
 			return;
 		}
-		// Switch players
-		if (Player == 'X') Player = 'O';
-		else Player = 'X';
-		movesLeft--;
+		//computer's turn
+		send_privmsg("Computer's turn ...", nickname, ircsock);
+		sleep(1);
+		SetMove(plyr->board, 'O', plyr->getMoves());
+		drawBoard(plyr->board, nickname, ircsock);
+		if (checkWin(plyr->board, 'O') || !plyr->getMoves()){// Check who wins
+			if(!plyr->getMoves())
+				send_privmsg("It's a draw!🙂", nickname, ircsock);
+			else
+				send_privmsg("Computer wins!🤖", nickname, ircsock);
+			plyr->setIsPlaying(false);
+			plyr->board.clear();
+			return;
+		}
+		plyr->dicMoves();
 	}
-	drawBoard(board, ircsock, UserNick);
-	send_privmsg("It's a draw!🙂", ircsock, UserNick);
+	else
+		send_privmsg("Invalid command. Try again!", nickname, ircsock);
 }
-bool isPortValid(std::string port)
-{
-	return (port.find_first_not_of("0123456789") == std::string::npos && std::atoi(port.c_str()) >= 1024 && std::atoi(port.c_str()) < 65535);
+//---------------------------------------------------init methods
+Player *Bot::GetPlayer(std::string nickname)
+{	
+    for (size_t i = 0; i < this->players.size(); i++){
+		if (this->players[i].getNickname() == nickname)
+			return &this->players[i];
+	}
+	return NULL;
+
 }
 
-void signalHandler(int signum)
+void Bot::init(int ircsock)
 {
-	(void)signum;
-	std::string quit = "QUIT\r\n";
-	if(send(ircsock, quit.c_str(), quit.size(), 0) == -1)
-		std::cerr << "send faild" << std::endl;
-}
-
-//-----------------------------------------------------------------------------------//
-std::string getnokta(std::vector<std::string> &vnokat, int size)
-{
-	std::srand(static_cast<unsigned int>(std::time(NULL)));
-	return vnokat[std::rand() % size];
-}
-std::vector<std::string> getnokat(std::string filename)
-{
-	std::vector<std::string> vnokat;
-	std::string line;
-	std::ifstream file(filename);
-	if (!file.is_open())
-		{std::cerr << "Failed to open file" << std::endl; return vnokat;}
-	while (std::getline(file, line))
-		vnokat.push_back(line);
-	file.close();
-	return vnokat;
-}
-
-void nokta(std::string nick, std::vector<std::string> &vnokat ,int &ircsock)
-{
-	std::string response = "PRIVMSG " + nick + " : " + getnokta(vnokat, vnokat.size()) + "\r\n";
-	_sendMessage(response, ircsock);
-}
-//-----------------------------------------------------------------------------------//
-
-int main(int ac, char **av)
-{
-	if (ac != 5)
-	{std::cerr << "Usage: " << av[0] << " <address> <port> <password> <file>" << std::endl; return 1;}
-	if (!isPortValid(av[2]) || !*av[3] || std::strlen(av[3]) > 20)
-		{std::cerr << "Invalid port! / password!" << std::endl; return 1;}
-	signal(SIGINT, signalHandler);
-	signal(SIGQUIT, signalHandler);
-	std::string address = av[1];
-	if(address == "localhost" || address == "LOCALHOST")
-		address = "127.0.0.1";
-	std::string filename = av[4];
-	std::vector<std::string> vnokat = getnokat(filename);
-	if (vnokat.empty())
-		{std::cerr << "Failed to get nokat" << std::endl; return 1;}
-	struct sockaddr_in ircHints;
-	ircsock = socket(AF_INET, SOCK_STREAM, 0);
-	if (ircsock == -1)
-		{std::cerr << "failed to create socket (ircsock)" << std::endl; return 1;}
-    ircHints.sin_family = AF_INET;
-    ircHints.sin_port = htons(std::atoi(av[2]));
-    if(!inet_pton(AF_INET, address.c_str(), &(ircHints.sin_addr)))
-		return 0;
-    if(connect(ircsock, (struct sockaddr*)&ircHints, sizeof(ircHints)) == -1)
-		{std::cerr << "connect failed" << std::endl; return 1;}
-    // connection to irc server
-    _sendMessage("PASS " + std::string(av[3]) + "\r\n", ircsock);
-    _sendMessage("NICK bot\r\n", ircsock);
-    _sendMessage("USER bot 0 * bot\r\n", ircsock);
-
-    std::string recived, UserNick, date;
+    std::string recived, nickname, command;
     ssize_t recivedBytes;
 
     char buff[1024];
-	memset(buff, 0, sizeof(buff));
-	while( (recivedBytes = recv(ircsock, buff, (sizeof(buff) - 1), 0)) > 0)
+	while(true)
     {
-        buff[recivedBytes] = '\0';
-        recived = SplitBuff(buff, UserNick, date);
-        if(recived == "PLAY" || recived == "play")
+		memset(buff, 0, sizeof(buff));
+		recivedBytes = recv(ircsock, buff, (sizeof(buff) - 1), 0);
+		if(recivedBytes <= 0)
+			break;
+		recived = buff;
+		size_t pos = recived.find_first_of("\n\r");
+		if(pos != std::string::npos)
+			recived = recived.substr(0, pos);
+		if(recived.find("PRIVMSG") != std::string::npos)
 		{
-			playTicTacToe(ircsock, UserNick);
-			_sendMessage("exit\r\n", ircsock);
+			getCommand(recived, nickname, command);
+			Player *plyr = GetPlayer(nickname);
+			if(command.find("age") != std::string::npos){
+				std::string date;
+				SplitBuff(command, date);
+				ageCalculator(date, nickname, ircsock);
+				continue;
+			}
+			else if(command.find("nokta") != std::string::npos){
+				send_privmsg(getnokta(vnokat, vnokat.size()), nickname, ircsock);
+				continue;
+			}
+			else if(command == "exit" && plyr && plyr->getIsPlaying()){
+				plyr->setIsPlaying(false);
+				plyr->board.clear();
+				send_privmsg("Goodbye!", nickname, ircsock);
+				continue;
+			}
+            else
+				PlayGame(command, nickname, ircsock);
 		}
-        else if(recived == "AGE" || recived == "age")
-			ageCalculator(date, UserNick);
-		else if (recived == "NOKTA" || recived == "nokta")
-			nokta(UserNick,vnokat,ircsock);
 	}
-	return 0;
 }

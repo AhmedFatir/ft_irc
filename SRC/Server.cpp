@@ -127,10 +127,14 @@ void Server::SignalHandler(int signum)
 }
 
 void	Server::close_fds(){
-	for(size_t i = 0; i < clients.size(); i++)
+	for(size_t i = 0; i < clients.size(); i++){
+		std::cout << RED << "Client <" << clients[i].GetFd() << "> Disconnected" << WHI << std::endl;
 		close(clients[i].GetFd());
-	if (server_fdsocket != -1)
+	}
+	if (server_fdsocket != -1){	
+		std::cout << RED << "Server <" << server_fdsocket << "> Disconnected" << WHI << std::endl;
 		close(server_fdsocket);
+	}
 }
 //---------------//Close and Signal Methods
 //---------------//Server Methods
