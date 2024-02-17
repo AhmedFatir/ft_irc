@@ -13,14 +13,14 @@ Bot& Bot::operator=(const Bot& other){
 //---------------------------------------------------send methods
 void Bot::_sendMessage(std::string message, int fd)
 {
-    if(send(fd, message.c_str(), message.size(), 0) == -1)
-        std::cerr << "Send failed" << std::endl;
+	if(send(fd, message.c_str(), message.size(), 0) == -1)
+		std::cerr << "Send failed" << std::endl;
 }
 
 void Bot::send_privmsg(std::string message, std::string UserNick, int ircsock)
 {
-    std::string msg = "PRIVMSG " + UserNick + " :" + message + "\r\n";
-    if (send(ircsock, msg.c_str(), msg.size(),0) == -1)
+	std::string msg = "PRIVMSG " + UserNick + " :" + message + "\r\n";
+	if (send(ircsock, msg.c_str(), msg.size(),0) == -1)
 		std::cerr << "Send failed" << std::endl;
 }
 //---------------------------------------------------nokat methods
@@ -77,24 +77,28 @@ void Bot::ageCalculator(std::string age, std::string Nickname,int ircsock)
 {
 	if (!ParsAge(age))
 		{send_privmsg("Invalid date format(<age> <year-month-day>)", Nickname, ircsock);return;}
-    int year, month, day;
-    year = std::atoi(age.substr(0, 4).c_str());
-    month = std::atoi(age.substr(5, 2).c_str());
-    day = std::atoi(age.substr(8, 2).c_str());
+	int year, month, day;
+	year = std::atoi(age.substr(0, 4).c_str());
+	month = std::atoi(age.substr(5, 2).c_str());
+	day = std::atoi(age.substr(8, 2).c_str());
 
-    std::tm date;
-    memset(&date, 0, sizeof(date));
-    date.tm_year = year - 1900;
-    date.tm_mon = month - 1;
-    date.tm_mday = day;
+	std::tm birth_date;
+	memset(&birth_date, 0, sizeof(birth_date));
+	birth_date.tm_year = year - 1900;
+	birth_date.tm_mon = month - 1;
+	birth_date.tm_mday = day;
 
-    std::time_t age_in_sec = mktime(&date);
-    std::time_t current_time;
-    std::time(&current_time);
-    int age_int = (current_time - age_in_sec) / (365.25 * 24 * 60 * 60);
-    std::stringstream ss;
-    ss << age_int;
-	send_privmsg("Your age is : " + ss.str() + " year(s) old", Nickname, ircsock);
+	std::time_t birth_time = mktime(&birth_date);
+	std::time_t current_time;
+	std::time(&current_time);
+
+	double seconds = difftime(current_time, birth_time);
+	int years = static_cast<int>(seconds / (365.25 * 24 * 60 * 60));
+	int months = static_cast<int>((seconds - years * 365.25 * 24 * 60 * 60) / (30.44 * 24 * 60 * 60));
+	int days = static_cast<int>((seconds - years * 365.25 * 24 * 60 * 60 - months * 30.44 * 24 * 60 * 60) / (24 * 60 * 60));
+	std::stringstream ss;
+	ss << "Your Age is: " << years << " years, " << months << " months, " << days << " days old";
+	send_privmsg(ss.str(), Nickname, ircsock);
 }
 //---------------------------------------------------parse methods
 void Bot::getCommand(std::string recived, std::string& nick , std::string &command)
@@ -215,31 +219,32 @@ void Bot::PlayGame(std::string command, std::string nickname, int ircsock)
 {
 	Player *plyr = GetPlayer(nickname);
 	if(command == "play" && !plyr){// if the player is not in the list (first time)
-        Player player;
-    	std::vector<char> board(9, '-');
-        player.board = board;
-        player.setIsPlaying(true);
-        player.setNickname(nickname);
-        players.push_back(player);
-        send_privmsg("Welcome to (X | O) Game!",  nickname, ircsock);
-	    send_privmsg("YOU : X | Computer: O", nickname, ircsock);
-        drawBoard(player.board, nickname, ircsock);
-    }
+		Player player;
+		std::vector<char> board(9, '-');
+		player.board = board;
+		player.setIsPlaying(true);
+		player.setNickname(nickname);
+		players.push_back(player);
+		send_privmsg("Welcome to (X | O) Game!",  nickname, ircsock);
+		send_privmsg("YOU : X | Computer: O", nickname, ircsock);
+		drawBoard(player.board, nickname, ircsock);
+	}
 	else if (command == "play" && plyr && !plyr->getIsPlaying()){ // if the player is in the list but not playing
-        send_privmsg("Welcome to (X | O) Game!",  nickname, ircsock);
-	    send_privmsg("YOU : X | Computer: O", nickname, ircsock);
+		send_privmsg("Welcome to (X | O) Game!",  nickname, ircsock);
+		send_privmsg("YOU : X | Computer: O", nickname, ircsock);
 		std::vector<char> board(9, '-');
 		plyr->restMoves();
-        plyr->board = board;
+		plyr->board = board;
 		drawBoard(plyr->board, nickname, ircsock);
 		plyr->setIsPlaying(true);
 	}
 	else if (plyr && plyr->getIsPlaying())// if the player is in the list and playing
 	{
 		if(command.empty() || command.size() > 1 || !isdigit(command[0]) || plyr->getChatAtPos(std::atoi(command.c_str()) - 1) != '-' ){
-		    send_privmsg("Invalid move. Try again!", nickname, ircsock);
+			send_privmsg("Invalid move. Try again!", nickname, ircsock);
+			send_privmsg("To Quit Send (exit)/ YOU, enter your move (1-9):", nickname, ircsock);
 			drawBoard(plyr->board, nickname, ircsock);
-		    return;
+			return;
 		}
 		int move = std::atoi(command.c_str());
 		plyr->setChatAtPos(move - 1, 'X');
@@ -276,7 +281,7 @@ void Bot::PlayGame(std::string command, std::string nickname, int ircsock)
 //---------------------------------------------------init methods
 Player *Bot::GetPlayer(std::string nickname)
 {	
-    for (size_t i = 0; i < this->players.size(); i++){
+	for (size_t i = 0; i < this->players.size(); i++){
 		if (this->players[i].getNickname() == nickname)
 			return &this->players[i];
 	}
@@ -286,12 +291,12 @@ Player *Bot::GetPlayer(std::string nickname)
 
 void Bot::init(int ircsock)
 {
-    std::string recived, nickname, command;
-    ssize_t recivedBytes;
+	std::string recived, nickname, command;
+	ssize_t recivedBytes;
 
-    char buff[1024];
+	char buff[1024];
 	while(true)
-    {
+	{
 		memset(buff, 0, sizeof(buff));
 		recivedBytes = recv(ircsock, buff, (sizeof(buff) - 1), 0);
 		if(recivedBytes <= 0)
@@ -305,22 +310,32 @@ void Bot::init(int ircsock)
 			getCommand(recived, nickname, command);
 			Player *plyr = GetPlayer(nickname);
 			if(command.find("age") != std::string::npos){
+				if (plyr && plyr->getIsPlaying()){
+					plyr->setIsPlaying(false);
+					plyr->board.clear();
+					send_privmsg("Game Closed!", nickname, ircsock);
+				}
 				std::string date;
 				SplitBuff(command, date);
 				ageCalculator(date, nickname, ircsock);
 				continue;
 			}
 			else if(command.find("nokta") != std::string::npos){
+				if (plyr && plyr->getIsPlaying()){
+					plyr->setIsPlaying(false);
+					plyr->board.clear();
+					send_privmsg("Game Closed!", nickname, ircsock);
+				}
 				send_privmsg(getnokta(vnokat, vnokat.size()), nickname, ircsock);
 				continue;
 			}
 			else if(command == "exit" && plyr && plyr->getIsPlaying()){
 				plyr->setIsPlaying(false);
 				plyr->board.clear();
-				send_privmsg("Goodbye!", nickname, ircsock);
+				send_privmsg("Game Closed!", nickname, ircsock);
 				continue;
 			}
-            else
+			else
 				PlayGame(command, nickname, ircsock);
 		}
 	}
