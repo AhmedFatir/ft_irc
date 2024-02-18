@@ -55,8 +55,7 @@ int main(int ac, char **av)
 
     ircHints.sin_family = AF_INET;
     ircHints.sin_port = htons(std::atoi(av[2]));
-    if(!inet_pton(AF_INET, address.c_str(), &(ircHints.sin_addr)))
-		return 0;
+	ircHints.sin_addr.s_addr = inet_addr(address.c_str());
 	
     if(connect(ircsock, (struct sockaddr*)&ircHints, sizeof(ircHints)) == -1)
 		{std::cerr << "connect failed" << std::endl; return 1;}
