@@ -113,6 +113,7 @@ void Server::senderror(int code, std::string clientname, std::string channelname
 
 void Server::_sendResponse(std::string response, int fd)
 {
+	std::cout << "Response:\n" << response;
 	if(send(fd, response.c_str(), response.size(), 0) == -1)
 		std::cerr << "Response send() faild" << std::endl;
 }
@@ -226,14 +227,11 @@ void Server::reciveNewData(int fd)
 		cli->setBuffer(buff);
 		if(cli->getBuffer().find_first_of("\r\n") == std::string::npos)
 			return;
-		if(cli->getBuffer() != "PONG localhost\r\n")
-		{
-			cmd = split_recivedBuffer(cli->getBuffer());
-			for(size_t i = 0; i < cmd.size(); i++)
-				this->parse_exec_cmd(cmd[i], fd);
-			if(GetClient(fd))
-				GetClient(fd)->clearBuffer();
-		}
+		cmd = split_recivedBuffer(cli->getBuffer());
+		for(size_t i = 0; i < cmd.size(); i++)
+			this->parse_exec_cmd(cmd[i], fd);
+		if(GetClient(fd))
+			GetClient(fd)->clearBuffer();
 	}
 }
 //---------------//Server Methods
@@ -268,7 +266,7 @@ std::vector<std::string> Server::split_cmd(std::string& cmd)
 
 bool Server::notregistered(int fd)
 {
-	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty())
+	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty() || GetClient(fd)->GetNickName() == "*"  || !GetClient(fd)->GetLogedIn())
 		return false;
 	return true;
 }
@@ -281,6 +279,8 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 	size_t found = cmd.find_first_not_of(" \t\v");
 	if(found != std::string::npos)
 		cmd = cmd.substr(found);
+	if(splited_cmd.size() && (splited_cmd[0] == "BONG" || splited_cmd[0] == "bong"))
+		return;
     if(splited_cmd.size() && (splited_cmd[0] == "PASS" || splited_cmd[0] == "pass"))
         client_authen(fd, cmd);
 	else if (splited_cmd.size() && (splited_cmd[0] == "NICK" || splited_cmd[0] == "nick"))

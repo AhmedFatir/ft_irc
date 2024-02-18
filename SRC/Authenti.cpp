@@ -37,12 +37,11 @@ void Server::client_authen(int fd, std::string cmd)
 bool Server::is_validNickname(std::string& nickname)
 {
 		
-	if(!nickname.empty() && (nickname[0] == '&' || nickname[0] == '#' || nickname[0] == ':' || std::isdigit(nickname[0])))
+	if(!nickname.empty() && (nickname[0] == '&' || nickname[0] == '#' || nickname[0] == ':'))
 		return false;
 	for(size_t i = 1; i < nickname.size(); i++)
 	{
-		if(!std::isalnum(nickname[i]) && nickname[i] != '{' && nickname[i] != '}' && \
-			nickname[i] != '[' && nickname[i] != ']' && nickname[i] != '|' && nickname[i] != '\\')
+		if(!std::isalnum(nickname[i]) && nickname[i] != '_')
 			return false;
 	}
 	return true;
@@ -62,6 +61,7 @@ bool Server::nickNameInUse(std::string& nickname)
 
 void Server::set_nickname(std::string cmd, int fd)
 {
+	std::string inuse;
 	cmd = cmd.substr(4);
 	size_t pos = cmd.find_first_not_of("\t\v ");
 	if(pos < cmd.size())
@@ -71,29 +71,47 @@ void Server::set_nickname(std::string cmd, int fd)
 			cmd.erase(cmd.begin());
 	}
 	Client *cli = GetClient(fd);
-	if(pos == std::string::npos || cmd.empty()) 
-		_sendResponse(ERR_NOTENOUGHPARAM(std::string("*")), fd);
-	else if (nickNameInUse(cmd))
-        _sendResponse(ERR_NICKINUSE(std::string(cmd)), fd);
-	else if(!is_validNickname(cmd))
-        _sendResponse(ERR_ERRONEUSNICK(std::string(cmd)), fd);
+	if(pos == std::string::npos || cmd.empty())
+		{_sendResponse(ERR_NOTENOUGHPARAM(std::string("*")), fd); return;}
+	if (nickNameInUse(cmd) && cli->GetNickName() != cmd){
+		inuse = "*";
+		if(cli->GetNickName().empty())
+			cli->SetNickname(inuse);
+	    _sendResponse(ERR_NICKINUSE(std::string(cmd)), fd); 
+		return;
+	}
+	if(!is_validNickname(cmd)) {
+		_sendResponse(ERR_ERRONEUSNICK(std::string(cmd)), fd);
+		return;
+	}
 	else
 	{
 		if(cli && cli->getRegistered())
 		{
-			std::string oldNick = cli->GetNickName();
+			std::string oldnick = cli->GetNickName();
 			cli->SetNickname(cmd);
-			if(!oldNick.empty())
+			if(!oldnick.empty() && oldnick != cmd)
 			{
-				_sendResponse(RPL_NICKCHANGE(oldNick,cmd), fd);
+				if(oldnick == "*")
+				{
+					_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
+					_sendResponse(RPL_NICKCHANGE(cli->GetNickName(),cmd), fd);
+				}
+				else
+					_sendResponse(RPL_NICKCHANGE(oldnick,cmd), fd);
+				// cli->setOldNick(cli->GetNickName());
 				return;
 			}
+			
 		}
 		else if (cli && !cli->getRegistered())
 			_sendResponse(ERR_NOTREGISTERED(cmd), fd);
 	}
-	if(cli && cli->getRegistered() &&! cli->GetUserName().empty() && !cli->GetNickName().empty())
+	if(cli && cli->getRegistered() && !cli->GetUserName().empty() && !cli->GetNickName().empty() && cli->GetNickName() != "*" && !cli->GetLogedIn())
+	{
+		cli->setLogedin(true);
 		_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
+	}
 }
 
 /* 
@@ -106,13 +124,16 @@ void	Server::set_username(std::string& cmd, int fd)
 
 	Client *cli = GetClient(fd); 
 	if((cli && splited_cmd.size() < 5))
-		_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd);
-	else if(!cli  || !cli->getRegistered())
+		{_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd); return; }
+	if(!cli  || !cli->getRegistered())
 		_sendResponse(ERR_NOTREGISTERED(std::string("*")), fd);
 	else if (cli && !cli->GetUserName().empty())
-		_sendResponse(ERR_ALREADYREGISTERED(cli->GetNickName()), fd);
+		{_sendResponse(ERR_ALREADYREGISTERED(cli->GetNickName()), fd); return;}
 	else
 		cli->SetUsername(splited_cmd[1]);
-	if(cli && cli->getRegistered() &&! cli->GetUserName().empty() && !cli->GetNickName().empty())
+	if(cli && cli->getRegistered() && !cli->GetUserName().empty() && !cli->GetNickName().empty() && cli->GetNickName() != "*"  && !cli->GetLogedIn())
+	{
+		cli->setLogedin(true);
 		_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
+	}
 }
