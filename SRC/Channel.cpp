@@ -35,6 +35,7 @@ Channel &Channel::operator=(Channel const &src){
 //---------------//Setters
 void Channel::SetInvitOnly(int invit_only){this->invit_only = invit_only;}
 void Channel::SetTopic(int topic){this->topic = topic;}
+void Channel::SetTime(std::string time){this->time_creation = time;}
 void Channel::SetKey(int key){this->key = key;}
 void Channel::SetLimit(int limit){this->limit = limit;}
 void Channel::SetTopicName(std::string topic_name){this->topic_name = topic_name;}
@@ -71,6 +72,7 @@ bool Channel::clientInChannel(std::string &nick){
 std::string Channel::GetTopicName(){return this->topic_name;}
 std::string Channel::GetPassword(){return this->password;}
 std::string Channel::GetName(){return this->name;}
+std::string Channel::GetTime(){return this->time_creation;}
 std::string Channel::get_creationtime(){return created_at;}
 std::string Channel::getModes(){
 	std::string mode;

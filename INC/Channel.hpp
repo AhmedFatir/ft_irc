@@ -15,6 +15,7 @@ private:
 	int limit;
 	bool topic_restriction;
 	std::string name;
+	std::string time_creation;
 	std::string password;
 	std::string created_at;
 	std::string topic_name;
@@ -34,6 +35,7 @@ public:
 	void SetTopicName(std::string topic_name);
 	void SetPassword(std::string password);
 	void SetName(std::string name);
+	void SetTime(std::string time);
 	void set_topicRestriction(bool value);
 	void setModeAtindex(size_t index, bool mode);
 	void set_createiontime();
@@ -49,6 +51,7 @@ public:
 	std::string GetTopicName();
 	std::string GetPassword();
 	std::string GetName();
+	std::string GetTime();
 	std::string get_creationtime();
 	std::string getModes();
 	std::string clientChannel_list();

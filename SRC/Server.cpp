@@ -113,6 +113,7 @@ void Server::senderror(int code, std::string clientname, std::string channelname
 
 void Server::_sendResponse(std::string response, int fd)
 {
+	std::cout << "Response:\n" << response;
 	if(send(fd, response.c_str(), response.size(), 0) == -1)
 		std::cerr << "Response send() faild" << std::endl;
 }
@@ -174,7 +175,8 @@ void Server::set_sever_socket()
 		throw(std::runtime_error("faild to create socket"));
 	if(setsockopt(server_fdsocket, SOL_SOCKET, SO_REUSEADDR, &en, sizeof(en)) == -1)
 		throw(std::runtime_error("faild to set option (SO_REUSEADDR) on socket"));
-	fcntl(server_fdsocket, F_SETFL, O_NONBLOCK);
+	 if (fcntl(server_fdsocket, F_SETFL, O_NONBLOCK) == -1)
+		throw(std::runtime_error("faild to set option (O_NONBLOCK) on socket"));
 	if (bind(server_fdsocket, (struct sockaddr *)&add, sizeof(add)) == -1)
 		throw(std::runtime_error("faild to bind socket"));
 	if (listen(server_fdsocket, SOMAXCONN) == -1)
@@ -193,7 +195,8 @@ void Server::accept_new_client()
 	int incofd = accept(server_fdsocket, (sockaddr *)&(cliadd), &len);
 	if (incofd == -1)
 		{std::cout << "accept() failed" << std::endl; return;}
-	fcntl(incofd, F_SETFL, O_NONBLOCK);
+	if (fcntl(incofd, F_SETFL, O_NONBLOCK) == -1)
+		{std::cout << "fcntl() failed" << std::endl; return;}
 	new_cli.fd = incofd;
 	new_cli.events = POLLIN;
 	new_cli.revents = 0;
@@ -263,7 +266,7 @@ std::vector<std::string> Server::split_cmd(std::string& cmd)
 
 bool Server::notregistered(int fd)
 {
-	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty())
+	if (!GetClient(fd) || GetClient(fd)->GetNickName().empty() || GetClient(fd)->GetUserName().empty() || GetClient(fd)->GetNickName() == "*"  || !GetClient(fd)->GetLogedIn())
 		return false;
 	return true;
 }
@@ -272,7 +275,6 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 {
 	if(cmd.empty())
 		return ;
-	std::cout << cmd << std::endl;
 	std::vector<std::string> splited_cmd = split_cmd(cmd);
 	size_t found = cmd.find_first_not_of(" \t\v");
 	if(found != std::string::npos)

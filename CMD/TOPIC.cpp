@@ -35,19 +35,16 @@ int Server::getpos(std::string &cmd)
 
 void Server::Topic(std::string &cmd, int &fd)
 {
-	if (cmd == "TOPIC :" || cmd == "TOPIC" || cmd == "topic")
-	{senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n");return;} // ERR_NEEDMOREPARAMS (461) if there are not enough parameters
+	if (cmd == "TOPIC :")
+		{senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n");return;} // ERR_NEEDMOREPARAMS (461) if there are not enough parameters
 	std::vector<std::string> scmd = split_cmd(cmd);
 	if (scmd.size() == 1)
-	{senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n");return;} // ERR_NEEDMOREPARAMS (461) if there are not enough parameters
+		{senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n");return;} // ERR_NEEDMOREPARAMS (461) if there are not enough parameters
 	std::string nmch = scmd[1].substr(1);
-	if (!GetChannel(nmch))
-	{
-		senderror(403, "#" + nmch, fd, " :No such channel\r\n");
-		return;
-	} // ERR_NOSUCHCHANNEL (403) if the given channel does not exist
+	if (!GetChannel(nmch)) // ERR_NOSUCHCHANNEL (403) if the given channel does not exist
+		{senderror(403, "#" + nmch, fd, " :No such channel\r\n"); return;}
 	if (!(GetChannel(nmch)->get_client(fd)) && !(GetChannel(nmch)->get_admin(fd)))
-	{senderror(442, "#" + nmch, fd, " :You're not on that channel\r\n");return;} // ERR_NOTONCHANNEL (442) if the client is not on the channel
+		{senderror(442, "#" + nmch, fd, " :You're not on that channel\r\n");return;} // ERR_NOTONCHANNEL (442) if the client is not on the channel
 	if (scmd.size() == 2)
 	{
 		if (GetChannel(nmch)->GetTopicName() == "")
@@ -55,9 +52,8 @@ void Server::Topic(std::string &cmd, int &fd)
 		size_t pos = GetChannel(nmch)->GetTopicName().find(":");
 		if (GetChannel(nmch)->GetTopicName() != "" && pos == std::string::npos)
 		{
-			// int pos = tmp[2].find(32);
 			_sendResponse(": 332 " + GetClient(fd)->GetNickName() + " " + "#" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n", fd);			  // RPL_TOPIC (332) if the topic is set
-			_sendResponse(": 333 " + GetClient(fd)->GetNickName() + " " + "#" + nmch + " " + GetClient(fd)->GetNickName() + " " + tTopic() + "\r\n", fd); // RPL_TOPICWHOTIME (333) if the topic is set
+			_sendResponse(": 333 " + GetClient(fd)->GetNickName() + " " + "#" + nmch + " " + GetClient(fd)->GetNickName() + " " + GetChannel(nmch)->GetTime() + "\r\n", fd); // RPL_TOPICWHOTIME (333) if the topic is set
 			return;
 		}
 		else
@@ -66,7 +62,7 @@ void Server::Topic(std::string &cmd, int &fd)
 			if (pos == 0)
 				GetChannel(nmch)->GetTopicName().erase(0, 1);
 			_sendResponse(": 332 " + GetClient(fd)->GetNickName() + " " + "#" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n", fd);			  // RPL_TOPIC (332) if the topic is set
-			_sendResponse(": 333 " + GetClient(fd)->GetNickName() + " " + "#" + nmch + " " + GetClient(fd)->GetNickName() + " " + tTopic() + "\r\n", fd); // RPL_TOPICWHOTIME (333) if the topic is set
+			_sendResponse(": 333 " + GetClient(fd)->GetNickName() + " " + "#" + nmch + " " + GetClient(fd)->GetNickName() + " " + GetChannel(nmch)->GetTime() + "\r\n", fd); // RPL_TOPICWHOTIME (333) if the topic is set
 			return;
 		}
 	}
@@ -92,9 +88,10 @@ void Server::Topic(std::string &cmd, int &fd)
 		{senderror(331, "#" + nmch, fd, " :No topic is set\r\n");return;} // RPL_NOTOPIC (331) if no topic is set
 
 		if (GetChannel(nmch)->Gettopic_restriction() && GetChannel(nmch)->get_client(fd))
-		{senderror(482, nmch, fd, " :You're Not a channel operator\r\n");return;} // ERR_CHANOPRIVSNEEDED (482) if the client is not a channel operator
+		{senderror(482, "#" + nmch, fd, " :You're Not a channel operator\r\n");return;} // ERR_CHANOPRIVSNEEDED (482) if the client is not a channel operator
 		else if (GetChannel(nmch)->Gettopic_restriction() && GetChannel(nmch)->get_admin(fd))
 		{
+			GetChannel(nmch)->SetTime(tTopic());
 			GetChannel(nmch)->SetTopicName(tmp[2]);
 			std::string rpl;
 			size_t pos = tmp[2].find(":");
@@ -110,6 +107,7 @@ void Server::Topic(std::string &cmd, int &fd)
 			size_t pos = tmp[2].find(":");
 			if (pos == std::string::npos)
 			{
+				GetChannel(nmch)->SetTime(tTopic());
 				GetChannel(nmch)->SetTopicName(tmp[2]);
 				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n"; // RPL_TOPIC (332) if the topic is set
 			}
@@ -120,6 +118,7 @@ void Server::Topic(std::string &cmd, int &fd)
 				if (poss == std::string::npos && tmp[2][0] == ':' && tmp[2][1] != ':')
 					tmp[2] = tmp[2].substr(1);
 				GetChannel(nmch)->SetTopicName(tmp[2]);
+				GetChannel(nmch)->SetTime(tTopic());
 				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n"; // RPL_TOPIC (332) if the topic is set
 			}
 			GetChannel(nmch)->sendTo_all(rpl);

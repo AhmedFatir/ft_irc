@@ -21,8 +21,7 @@ int main(int ac, char **av)
 	}
 	catch(const std::exception& e)
 	{
-		if(ser.GetFd() != -1)
-			ser.close_fds();
+		ser.close_fds();
 		std::cerr << e.what() << std::endl;
 	}
 	std::cout << "The Server Closed!" << std::endl;
