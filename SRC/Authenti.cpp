@@ -92,14 +92,14 @@ void Server::set_nickname(std::string cmd, int fd)
 			cli->SetNickname(cmd);
 			if(!oldnick.empty() && oldnick != cmd)
 			{
-				if(oldnick == "*")
+				if(oldnick == "*" && !cli->GetUserName().empty())
 				{
+					cli->setLogedin(true);
 					_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
 					_sendResponse(RPL_NICKCHANGE(cli->GetNickName(),cmd), fd);
 				}
 				else
 					_sendResponse(RPL_NICKCHANGE(oldnick,cmd), fd);
-				// cli->setOldNick(cli->GetNickName());
 				return;
 			}
 			
