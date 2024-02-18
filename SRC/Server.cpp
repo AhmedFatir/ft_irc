@@ -224,14 +224,11 @@ void Server::reciveNewData(int fd)
 		cli->setBuffer(buff);
 		if(cli->getBuffer().find_first_of("\r\n") == std::string::npos)
 			return;
-		if(cli->getBuffer() != "PONG localhost\r\n")
-		{
-			cmd = split_recivedBuffer(cli->getBuffer());
-			for(size_t i = 0; i < cmd.size(); i++)
-				this->parse_exec_cmd(cmd[i], fd);
-			if(GetClient(fd))
-				GetClient(fd)->clearBuffer();
-		}
+		cmd = split_recivedBuffer(cli->getBuffer());
+		for(size_t i = 0; i < cmd.size(); i++)
+			this->parse_exec_cmd(cmd[i], fd);
+		if(GetClient(fd))
+			GetClient(fd)->clearBuffer();
 	}
 }
 //---------------//Server Methods
@@ -275,10 +272,13 @@ void Server::parse_exec_cmd(std::string &cmd, int fd)
 {
 	if(cmd.empty())
 		return ;
+	std::cout << cmd << std::endl;
 	std::vector<std::string> splited_cmd = split_cmd(cmd);
 	size_t found = cmd.find_first_not_of(" \t\v");
 	if(found != std::string::npos)
 		cmd = cmd.substr(found);
+	if(splited_cmd.size() && (splited_cmd[0] == "BONG" || splited_cmd[0] == "bong"))
+		return;
     if(splited_cmd.size() && (splited_cmd[0] == "PASS" || splited_cmd[0] == "pass"))
         client_authen(fd, cmd);
 	else if (splited_cmd.size() && (splited_cmd[0] == "NICK" || splited_cmd[0] == "nick"))

@@ -71,12 +71,12 @@ void Server::set_nickname(std::string cmd, int fd)
 			cmd.erase(cmd.begin());
 	}
 	Client *cli = GetClient(fd);
-	if(pos == std::string::npos || cmd.empty()) 
-		_sendResponse(ERR_NOTENOUGHPARAM(std::string("*")), fd);
-	else if (nickNameInUse(cmd))
-        _sendResponse(ERR_NICKINUSE(std::string(cmd)), fd);
-	else if(!is_validNickname(cmd))
-        _sendResponse(ERR_ERRONEUSNICK(std::string(cmd)), fd);
+	if(pos == std::string::npos || cmd.empty())
+		{_sendResponse(ERR_NOTENOUGHPARAM(std::string("*")), fd); return;}
+	if (nickNameInUse(cmd))
+        {_sendResponse(ERR_NICKINUSE(std::string(cmd)), fd); return;}
+	if(!is_validNickname(cmd))
+       {_sendResponse(ERR_ERRONEUSNICK(std::string(cmd)), fd); return;}
 	else
 	{
 		if(cli && cli->getRegistered())
@@ -92,7 +92,7 @@ void Server::set_nickname(std::string cmd, int fd)
 		else if (cli && !cli->getRegistered())
 			_sendResponse(ERR_NOTREGISTERED(cmd), fd);
 	}
-	if(cli && cli->getRegistered() &&! cli->GetUserName().empty() && !cli->GetNickName().empty())
+	if(cli && cli->getRegistered() && !cli->GetUserName().empty() && !cli->GetNickName().empty())
 		_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
 }
 
@@ -106,11 +106,11 @@ void	Server::set_username(std::string& cmd, int fd)
 
 	Client *cli = GetClient(fd); 
 	if((cli && splited_cmd.size() < 5))
-		_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd);
-	else if(!cli  || !cli->getRegistered())
+		{_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd); return; }
+	if(!cli  || !cli->getRegistered())
 		_sendResponse(ERR_NOTREGISTERED(std::string("*")), fd);
 	else if (cli && !cli->GetUserName().empty())
-		_sendResponse(ERR_ALREADYREGISTERED(cli->GetNickName()), fd);
+		{_sendResponse(ERR_ALREADYREGISTERED(cli->GetNickName()), fd); return;}
 	else
 		cli->SetUsername(splited_cmd[1]);
 	if(cli && cli->getRegistered() &&! cli->GetUserName().empty() && !cli->GetNickName().empty())

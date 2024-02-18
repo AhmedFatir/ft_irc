@@ -2,7 +2,7 @@
 
 bool isPortValid(std::string port){
 	return (port.find_first_not_of("0123456789") == std::string::npos && \
-	std::atoi(port.c_str()) >= 1024 && std::atoi(port.c_str()) < 65535);
+	std::atoi(port.c_str()) >= 1024 && std::atoi(port.c_str()) <= 65535);
 }
 
 int main(int ac, char **av)
@@ -21,7 +21,8 @@ int main(int ac, char **av)
 	}
 	catch(const std::exception& e)
 	{
-		ser.close_fds();
+		if(ser.GetFd() != -1)
+			ser.close_fds();
 		std::cerr << e.what() << std::endl;
 	}
 	std::cout << "The Server Closed!" << std::endl;
