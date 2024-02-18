@@ -19,8 +19,7 @@
 #include "Client.hpp"
 #include "Channel.hpp"
 #include "replies.hpp"
-#include <curl/curl.h>
-#include <map>
+
 
 #define RED "\e[1;31m"
 #define WHI "\e[0;37m"
