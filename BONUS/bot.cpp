@@ -240,7 +240,7 @@ void Bot::PlayGame(std::string command, std::string nickname, int ircsock)
 	}
 	else if (plyr && plyr->getIsPlaying())// if the player is in the list and playing
 	{
-		if(command.empty() || command.size() > 1 || !isdigit(command[0]) || plyr->getChatAtPos(std::atoi(command.c_str()) - 1) != '-' ){
+		if(command.empty() || command.size() > 1 || !isdigit(command[0]) || std::atoi(command.c_str()) < 1 || plyr->getChatAtPos(std::atoi(command.c_str()) - 1) != '-'){
 			send_privmsg("Invalid move. Try again!", nickname, ircsock);
 			send_privmsg("To Quit Send (exit)/ YOU, enter your move (1-9):", nickname, ircsock);
 			drawBoard(plyr->board, nickname, ircsock);
