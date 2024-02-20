@@ -24,6 +24,8 @@ class Bot
 private:
 	std::vector<Player> players;
 	std::vector<std::string> vnokat;
+	bool Loggedin;
+	std::string botnick;
 public:
 	Bot();
 	Bot(const Bot& other);
@@ -50,5 +52,6 @@ public:
 	bool	checkWin(const std::vector<char>& board, char player);
 	int		PotentialAction(const std::vector<char>& board, char player);
 	void	SetMove(std::vector<char>& board, char Player, int move);
+	void	setNick(std::string nick);
 	void	PlayGame(std::string command, std::string nickname, int ircsock);
 };
