@@ -1,0 +1,1 @@
+This is my implementation of the cub3D project from 42 school. My full explanation of the project is in this Medium article. I hope you will like it. https://medium.com/@afatir.ahmedfatir/small-irc-server-ft-irc-42-network-7cee848de6f9
