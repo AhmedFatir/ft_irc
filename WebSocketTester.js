@@ -11,7 +11,7 @@ const readline = require('readline');
 
 const username = process.argv[2];
 if (!username) {
-  console.error('Error: Please provide a username as a command line argument');
+  console.error('Error: usage (node WebSocketTester.js <username>)');
   process.exit(1);
 }
 
