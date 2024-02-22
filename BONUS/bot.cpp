@@ -1,15 +1,22 @@
 #include "../INC/Bot.hpp"
 
-Bot::Bot(){}
+Bot::Bot(){this->Loggedin = false;}
 Bot::~Bot(){}
 Bot::Bot(const Bot& other){*this = other;}
 Bot& Bot::operator=(const Bot& other){
 	if (this != &other){
 		this->players = other.players;
 		this->vnokat = other.vnokat;
+		this->Loggedin = other.Loggedin;
+		this->botnick = other.botnick;
 	}
 	return *this;
 }
+void	Bot::setNick(std::string nick)
+{
+	botnick = nick;
+}
+
 //---------------------------------------------------send methods
 void Bot::_sendMessage(std::string message, int fd)
 {
@@ -305,9 +312,13 @@ void Bot::init(int ircsock)
 		size_t pos = recived.find_first_of("\n\r");
 		if(pos != std::string::npos)
 			recived = recived.substr(0, pos);
-		if(recived == ": 464 * :Password incorrect !")
-		{std::cout << recived << std::endl;return;}
-		if(recived.find("PRIVMSG") != std::string::npos)
+		if(recived == ": 001 " + botnick + " : Welcome to the IRC server!" && !Loggedin)
+			Loggedin = true;
+		else if (!Loggedin){
+			std::cout << recived << std::endl;
+			return;
+		}
+		else if(recived.find("PRIVMSG") != std::string::npos && Loggedin)
 		{
 			getCommand(recived, nickname, command);
 			Player *plyr = GetPlayer(nickname);
