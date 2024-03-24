@@ -46,6 +46,23 @@ For the bonus part, there's a client bot that offers 3 services: game, age, and 
 make bonus
 ./bot <address> <port> <password> <botnickname> <file>
 ```
+you can communicate with the bot using another client through PRIVMSG command like:
+```bash
+privmsg bot : age 1996-10-09
+```
+and the bot will respond:
+```bash
+:bot!~bot@localhost PRIVMSG afatir :Your Age is: 27 years, 5 months, 14 days old
+```
+or you can play an (X | O) game with the bot by simply sending a play message:
+```bash
+privmsg bot : play
+```
+or to get Nokta (joke):
+```bash
+privmsg bot : nokta
+```
+
 ## Usage example
 #### Run this cmd in the terminal
 ```bash
