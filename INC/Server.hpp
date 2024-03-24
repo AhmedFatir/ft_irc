@@ -13,6 +13,8 @@
 #include <netdb.h>
 #include <poll.h>
 #include <csignal>
+#include <cstring>
+#include <cstdlib>
 #include <fstream>
 #include <ctime>
 #include "Client.hpp"
