@@ -48,7 +48,7 @@ make bonus
 ```
 you can communicate with the bot using another client through PRIVMSG command like:
 ```bash
-privmsg bot : age 1996-10-09
+privmsg bot :age 1996-10-09
 ```
 and the bot will respond:
 ```bash
@@ -56,11 +56,22 @@ and the bot will respond:
 ```
 or you can play an (X | O) game with the bot by simply sending a play message:
 ```bash
-privmsg bot : play
+privmsg bot :play           
+:bot!~bot@localhost PRIVMSG afatir :Welcome to (X | O) Game!
+:bot!~bot@localhost PRIVMSG afatir :YOU : X | Computer: O
+:bot!~bot@localhost PRIVMSG afatir :-----------
+:bot!~bot@localhost PRIVMSG afatir : - | - | - 
+:bot!~bot@localhost PRIVMSG afatir :-----------
+:bot!~bot@localhost PRIVMSG afatir : - | - | - 
+:bot!~bot@localhost PRIVMSG afatir :-----------
+:bot!~bot@localhost PRIVMSG afatir : - | - | - 
+:bot!~bot@localhost PRIVMSG afatir :-----------
 ```
+and play the game through the PRIVMSG command.
 or to get Nokta (joke):
 ```bash
-privmsg bot : nokta
+privmsg bot :nokta
+:bot!~bot@localhost PRIVMSG afatir :How long does it take a woman to take out the trash? Nine months.
 ```
 
 ## Usage example
