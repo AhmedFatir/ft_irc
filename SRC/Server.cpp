@@ -113,7 +113,6 @@ void Server::senderror(int code, std::string clientname, std::string channelname
 
 void Server::_sendResponse(std::string response, int fd)
 {
-	std::cout << "Response:\n" << response;
 	if(send(fd, response.c_str(), response.size(), 0) == -1)
 		std::cerr << "Response send() faild" << std::endl;
 }
