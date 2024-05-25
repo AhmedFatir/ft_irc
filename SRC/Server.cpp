@@ -144,6 +144,7 @@ void Server::init(int port, std::string pass)
 	this->port = port;
 	this->set_sever_socket();
 
+	std::cout << GRE << "Server <" << server_fdsocket << "> Connected" << WHI << std::endl;
 	std::cout << "Waiting to accept a connection...\n";
 	while (Server::Signal == false)
 	{

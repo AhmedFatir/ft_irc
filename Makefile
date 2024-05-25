@@ -26,7 +26,7 @@ clean:
 	@rm -f $(OBJS) $(OBJS_BONUS)
 
 fclean: clean
-	@rm -f $(NAME) $(NAME_BOUNUS)
+	@rm -f $(NAME) $(NAME_BOUNUS) a.out
 
 re: fclean all
 
