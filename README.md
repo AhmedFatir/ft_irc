@@ -46,7 +46,7 @@ For the bonus part, there's a client bot that offers 3 services: game, age, and 
 make bonus
 ./bot
 ```
-The bot takes its arguments from the .env file. You can change the values if necessary.
+The bot takes its arguments from the .env file. You may modify the values if necessary. 
 you can communicate with the bot using another client through PRIVMSG command like:
 ```bash
 privmsg bot :age 1996-10-09
