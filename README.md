@@ -44,8 +44,9 @@ user <username> #it should be 4 arguments
 For the bonus part, there's a client bot that offers 3 services: game, age, and Nokta. To use the bot, you can run:
 ```bash
 make bonus
-./bot <address> <port> <password> <botnickname> <file>
+./bot
 ```
+The bot takes its arguments from the .env file. You can change the values if necessary.
 you can communicate with the bot using another client through PRIVMSG command like:
 ```bash
 privmsg bot :age 1996-10-09
