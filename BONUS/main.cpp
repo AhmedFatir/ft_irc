@@ -43,7 +43,7 @@ bool isPortValid(std::string port){
 }
 
 void _sendMessage(std::string message, int fd){
-    if(send(fd, message.c_str(), message.size(), SEND_FLAGS) == -1)
+    if(send(fd, message.c_str(), message.size(), 0) == -1)
         std::cerr << "Send failed" << std::endl;
 }
 
