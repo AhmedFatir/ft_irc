@@ -21,6 +21,18 @@
 #include "Channel.hpp"
 #include "replies.hpp"
 
+#ifdef __APPLE__
+// On macOS, MSG_NOSIGNAL is not available, so we use 0
+#define SEND_FLAGS 0
+#elif defined(__linux__)
+// On Linux, we can use MSG_NOSIGNAL to prevent SIGPIPE
+#include <sys/socket.h>
+#define SEND_FLAGS MSG_NOSIGNAL
+#else
+// For other platforms, define it to 0 or another appropriate value
+#define SEND_FLAGS 0
+#warning "This platform is not explicitly supported."
+#endif
 
 #define RED "\e[1;31m"
 #define WHI "\e[0;37m"

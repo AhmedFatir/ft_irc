@@ -20,14 +20,14 @@ void	Bot::setNick(std::string nick)
 //---------------------------------------------------send methods
 void Bot::_sendMessage(std::string message, int fd)
 {
-	if(send(fd, message.c_str(), message.size(), 0) == -1)
+	if(send(fd, message.c_str(), message.size(), SEND_FLAGS) == -1)
 		std::cerr << "Send failed" << std::endl;
 }
 
 void Bot::send_privmsg(std::string message, std::string UserNick, int ircsock)
 {
 	std::string msg = "PRIVMSG " + UserNick + " :" + message + "\r\n";
-	if (send(ircsock, msg.c_str(), msg.size(),0) == -1)
+	if (send(ircsock, msg.c_str(), msg.size(),SEND_FLAGS) == -1)
 		std::cerr << "Send failed" << std::endl;
 }
 //---------------------------------------------------nokat methods

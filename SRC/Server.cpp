@@ -98,7 +98,7 @@ void Server::senderror(int code, std::string clientname, int fd, std::string msg
 	std::stringstream ss;
 	ss << ":localhost " << code << " " << clientname << msg;
 	std::string resp = ss.str();
-	if(send(fd, resp.c_str(), resp.size(),0) == -1)
+	if(send(fd, resp.c_str(), resp.size(),SEND_FLAGS) == -1)
 		std::cerr << "send() faild" << std::endl;
 }
 
@@ -107,13 +107,13 @@ void Server::senderror(int code, std::string clientname, std::string channelname
 	std::stringstream ss;
 	ss << ":localhost " << code << " " << clientname << " " << channelname << msg;
 	std::string resp = ss.str();
-	if(send(fd, resp.c_str(), resp.size(),0) == -1)
+	if(send(fd, resp.c_str(), resp.size(),SEND_FLAGS) == -1)
 		std::cerr << "send() faild" << std::endl;
 }
 
 void Server::_sendResponse(std::string response, int fd)
 {
-	if(send(fd, response.c_str(), response.size(), 0) == -1)
+	if(send(fd, response.c_str(), response.size(), SEND_FLAGS) == -1)
 		std::cerr << "Response send() faild" << std::endl;
 }
 //---------------//Send Methods
