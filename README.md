@@ -94,3 +94,5 @@ user afatir 0 * afatir
 ```bash
 ./bot localhost 4444 hello bot BONUS/qoutes
 ```
+
+## For the full explanation of the IRC Server, you can check out my [Medium blog](https://medium.com/@afatir.ahmedfatir/small-irc-server-ft-irc-42-network-7cee848de6f9) for the complete details.
