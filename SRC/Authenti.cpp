@@ -90,6 +90,11 @@ void Server::set_nickname(std::string cmd, int fd)
 		{
 			std::string oldnick = cli->GetNickName();
 			cli->SetNickname(cmd);
+			for(size_t i = 0; i < channels.size(); i++){
+				Client *cl = channels[i].GetClientInChannel(oldnick);
+				if(cl)
+					cl->SetNickname(cmd);
+			}
 			if(!oldnick.empty() && oldnick != cmd)
 			{
 				if(oldnick == "*" && !cli->GetUserName().empty())
